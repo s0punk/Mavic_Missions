@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Mavic Missions</string>
+
+    <!-- Main Activity -->
+    <string name="chooseMission">Choisissez une mission</string>
+    <string name="dynamicParcour">Parcour dynamique</string>
+    <string name="followLine">Suivi d\'une ligne</string>
+    <string name="ballRescue">Sauvetage d\'une balle</string>
 </resources>
