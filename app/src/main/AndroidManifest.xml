@@ -9,6 +9,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MavicMissions">
+
+        <!-- SDK key -->
+        <meta-data
+            android:name="com.dji.sdk.API_KEY"
+            android:value="5a230b88adb374ba14f59cd7"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
