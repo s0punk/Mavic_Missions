@@ -7,9 +7,19 @@ import java.util.TimerTask;
 
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
+import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
+import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
+import dji.common.flightcontroller.virtualstick.VerticalControlMode;
+import dji.common.flightcontroller.virtualstick.YawControlMode;
 import dji.common.util.CommonCallbacks;
+import dji.sdk.flightcontroller.FlightController;
+import dji.sdk.products.Aircraft;
+import io.reactivex.annotations.NonNull;
 
 public class AircraftController {
+    private Aircraft aircraft;
+    private FlightController flightController;
+
     private SendVirtualStickDataTask controlTask;
     private Timer timer;
 
@@ -29,16 +39,73 @@ public class AircraftController {
         }
     }
 
+    public AircraftController(Aircraft aircraft) {
+        if (aircraft != null) {
+            this.aircraft = aircraft;
+            this.flightController = aircraft.getFlightController();
+
+            flightController.setVirtualStickModeEnabled(true,  djiError -> { flightController.setVirtualStickAdvancedModeEnabled(true); });
+
+            flightController.setYawControlMode(YawControlMode.ANGLE);
+            flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+            flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+            flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);
+
+            pitch = 0;
+            roll = 0;
+            yaw = 0;
+            throttle = 0;
+        }
+    }
+
+    private void SendTask() {
+        if (aircraft != null && flightController != null) {
+            SendVirtualStickDataTask task = new SendVirtualStickDataTask();
+            Timer timer = new Timer();
+            timer.schedule(task, 100, 200);
+        }
+    }
+
+    public void goLeft(int degree) {
+        pitch = 0;
+        roll = -degree;
+        yaw = 0;
+        throttle = 0;
+
+        SendTask();
+    }
+
+    public void goRight(int degree) {
+        pitch = 0;
+        roll = degree;
+        yaw = 0;
+        throttle = 0;
+
+        SendTask();
+    }
+
+    public void goForward(int degree) {
+        pitch = -degree;
+        roll = 0;
+        yaw = 0;
+        throttle = 0;
+
+        SendTask();
+    }
+
+    public void goBack(int degree) {
+        pitch = degree;
+        roll = 0;
+        yaw = 0;
+        throttle = 0;
+
+        SendTask();
+    }
+
     public float getPitch() { return pitch; }
-    public void setPitch(float pitch) { this.pitch = pitch; }
     public float getRoll() { return roll; }
-    public void setRoll(float roll) { this.roll = roll; }
     public float getYaw() { return yaw; }
-    public void setYaw(float yaw) { this.yaw = yaw; }
     public float getThrottle() { return throttle; }
-    public void setThrottle(float throttle) { this.throttle = throttle; }
     public SendVirtualStickDataTask getControlTask() { return controlTask; }
-    public void setControlTask(SendVirtualStickDataTask controlTask) { this.controlTask = controlTask; }
     public Timer getTimer() { return timer; }
-    public void setTimer(Timer timer) { this.timer = timer; }
 }

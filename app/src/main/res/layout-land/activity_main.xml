@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <Button
+        android:id="@+id/btnTest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="test"/>
+
+    <!--<TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/chooseMission"
@@ -12,8 +19,27 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp" />
 
-    <TableRow android:backgroundTint="@color/black">
+    <TableRow
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="100dp"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content">
 
-    </TableRow>
+        <Button
+            android:id="@+id/btnDynamicParcour"
+            android:text="@string/dynamicParcour"
+            android:textSize="12sp"
+            android:layout_marginEnd="20dp"/>
+        <Button
+            android:id="@+id/btnFollowLine"
+            android:text="@string/followLine"
+            android:textSize="12sp"
+            android:layout_marginEnd="20dp"/>
+        <Button
+            android:id="@+id/btnBallRescue"
+            android:text="@string/ballRescue"
+            android:textSize="12sp"
+            android:layout_marginEnd="20dp"/>
+    </TableRow>-->
 
 </androidx.appcompat.widget.LinearLayoutCompat>
