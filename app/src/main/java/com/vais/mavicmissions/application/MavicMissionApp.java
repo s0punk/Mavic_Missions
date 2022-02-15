@@ -16,6 +16,8 @@ public class MavicMissionApp extends Application {
     private static BaseProduct product;
     private static Application app = null;
 
+    private Boolean registered = false;
+
     @Override
     protected void attachBaseContext(Context paramContext) {
         super.attachBaseContext(paramContext);
@@ -52,4 +54,8 @@ public class MavicMissionApp extends Application {
     public static Application getInstance() {
         return MavicMissionApp.app;
     }
+
+    public Boolean getRegistered() { return registered; }
+
+    public void setRegistered(Boolean registered) { this.registered = registered; }
 }

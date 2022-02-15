@@ -6,9 +6,17 @@
 
     <Button
         android:id="@+id/btnTest"
+        android:enabled="false"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="test"/>
+        android:text="Décoller + avance"/>
+
+    <Button
+        android:id="@+id/btnTestStop"
+        android:enabled="false"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Atterir"/>
 
     <!--<TextView
         android:layout_width="wrap_content"
