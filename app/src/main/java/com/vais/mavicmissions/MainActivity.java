@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
+import com.vais.mavicmissions.services.VerificationUnit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
+        controller.setFlightController(VerificationUnit.getFlightController());
         switch (view.getId()) {
             case R.id.btnTest:
                 controller.takeOff();

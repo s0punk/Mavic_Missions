@@ -87,7 +87,7 @@ public class AircraftController {
     }
 
     public void takeOff() {
-        if (aircraft != null && flightController != null && !hasTakenOff) {
+        if (flightController != null && !hasTakenOff) {
             setControllerReady(false);
             flightController.startTakeoff(djiError -> {
                 new Handler().postDelayed(() -> {
@@ -99,7 +99,7 @@ public class AircraftController {
     }
 
     public void land() {
-        if (aircraft != null && flightController != null && hasTakenOff) {
+        if (flightController != null && hasTakenOff) {
             resetAxis();
 
             setControllerReady(false);
@@ -117,7 +117,7 @@ public class AircraftController {
     }
 
     private void sendTask() {
-        if (aircraft != null && flightController != null && controllerReady && hasTakenOff) {
+        if (flightController != null && controllerReady && hasTakenOff) {
             SendVirtualStickDataTask task = new SendVirtualStickDataTask();
             Timer timer = new Timer();
             timer.schedule(task, 100, 200);
@@ -153,6 +153,7 @@ public class AircraftController {
         listener.onControllerStateChanged(ready);
     }
 
+    public void setFlightController(FlightController controller) { flightController = controller; }
     public Boolean getHasTakenOff() { return hasTakenOff; }
     public float getPitch() { return pitch; }
     public float getRoll() { return roll; }
