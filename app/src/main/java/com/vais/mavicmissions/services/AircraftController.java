@@ -3,6 +3,8 @@ package com.vais.mavicmissions.services;
 import android.content.Context;
 import android.os.Handler;
 
+import androidx.annotation.NonNull;
+
 import com.vais.mavicmissions.application.MavicMissionApp;
 
 import java.util.Timer;
@@ -17,16 +19,18 @@ import dji.common.flightcontroller.virtualstick.YawControlMode;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
-import io.reactivex.annotations.NonNull;
 
 public class AircraftController {
+    private static final int COMMAND_TIMEOUT = 5000;
+
     private Aircraft aircraft;
     private FlightController flightController;
     private AircraftListener listener;
-//https://guides.codepath.com/android/Creating-Custom-Listeners
+
     private MavicMissionApp app;
 
     private boolean hasTakenOff;
+    private boolean controllerReady;
 
     private float pitch;
     private float roll;
@@ -45,19 +49,21 @@ public class AircraftController {
     }
 
     public interface AircraftListener {
-        public void onControllerReady();
+        public void onControllerStateChanged(boolean controllerState);
     }
 
-    public AircraftController(Aircraft aircraft, MavicMissionApp app) {
-        listener = null;
-        if (aircraft != null && app.getRegistered()) {
+    public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, @NonNull AircraftListener listener) {
+        controllerReady = false;
+        hasTakenOff = false;
+        this.listener = listener;
+
+        if (app.getRegistered()) {
             this.aircraft = aircraft;
             this.flightController = aircraft.getFlightController();
             this.app = app;
-            hasTakenOff = false;
 
             flightController.setVirtualStickModeEnabled(true,  djiError -> { flightController.setVirtualStickAdvancedModeEnabled(true); });
-            wait(5);
+            new Handler().postDelayed(() -> setControllerReady(true), COMMAND_TIMEOUT);
 
             flightController.setYawControlMode(YawControlMode.ANGLE);
             flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
@@ -70,7 +76,7 @@ public class AircraftController {
 
     public void destroy() {
         flightController.setVirtualStickModeEnabled(false,  djiError -> { flightController.setVirtualStickAdvancedModeEnabled(false); });
-        wait(5);
+        new Handler().postDelayed(() -> setControllerReady(false), COMMAND_TIMEOUT);
     }
 
     public void resetAxis() {
@@ -82,24 +88,36 @@ public class AircraftController {
 
     public void takeOff() {
         if (aircraft != null && flightController != null && !hasTakenOff) {
+            setControllerReady(false);
             flightController.startTakeoff(djiError -> {
-                hasTakenOff = true;
-                wait(5);
+                new Handler().postDelayed(() -> {
+                    setControllerReady(true);
+                    hasTakenOff = true;
+                }, COMMAND_TIMEOUT);
             });
         }
     }
 
     public void land() {
-        if (aircraft != null && flightController != null) {
+        if (aircraft != null && flightController != null && hasTakenOff) {
             resetAxis();
-            flightController.startLanding(djiError -> flightController.confirmLanding(djiError1 -> {
-                hasTakenOff = false;
-            }));
+
+            setControllerReady(false);
+            flightController.startLanding(djiError -> {
+                new Handler().postDelayed(() -> {
+                    flightController.confirmLanding(djiError1 -> {
+                        new Handler().postDelayed(() -> {
+                            setControllerReady(true);
+                            hasTakenOff = false;
+                        }, COMMAND_TIMEOUT);
+                    });
+                }, COMMAND_TIMEOUT);
+            });
         }
     }
 
     private void sendTask() {
-        if (aircraft != null && flightController != null && hasTakenOff) {
+        if (aircraft != null && flightController != null && controllerReady && hasTakenOff) {
             SendVirtualStickDataTask task = new SendVirtualStickDataTask();
             Timer timer = new Timer();
             timer.schedule(task, 100, 200);
@@ -130,13 +148,11 @@ public class AircraftController {
         sendTask();
     }
 
-    private void wait(int waitTime) {
-        Handler handler = new Handler();
-        handler.postDelayed(() -> { }, waitTime);
+    private void setControllerReady(boolean ready) {
+        controllerReady = ready;
+        listener.onControllerStateChanged(ready);
     }
 
-    public AircraftListener getListener() { return listener; }
-    public void setListener(AircraftListener listener) { this.listener = listener; }
     public Boolean getHasTakenOff() { return hasTakenOff; }
     public float getPitch() { return pitch; }
     public float getRoll() { return roll; }

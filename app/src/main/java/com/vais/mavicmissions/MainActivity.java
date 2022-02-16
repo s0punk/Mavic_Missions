@@ -10,49 +10,31 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
-import com.vais.mavicmissions.services.VerificationUnit;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.flightcontroller.virtualstick.FlightControlData;
-import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
-import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
-import dji.common.flightcontroller.virtualstick.VerticalControlMode;
-import dji.common.flightcontroller.virtualstick.YawControlMode;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
-import dji.sdk.flightcontroller.FlightController;
-import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.thirdparty.afinal.core.AsyncTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     private static final String TAG = "MainActivity";
-    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
 
-    private Handler mHandler;
-    private float pitch;
-    private float roll;
-    private float yaw;
-    private float throttle;
+    public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
             Manifest.permission.INTERNET,
@@ -71,6 +53,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private List<String> missingPermission = new ArrayList<>();
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private static final int REQUEST_PERMISSION_CODE = 12345;
+
+    private Handler mHandler;
 
     private AircraftController controller;
     private MavicMissionApp app;
@@ -108,12 +92,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btnTest:
-                Toast.makeText(this, "Décollage du drone...", Toast.LENGTH_SHORT).show();
                 controller.takeOff();
                 controller.goForward(5);
                 break;
             case R.id.btnTestStop:
-                Toast.makeText(this, "Attérissage du drone", Toast.LENGTH_SHORT).show();
                 controller.land();
                 break;
         }
@@ -171,7 +153,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             showToast(registerComplete);
                             DJISDKManager.getInstance().startConnectionToProduct();
                             app.setRegistered(true);
-                            controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app);
+                            controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app, new AircraftController.AircraftListener() {
+                                @Override
+                                public void onControllerStateChanged(boolean controllerState) {
+                                    btnStart.setEnabled(controllerState);
+                                    btnLand.setEnabled(controllerState);
+                                }
+                            });
                         } else {
                             showToast(registerError);
                             app.setRegistered(false);
@@ -219,6 +207,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void showToast(final String toastMsg) {
         Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_LONG).show());
+        handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show());
     }
 }
