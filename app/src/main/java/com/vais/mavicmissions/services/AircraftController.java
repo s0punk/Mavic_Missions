@@ -21,7 +21,7 @@ import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 
 public class AircraftController {
-    private static final int COMMAND_TIMEOUT = 5000;
+    public static final int COMMAND_TIMEOUT = 5000;
 
     private Aircraft aircraft;
     private FlightController flightController;

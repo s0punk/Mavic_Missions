@@ -85,8 +85,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         controller.destroy();
-        super.onDestroy();
-
+        new Handler().postDelayed(super::onDestroy, AircraftController.COMMAND_TIMEOUT);
     }
 
     @Override
