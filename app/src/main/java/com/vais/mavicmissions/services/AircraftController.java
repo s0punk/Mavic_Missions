@@ -1,6 +1,5 @@
 package com.vais.mavicmissions.services;
 
-import android.content.Context;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
@@ -10,22 +9,23 @@ import com.vais.mavicmissions.application.MavicMissionApp;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import dji.common.error.DJIError;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
+import dji.sdk.sdkmanager.DJISDKManager;
 
 public class AircraftController {
     public static final int COMMAND_TIMEOUT = 5000;
 
     private Aircraft aircraft;
     private FlightController flightController;
-    private AircraftListener listener;
+
+    private final AircraftListener listener;
+    private CameraController cameraController;
 
     private MavicMissionApp app;
 
@@ -43,13 +43,13 @@ public class AircraftController {
             if (VerificationUnit.isFlightControllerAvailable()) {
                 MavicMissionApp.getAircraftInstance()
                         .getFlightController()
-                        .sendVirtualStickFlightControlData(new FlightControlData(pitch, roll, yaw, throttle), (CommonCallbacks.CompletionCallback) djiError -> { });
+                        .sendVirtualStickFlightControlData(new FlightControlData(pitch, roll, yaw, throttle), djiError -> { });
             }
         }
     }
 
     public interface AircraftListener {
-        public void onControllerStateChanged(boolean controllerState);
+        void onControllerStateChanged(boolean controllerState);
     }
 
     public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, @NonNull AircraftListener listener) {
@@ -62,21 +62,25 @@ public class AircraftController {
             this.flightController = aircraft.getFlightController();
             this.app = app;
 
-            flightController.setVirtualStickModeEnabled(true,  djiError -> { flightController.setVirtualStickAdvancedModeEnabled(true); });
+            flightController.setVirtualStickModeEnabled(true,  djiError -> flightController.setVirtualStickAdvancedModeEnabled(true));
             new Handler().postDelayed(() -> setControllerReady(true), COMMAND_TIMEOUT);
 
             flightController.setYawControlMode(YawControlMode.ANGLE);
             flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
             flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
             flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);
-
             resetAxis();
+
+            cameraController = new CameraController(this.aircraft);
         }
     }
 
     public void destroy() {
-        flightController.setVirtualStickModeEnabled(false,  djiError -> { flightController.setVirtualStickAdvancedModeEnabled(false); });
-        new Handler().postDelayed(() -> setControllerReady(false), COMMAND_TIMEOUT);
+        flightController.setVirtualStickModeEnabled(false,  djiError -> flightController.setVirtualStickAdvancedModeEnabled(false));
+        new Handler().postDelayed(() -> {
+            setControllerReady(false);
+            DJISDKManager.getInstance().startConnectionToProduct();
+        }, COMMAND_TIMEOUT);
     }
 
     public void resetAxis() {
@@ -89,12 +93,12 @@ public class AircraftController {
     public void takeOff() {
         if (flightController != null && !hasTakenOff) {
             setControllerReady(false);
-            flightController.startTakeoff(djiError -> {
+            flightController.startTakeoff(djiError ->
                 new Handler().postDelayed(() -> {
                     setControllerReady(true);
                     hasTakenOff = true;
-                }, COMMAND_TIMEOUT);
-            });
+                }, COMMAND_TIMEOUT)
+            );
         }
     }
 
@@ -154,6 +158,8 @@ public class AircraftController {
     }
 
     public void setFlightController(FlightController controller) { flightController = controller; }
+    public CameraController getCameraController() { return cameraController; }
+    public void setCameraController(CameraController cameraController) { this.cameraController = cameraController; }
     public Boolean getHasTakenOff() { return hasTakenOff; }
     public float getPitch() { return pitch; }
     public float getRoll() { return roll; }
