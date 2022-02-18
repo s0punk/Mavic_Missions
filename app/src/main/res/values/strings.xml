@@ -11,5 +11,4 @@
     <string name="registering">Authentification en cours...</string>
     <string name="registerComplete">Authentification terminée avec succès</string>
     <string name="registerError">Erreur survenue lors du processus d\'authentification</string>
-    <string name="aircraftConnectionImpossible">Impossible d\'effectuer la connexion avec le drone</string>
 </resources>

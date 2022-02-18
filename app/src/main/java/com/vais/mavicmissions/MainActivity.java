@@ -61,10 +61,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int REQUEST_PERMISSION_CODE = 12345;
 
     private Handler mHandler;
-    private Runnable updateRunnable = () -> {
-        Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
-        sendBroadcast(intent);
-    };
 
     private AircraftController controller;
     private MavicMissionApp app;
@@ -153,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String registering = getResources().getString(R.string.registering);
         String registerComplete = getResources().getString(R.string.registerComplete);
         String registerError = getResources().getString(R.string.registerError);
-        String connectionImpossible = getResources().getString(R.string.aircraftConnectionImpossible);
 
         if (isRegistrationInProgress.compareAndSet(false, true)) {
             AsyncTask.execute(() -> {
@@ -162,16 +157,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onRegister(DJIError djiError) {
                         if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
+                            app.setRegistered(true);
                             DJISDKManager.getInstance().startConnectionToProduct();
                             showToast(registerComplete);
-
-                            Aircraft test = MavicMissionApp.getAircraftInstance();
-                            boolean isNull = test == null;
-
-                            int test1 = 1;
-                           /* if (!onRegistered())
-                                showToast(connectionImpossible);*/
-
                         } else {
                             showToast(registerError);
                             app.setRegistered(false);
@@ -179,9 +167,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     @Override
-                    public void onProductDisconnect() { notifyStatusChange(); }
+                    public void onProductDisconnect() {
+                        notifyStatusChange();
+                    }
+
                     @Override
-                    public void onProductConnect(BaseProduct baseProduct) { notifyStatusChange(); }
+                    public void onProductConnect(BaseProduct baseProduct) {
+                        notifyStatusChange();
+                        onRegistered();
+                    }
+
                     @Override
                     public void onProductChanged(BaseProduct baseProduct) { }
                     @Override
@@ -197,27 +192,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private boolean onRegistered() {
-        if (DJISDKManager.getInstance().startConnectionToProduct()) {
-            Aircraft aircraft = MavicMissionApp.getAircraftInstance();
-            controller = new AircraftController(aircraft, app, new AircraftController.AircraftListener() {
-                @Override
-                public void onControllerStateChanged(boolean controllerState) {
-                    btnStart.setEnabled(controllerState);
-                    btnLand.setEnabled(controllerState);
-                }
-            });
-            app.setRegistered(true);
-            return true;
-        }
-        else
-            return false;
+    private void onRegistered() {
+        controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app, new AircraftController.AircraftListener() {
+            @Override
+            public void onControllerStateChanged(boolean controllerState) {
+                btnStart.setEnabled(controllerState);
+                btnLand.setEnabled(controllerState);
+            }
+        });
+        showToast("ICI");
     }
 
     private void notifyStatusChange() {
         mHandler.removeCallbacks(updateRunnable);
         mHandler.postDelayed(updateRunnable, 500);
     }
+
+    private Runnable updateRunnable = () -> {
+        Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
+        sendBroadcast(intent);
+    };
 
     private void showToast(final String toastMsg) {
         Handler handler = new Handler(Looper.getMainLooper());
