@@ -99,7 +99,6 @@ public class AircraftController {
     public void resetAxis() {
         pitch = 0;
         roll = 0;
-        yaw = ROTATION_FRONT;
         throttle = 0;
     }
 
