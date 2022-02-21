@@ -261,6 +261,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doSquareRotations() {
-
+        showToast("Parcours carrée avec rotation du drone");
+        controller.takeOff(takeoffReady -> {
+            if (takeoffReady)
+                controller.goForward(5, 2000, forwardReady -> {
+                    if (forwardReady)
+                        controller.faceRight(faceRightReady -> {
+                            if (faceRightReady)
+                                controller.goForward(5, 2000, fr2 -> {
+                                    if (fr2)
+                                        controller.faceBack(faceBackReady -> {
+                                            if (faceBackReady)
+                                                controller.goForward(5, 2000, fr3 -> {
+                                                    if (fr3)
+                                                        controller.faceLeft(faceLeftReady -> {
+                                                            if (faceLeftReady)
+                                                                controller.goForward(5, 2000, fr4 -> {
+                                                                    if (fr4)
+                                                                        controller.faceFront(faceFrontReady -> {
+                                                                            if (faceFrontReady)
+                                                                                controller.land(landReady -> {
+                                                                                    if (landReady) {
+                                                                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                                                                            btnStart.setEnabled(true);
+                                                                                            btnLand.setEnabled(true);
+                                                                                        });
+                                                                                        showToast("Fin du parcours carrée avec rotation du drone");
+                                                                                    }
+                                                                                });
+                                                                        });
+                                                                });
+                                                        });
+                                                });
+                                        });
+                                });
+                        });
+                });
+        });
     }
 }
