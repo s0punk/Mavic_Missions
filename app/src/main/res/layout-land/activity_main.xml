@@ -9,14 +9,14 @@
         android:enabled="false"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Décoller + avance"/>
+        android:text="Faire un carrée"/>
 
     <Button
         android:id="@+id/btnTestStop"
         android:enabled="false"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Atterir"/>
+        android:text="Faire un carrée avec rotations"/>
 
     <!--<TextView
         android:layout_width="wrap_content"

@@ -20,11 +20,19 @@ import dji.sdk.sdkmanager.DJISDKManager;
 
 public class AircraftController {
     public static final int COMMAND_TIMEOUT = 5000;
+    public static final int MINIMUM_COMMAND_DURATION = 100;
+    public static final int INFINITE_COMMAND = 0;
+
+    private static final int COMMAND_RESET = 500;
+    private static final int ROTATION_DURATION = 1000;
+
+    private static final int ROTATION_FRONT = 0;
+    private static final int ROTATION_LEFT = -90;
+    private static final int ROTATION_RIGHT = 90;
+    private static final int ROTATION_BACK = -180;
 
     private Aircraft aircraft;
     private FlightController flightController;
-
-    private final AircraftListener listener;
     private CameraController cameraController;
 
     private MavicMissionApp app;
@@ -52,10 +60,9 @@ public class AircraftController {
         void onControllerStateChanged(boolean controllerState);
     }
 
-    public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, @NonNull AircraftListener listener) {
+    public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, AircraftListener listener) {
         controllerReady = false;
         hasTakenOff = false;
-        this.listener = listener;
 
         if (app.getRegistered()) {
             this.aircraft = aircraft;
@@ -63,7 +70,13 @@ public class AircraftController {
             this.app = app;
 
             flightController.setVirtualStickModeEnabled(true,  djiError -> flightController.setVirtualStickAdvancedModeEnabled(true));
-            new Handler().postDelayed(() -> setControllerReady(true), COMMAND_TIMEOUT);
+            new Handler().postDelayed(() -> {
+                controllerReady = true;
+
+                if (listener != null)
+                    listener.onControllerStateChanged(true);
+
+            }, COMMAND_TIMEOUT);
 
             flightController.setYawControlMode(YawControlMode.ANGLE);
             flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
@@ -78,7 +91,7 @@ public class AircraftController {
     public void destroy() {
         flightController.setVirtualStickModeEnabled(false,  djiError -> flightController.setVirtualStickAdvancedModeEnabled(false));
         new Handler().postDelayed(() -> {
-            setControllerReady(false);
+            controllerReady = false;
             DJISDKManager.getInstance().startConnectionToProduct();
         }, COMMAND_TIMEOUT);
     }
@@ -86,33 +99,35 @@ public class AircraftController {
     public void resetAxis() {
         pitch = 0;
         roll = 0;
-        yaw = 0;
+        yaw = ROTATION_FRONT;
         throttle = 0;
     }
 
-    public void takeOff() {
+    public void takeOff(@NonNull AircraftListener listener) {
         if (flightController != null && !hasTakenOff) {
-            setControllerReady(false);
+            controllerReady = false;
             flightController.startTakeoff(djiError ->
-                new Handler().postDelayed(() -> {
-                    setControllerReady(true);
-                    hasTakenOff = true;
-                }, COMMAND_TIMEOUT)
+                    new Handler().postDelayed(() -> {
+                        controllerReady = true;
+                        hasTakenOff = true;
+                        listener.onControllerStateChanged(true);
+                    }, COMMAND_TIMEOUT)
             );
         }
     }
 
-    public void land() {
+    public void land(@NonNull AircraftListener listener) {
         if (flightController != null && hasTakenOff) {
             resetAxis();
 
-            setControllerReady(false);
+            controllerReady = false;
             flightController.startLanding(djiError -> {
                 new Handler().postDelayed(() -> {
                     flightController.confirmLanding(djiError1 -> {
                         new Handler().postDelayed(() -> {
-                            setControllerReady(true);
+                            controllerReady = true;
                             hasTakenOff = false;
+                            listener.onControllerStateChanged(true);
                         }, COMMAND_TIMEOUT);
                     });
                 }, COMMAND_TIMEOUT);
@@ -128,33 +143,83 @@ public class AircraftController {
         }
     }
 
-    public void goLeft(int degree) {
+    private void waitCommandDuration(int time, AircraftListener listener) {
+        if (time >= MINIMUM_COMMAND_DURATION)
+            new Handler().postDelayed(() -> {
+                resetAxis();
+                new Handler().postDelayed(() -> listener.onControllerStateChanged(true), COMMAND_RESET);
+            }, time);
+    }
+
+    public void goLeft(int degree, int time, AircraftListener listener) {
         resetAxis();
         roll = -degree;
+
         sendTask();
+        waitCommandDuration(time, listener);
     }
 
-    public void goRight(int degree) {
+    public void goRight(int degree, int time, AircraftListener listener) {
         resetAxis();
         roll = degree;
+
         sendTask();
+        waitCommandDuration(time, listener);
     }
 
-    public void goForward(int degree) {
+    public void goForward(int degree, int time, AircraftListener listener) {
         resetAxis();
         pitch = -degree;
+
         sendTask();
+        waitCommandDuration(time, listener);
     }
 
-    public void goBack(int degree) {
+    public void goBack(int degree, int time, AircraftListener listener) {
         resetAxis();
         pitch = degree;
+
         sendTask();
+        waitCommandDuration(time, listener);
     }
 
-    private void setControllerReady(boolean ready) {
-        controllerReady = ready;
-        listener.onControllerStateChanged(ready);
+    public void faceAngle(int angle, AircraftListener listener) {
+        resetAxis();
+        yaw = angle;
+
+        sendTask();
+        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+    }
+
+    public void faceFront(AircraftListener listener) {
+        resetAxis();
+
+        sendTask();
+        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+    }
+
+    public void faceLeft(AircraftListener listener) {
+        resetAxis();
+        yaw = ROTATION_LEFT;
+
+        sendTask();
+        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+    }
+
+    public void faceRight(AircraftListener listener) {
+        resetAxis();
+        yaw = ROTATION_RIGHT;
+
+        sendTask();
+        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+    }
+
+    public void faceBack(AircraftListener listener) {
+        resetAxis();
+        yaw = ROTATION_BACK;
+
+        sendTask();
+        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
     }
 
     public void setFlightController(FlightController controller) { flightController = controller; }

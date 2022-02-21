@@ -65,8 +65,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AircraftController controller;
     private MavicMissionApp app;
 
-    private boolean aircraftNonNull;
-
     private Button btnStart;
     private Button btnLand;
 
@@ -97,14 +95,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-        //controller.setFlightController(VerificationUnit.getFlightController());
         switch (view.getId()) {
             case R.id.btnTest:
-                controller.takeOff();
-                controller.goForward(5);
+                btnStart.setEnabled(false);
+                btnLand.setEnabled(false);
+                doSquare();
                 break;
             case R.id.btnTestStop:
-                controller.land();
+                /*btnStart.setEnabled(false);
+                btnLand.setEnabled(false);
+                doSquareRotations();*/
+                btnStart.setEnabled(false);
+                btnLand.setEnabled(false);
+                controller.takeOff(new AircraftController.AircraftListener() {
+                    @Override
+                    public void onControllerStateChanged(boolean controllerState) {
+                        controller.faceAngle(-90, faceLeftReady -> controller.goForward(5, 2000, new AircraftController.AircraftListener() {
+                            @Override
+                            public void onControllerStateChanged(boolean controllerState) {
+
+                            }
+                        }));
+                    }
+                });
                 break;
         }
     }
@@ -196,11 +209,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app, new AircraftController.AircraftListener() {
             @Override
             public void onControllerStateChanged(boolean controllerState) {
-                btnStart.setEnabled(controllerState);
-                btnLand.setEnabled(controllerState);
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    btnStart.setEnabled(controllerState);
+                    btnLand.setEnabled(controllerState);
+                });
             }
         });
-        showToast("ICI");
     }
 
     private void notifyStatusChange() {
@@ -216,5 +230,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void showToast(final String toastMsg) {
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show());
+    }
+
+    private void doSquare() {
+        showToast("Parcours carrée");
+        controller.takeOff(takeOffReady -> {
+            if (takeOffReady)
+                controller.goForward(5, 2000, forwardReady -> {
+                    if (forwardReady)
+                        controller.goRight(5, 2000, rightReady -> {
+                            if (rightReady)
+                                controller.goBack(5, 2000, backReady -> {
+                                    if (backReady)
+                                        controller.goLeft(5, 2000, leftReady -> {
+                                            if (leftReady)
+                                                controller.land(landReady -> {
+                                                    if (landReady) {
+                                                        new Handler(Looper.getMainLooper()).post(() -> {
+                                                            btnStart.setEnabled(true);
+                                                            btnLand.setEnabled(true);
+                                                        });
+                                                        showToast("Fin du parcours carrée");
+                                                    }
+                                                });
+                                        });
+                                });
+                        });
+                });
+        });
+    }
+
+    private void doSquareRotations() {
+
     }
 }
