@@ -8,16 +8,19 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
+import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.VerificationUnit;
 
 import java.util.ArrayList;
@@ -29,6 +32,7 @@ import dji.common.error.DJISDKError;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
+import dji.sdk.codec.DJICodecManager;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.BluetoothDevice;
 import dji.sdk.sdkmanager.BluetoothProductConnector;
@@ -37,7 +41,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.sdkmanager.LDMManager;
 import dji.thirdparty.afinal.core.AsyncTask;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener {
     private static final String TAG = "MainActivity";
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
@@ -63,28 +67,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Handler mHandler;
 
     private AircraftController controller;
+    private CameraController cameraController;
+    
     private MavicMissionApp app;
 
     private Button btnStart;
     private Button btnLand;
+
+    private TextureView cameraSurface;
+    private boolean textureAvailable;
+    private SurfaceTexture texture;
+    private int textureWidth;
+    private int textureHeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = (MavicMissionApp)getApplication();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             checkAndRequestPermissions();
-        }
 
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
 
+
         btnStart = findViewById(R.id.btnTest);
         btnLand = findViewById(R.id.btnTestStop);
+        cameraSurface = findViewById(R.id.cameraPreviewSurface);
 
         btnStart.setOnClickListener(this);
         btnLand.setOnClickListener(this);
+        cameraSurface.setSurfaceTextureListener(this);
     }
 
     @Override
@@ -98,10 +112,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
 
         mHandler = new Handler(Looper.getMainLooper());
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             checkAndRequestPermissions();
-        }
+
+        if (cameraController != null)
+            cameraController.subscribeToVideoFeed();
     }
 
     @Override
@@ -204,12 +219,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void onRegistered() {
-        controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app, new AircraftController.AircraftListener() {
+        controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app, new AircraftController.ControllerListener() {
             @Override
-            public void onControllerStateChanged(boolean controllerState) {
+            public void onControllerReady() {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    btnStart.setEnabled(controllerState);
-                    btnLand.setEnabled(controllerState);
+                    btnStart.setEnabled(true);
+                    btnLand.setEnabled(true);
+
+                    cameraController = new CameraController(controller.getAircraft());
+                    if (textureAvailable)
+                        onSurfaceTextureAvailable(texture, textureWidth, textureHeight);
                 });
             }
         });
@@ -234,69 +253,81 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void doSquare() {
         showToast("Parcours carrée");
-        controller.takeOff(takeOffReady -> {
-            if (takeOffReady)
-                controller.goForward(5, 2000, forwardReady -> {
-                    if (forwardReady)
-                        controller.goRight(5, 2000, rightReady -> {
-                            if (rightReady)
-                                controller.goBack(5, 2000, backReady -> {
-                                    if (backReady)
-                                        controller.goLeft(5, 2000, leftReady -> {
-                                            if (leftReady)
-                                                controller.land(landReady -> {
-                                                    if (landReady) {
-                                                        new Handler(Looper.getMainLooper()).post(() -> {
-                                                            btnStart.setEnabled(true);
-                                                            btnLand.setEnabled(true);
-                                                        });
-                                                        showToast("Fin du parcours carrée");
-                                                    }
-                                                });
-                                        });
+        controller.takeOff(() -> {
+            controller.goForward(2000, () -> {
+                controller.goRight(2000, () -> {
+                    controller.goBack(2000, () -> {
+                        controller.goLeft(2000, () -> {
+                            controller.land(() -> {
+                                new Handler(Looper.getMainLooper()).post(() -> {
+                                    btnStart.setEnabled(true);
+                                    btnLand.setEnabled(true);
                                 });
+                                showToast("Fin du parcours carrée");
+                            });
                         });
+                    });
                 });
+            });
         });
     }
 
     private void doSquareRotations() {
         showToast("Parcours carrée avec rotation du drone");
-        controller.takeOff(takeoffReady -> {
-            if (takeoffReady)
-                controller.goForward(5, 2000, forwardReady -> {
-                    if (forwardReady)
-                        controller.faceRight(faceRightReady -> {
-                            if (faceRightReady)
-                                controller.goForward(5, 2000, fr2 -> {
-                                    if (fr2)
-                                        controller.faceBack(faceBackReady -> {
-                                            if (faceBackReady)
-                                                controller.goForward(5, 2000, fr3 -> {
-                                                    if (fr3)
-                                                        controller.faceLeft(faceLeftReady -> {
-                                                            if (faceLeftReady)
-                                                                controller.goForward(5, 2000, fr4 -> {
-                                                                    if (fr4)
-                                                                        controller.faceFront(faceFrontReady -> {
-                                                                            if (faceFrontReady)
-                                                                                controller.land(landReady -> {
-                                                                                    if (landReady) {
-                                                                                        new Handler(Looper.getMainLooper()).post(() -> {
-                                                                                            btnStart.setEnabled(true);
-                                                                                            btnLand.setEnabled(true);
-                                                                                        });
-                                                                                        showToast("Fin du parcours carrée avec rotation du drone");
-                                                                                    }
-                                                                                });
-                                                                        });
-                                                                });
-                                                        });
+        controller.takeOff(() -> {
+            controller.goForward(2000, () -> {
+                controller.faceRight(() -> {
+                    controller.goForward(2000, () -> {
+                        controller.faceBack(() -> {
+                            controller.goForward(2000, () -> {
+                                controller.faceLeft(() -> {
+                                    controller.goForward(2000, () -> {
+                                        controller.faceFront(() -> {
+                                            controller.land(() -> {
+                                                new Handler(Looper.getMainLooper()).post(() -> {
+                                                    btnStart.setEnabled(true);
+                                                    btnLand.setEnabled(true);
                                                 });
+                                                showToast("Fin du parcours carrée avec rotation du drone");
+                                            });
                                         });
+                                    });
                                 });
+                            });
                         });
+                    });
                 });
+            });
         });
     }
+
+    @Override
+    public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surfaceTexture, int w, int h) {
+        if (controller != null && cameraController != null) {
+            if (cameraController.getCodecManager() == null)
+                cameraController.setCodecManager(new DJICodecManager(this, surfaceTexture, w, h));
+        }
+        else {
+            textureAvailable = true;
+            texture = surfaceTexture;
+            textureWidth = w;
+            textureHeight = h;
+        }
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surfaceTexture) {
+        if (controller != null && cameraController != null)
+            if (cameraController.getCodecManager() != null) {
+                cameraController.getCodecManager().cleanSurface();
+                cameraController.setCodecManager(null);
+            }
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surfaceTexture, int w, int h) { }
+
+    @Override
+    public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surfaceTexture) { }
 }

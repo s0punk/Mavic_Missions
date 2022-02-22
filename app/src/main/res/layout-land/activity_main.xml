@@ -18,6 +18,13 @@
         android:layout_height="wrap_content"
         android:text="Faire un carrée avec rotations"/>
 
+    <TextureView
+        android:id="@+id/cameraPreviewSurface"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    </TextureView>
+
     <!--<TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -3,6 +3,7 @@ package com.vais.mavicmissions.services;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
 
@@ -22,9 +23,10 @@ public class AircraftController {
     public static final int COMMAND_TIMEOUT = 5000;
     public static final int MINIMUM_COMMAND_DURATION = 100;
     public static final int INFINITE_COMMAND = 0;
+    public static final int MAXIMUM_AIRCRAFT_SPEED = 1;
 
     private static final int COMMAND_RESET = 500;
-    private static final int ROTATION_DURATION = 1000;
+    private static final int ROTATION_DURATION = 1500;
 
     private static final int ROTATION_FRONT = 0;
     private static final int ROTATION_LEFT = -90;
@@ -33,7 +35,6 @@ public class AircraftController {
 
     private Aircraft aircraft;
     private FlightController flightController;
-    private CameraController cameraController;
 
     private MavicMissionApp app;
 
@@ -44,6 +45,7 @@ public class AircraftController {
     private float roll;
     private float yaw;
     private float throttle;
+    private boolean velocityMode;
 
     private class SendVirtualStickDataTask extends TimerTask {
         @Override
@@ -56,11 +58,11 @@ public class AircraftController {
         }
     }
 
-    public interface AircraftListener {
-        void onControllerStateChanged(boolean controllerState);
+    public interface ControllerListener {
+        void onControllerReady();
     }
 
-    public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, AircraftListener listener) {
+    public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, @Nullable ControllerListener listener) {
         controllerReady = false;
         hasTakenOff = false;
 
@@ -74,17 +76,16 @@ public class AircraftController {
                 controllerReady = true;
 
                 if (listener != null)
-                    listener.onControllerStateChanged(true);
+                    listener.onControllerReady();
 
             }, COMMAND_TIMEOUT);
 
             flightController.setYawControlMode(YawControlMode.ANGLE);
             flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
             flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
-            flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);
+            flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+            velocityMode = true;
             resetAxis();
-
-            cameraController = new CameraController(this.aircraft);
         }
     }
 
@@ -102,20 +103,20 @@ public class AircraftController {
         throttle = 0;
     }
 
-    public void takeOff(@NonNull AircraftListener listener) {
+    public void takeOff(@NonNull ControllerListener listener) {
         if (flightController != null && !hasTakenOff) {
             controllerReady = false;
             flightController.startTakeoff(djiError ->
                     new Handler().postDelayed(() -> {
                         controllerReady = true;
                         hasTakenOff = true;
-                        listener.onControllerStateChanged(true);
+                        listener.onControllerReady();
                     }, COMMAND_TIMEOUT)
             );
         }
     }
 
-    public void land(@NonNull AircraftListener listener) {
+    public void land(@NonNull ControllerListener listener) {
         if (flightController != null && hasTakenOff) {
             resetAxis();
 
@@ -126,7 +127,7 @@ public class AircraftController {
                         new Handler().postDelayed(() -> {
                             controllerReady = true;
                             hasTakenOff = false;
-                            listener.onControllerStateChanged(true);
+                            listener.onControllerReady();
                         }, COMMAND_TIMEOUT);
                     });
                 }, COMMAND_TIMEOUT);
@@ -142,82 +143,86 @@ public class AircraftController {
         }
     }
 
-    private void waitCommandDuration(int time, AircraftListener listener) {
+    private void waitCommandDuration(int time, ControllerListener listener) {
         if (time >= MINIMUM_COMMAND_DURATION)
             new Handler().postDelayed(() -> {
                 resetAxis();
-                new Handler().postDelayed(() -> listener.onControllerStateChanged(true), COMMAND_RESET);
+                new Handler().postDelayed(() -> listener.onControllerReady(), COMMAND_RESET);
             }, time);
     }
 
-    public void goLeft(int degree, int time, AircraftListener listener) {
+    public void goLeft(int time, ControllerListener listener) {
         resetAxis();
-        roll = -degree;
+        pitch = velocityMode ? -MAXIMUM_AIRCRAFT_SPEED : MAXIMUM_AIRCRAFT_SPEED;
 
         sendTask();
         waitCommandDuration(time, listener);
     }
 
-    public void goRight(int degree, int time, AircraftListener listener) {
+    public void goRight(int time, ControllerListener listener) {
         resetAxis();
-        roll = degree;
+        pitch = velocityMode ? MAXIMUM_AIRCRAFT_SPEED : -MAXIMUM_AIRCRAFT_SPEED;
 
         sendTask();
         waitCommandDuration(time, listener);
     }
 
-    public void goForward(int degree, int time, AircraftListener listener) {
+    public void goForward(int time, ControllerListener listener) {
         resetAxis();
-        pitch = -degree;
+        roll = velocityMode ? MAXIMUM_AIRCRAFT_SPEED : -MAXIMUM_AIRCRAFT_SPEED;
 
         sendTask();
         waitCommandDuration(time, listener);
     }
 
-    public void goBack(int degree, int time, AircraftListener listener) {
+    public void goBack(int time, ControllerListener listener) {
         resetAxis();
-        pitch = degree;
+        roll = velocityMode ? -MAXIMUM_AIRCRAFT_SPEED : MAXIMUM_AIRCRAFT_SPEED;
 
         sendTask();
         waitCommandDuration(time, listener);
     }
 
-    public void faceAngle(int angle, AircraftListener listener) {
+    public void faceAngle(int angle, ControllerListener listener) {
         resetAxis();
         yaw = angle;
 
         sendTask();
-        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
-    public void faceFront(AircraftListener listener) {
+    public void faceFront(ControllerListener listener) {
         resetAxis();
         yaw = ROTATION_FRONT;
         sendTask();
-        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
-    public void faceLeft(AircraftListener listener) {
+    public void faceLeft(ControllerListener listener) {
         resetAxis();
         yaw = ROTATION_LEFT;
 
         sendTask();
-        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
-    public void faceRight(AircraftListener listener) {
+    public void faceRight(ControllerListener listener) {
         resetAxis();
         yaw = ROTATION_RIGHT;
 
         sendTask();
-        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
-    public void faceBack(AircraftListener listener) {
+    public void faceBack(ControllerListener listener) {
         resetAxis();
         yaw = ROTATION_BACK;
 
         sendTask();
-        new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
+        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+    }
+
+    public Aircraft getAircraft() {
+        return aircraft;
     }
 }
