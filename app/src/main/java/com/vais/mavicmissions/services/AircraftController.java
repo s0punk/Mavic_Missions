@@ -192,7 +192,7 @@ public class AircraftController {
 
     public void faceFront(AircraftListener listener) {
         resetAxis();
-
+        yaw = ROTATION_FRONT;
         sendTask();
         new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
     }
@@ -220,13 +220,4 @@ public class AircraftController {
         sendTask();
         new Handler().postDelayed(() -> listener.onControllerStateChanged(true), ROTATION_DURATION);
     }
-
-    public void setFlightController(FlightController controller) { flightController = controller; }
-    public CameraController getCameraController() { return cameraController; }
-    public void setCameraController(CameraController cameraController) { this.cameraController = cameraController; }
-    public Boolean getHasTakenOff() { return hasTakenOff; }
-    public float getPitch() { return pitch; }
-    public float getRoll() { return roll; }
-    public float getYaw() { return yaw; }
-    public float getThrottle() { return throttle; }
 }

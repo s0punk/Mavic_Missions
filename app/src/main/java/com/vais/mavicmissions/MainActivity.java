@@ -89,8 +89,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
+        super.onDestroy();
         controller.destroy();
-        new Handler().postDelayed(super::onDestroy, AircraftController.COMMAND_TIMEOUT);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mHandler = new Handler(Looper.getMainLooper());
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkAndRequestPermissions();
+        }
     }
 
     @Override
@@ -102,22 +113,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 doSquare();
                 break;
             case R.id.btnTestStop:
-                /*btnStart.setEnabled(false);
-                btnLand.setEnabled(false);
-                doSquareRotations();*/
                 btnStart.setEnabled(false);
                 btnLand.setEnabled(false);
-                controller.takeOff(new AircraftController.AircraftListener() {
-                    @Override
-                    public void onControllerStateChanged(boolean controllerState) {
-                        controller.faceAngle(-90, faceLeftReady -> controller.goForward(5, 2000, new AircraftController.AircraftListener() {
-                            @Override
-                            public void onControllerStateChanged(boolean controllerState) {
-
-                            }
-                        }));
-                    }
-                });
+                doSquareRotations();
                 break;
         }
     }
@@ -218,8 +216,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void notifyStatusChange() {
-        mHandler.removeCallbacks(updateRunnable);
-        mHandler.postDelayed(updateRunnable, 500);
+        if (mHandler != null) {
+            mHandler.removeCallbacks(updateRunnable);
+            mHandler.postDelayed(updateRunnable, 500);
+        }
     }
 
     private Runnable updateRunnable = () -> {
