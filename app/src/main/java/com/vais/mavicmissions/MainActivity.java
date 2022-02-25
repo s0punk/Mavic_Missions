@@ -360,12 +360,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surfaceTexture) { }
 
     @Override
-    public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer byteBuffer, int size, int width, int height) {
-        if (byteBuffer != null) {
-            final byte[] bytes = new byte[size];
-            byteBuffer.get(bytes);
+    public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer yuvFrame, int dataSize, int width, int height) {
+        if (yuvFrame != null) {
+            final byte[] bytes = new byte[dataSize];
+            yuvFrame.get(bytes);
 
-            ivScreenshot.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
             cameraController.getCodecManager().enabledYuvData(false);
             cameraController.getCodecManager().setYuvDataCallback(null);
         }
