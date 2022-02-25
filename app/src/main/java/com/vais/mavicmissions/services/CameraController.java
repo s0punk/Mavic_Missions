@@ -8,6 +8,11 @@ import androidx.annotation.Nullable;
 
 import dji.common.camera.CameraStreamSettings;
 import dji.common.camera.SettingsDefinitions;
+import dji.common.error.DJIError;
+import dji.common.gimbal.Axis;
+import dji.common.gimbal.ResetDirection;
+import dji.common.gimbal.Rotation;
+import dji.common.gimbal.RotationMode;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
@@ -15,12 +20,14 @@ import dji.sdk.gimbal.Gimbal;
 import dji.sdk.products.Aircraft;
 
 public class CameraController {
+    private static final float GIMBAL_DOWN_ANGLE = -90;
+
     private Aircraft aircraft;
 
     private Camera camera;
     private Gimbal gimbal;
 
-    private boolean cameraReady;
+    private boolean lookingDown;
 
     protected DJICodecManager codecManager;
     protected VideoFeeder.VideoDataListener videoReceiver;
@@ -32,7 +39,6 @@ public class CameraController {
         gimbal = aircraft.getGimbal();
 
         codecManager = null;
-
         videoReceiver = new VideoFeeder.VideoDataListener() {
             @Override
             public void onReceive(byte[] bytes, int size) {
@@ -40,10 +46,30 @@ public class CameraController {
                     codecManager.sendDataToDecoder(bytes, size);
             }
         };
+
+        lookingDown = false;
     }
 
     public void destroy() {
-        VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(null);
+        VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(videoReceiver);
+        codecManager.cleanSurface();
+        codecManager.destroyCodec();
+    }
+
+    public void lookForward() {
+        Rotation.Builder builder = new Rotation.Builder();
+        builder.mode(RotationMode.ABSOLUTE_ANGLE);
+        builder.pitch(0);
+
+        gimbal.rotate(builder.build(), DJIError -> lookingDown = false);
+    }
+
+    public void lookDown() {
+        Rotation.Builder builder = new Rotation.Builder();
+        builder.mode(RotationMode.ABSOLUTE_ANGLE);
+        builder.pitch(GIMBAL_DOWN_ANGLE);
+
+        gimbal.rotate(builder.build(), DJIError -> lookingDown = true);
     }
 
     public void subscribeToVideoFeed() {
@@ -64,5 +90,9 @@ public class CameraController {
 
     public void setVideoReceiver(VideoFeeder.VideoDataListener videoReceiver) {
         this.videoReceiver = videoReceiver;
+    }
+
+    public boolean isLookingDown() {
+        return lookingDown;
     }
 }

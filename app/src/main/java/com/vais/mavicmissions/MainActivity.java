@@ -8,7 +8,10 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
+import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +19,7 @@ import android.os.Looper;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
@@ -23,6 +27,7 @@ import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.VerificationUnit;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,7 +46,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.sdkmanager.LDMManager;
 import dji.thirdparty.afinal.core.AsyncTask;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener, DJICodecManager.YuvDataCallback {
     private static final String TAG = "MainActivity";
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
@@ -73,8 +78,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button btnStart;
     private Button btnLand;
+    private Button btnCamera;
+    private Button btnScreenshot;
 
     private TextureView cameraSurface;
+    private ImageView ivScreenshot;
+
     private boolean textureAvailable;
     private SurfaceTexture texture;
     private int textureWidth;
@@ -94,10 +103,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btnStart = findViewById(R.id.btnTest);
         btnLand = findViewById(R.id.btnTestStop);
+        btnCamera = findViewById(R.id.btnCamera);
+        btnScreenshot = findViewById(R.id.btnScreenshot);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
+        ivScreenshot = findViewById(R.id.ivScreenshot);
 
         btnStart.setOnClickListener(this);
         btnLand.setOnClickListener(this);
+        btnCamera.setOnClickListener(this);
+        btnScreenshot.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
     }
 
@@ -125,26 +139,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnTest:
                 btnStart.setEnabled(false);
                 btnLand.setEnabled(false);
+                btnCamera.setEnabled(false);
+                btnScreenshot.setEnabled(false);
                 doSquare();
                 break;
             case R.id.btnTestStop:
                 btnStart.setEnabled(false);
                 btnLand.setEnabled(false);
+                btnCamera.setEnabled(false);
+                btnScreenshot.setEnabled(false);
                 doSquareRotations();
+                break;
+            case R.id.btnCamera:
+                if (cameraController.isLookingDown())
+                    cameraController.lookForward();
+                else
+                    cameraController.lookDown();
+                break;
+            case R.id.btnScreenshot:
+                cameraController.getCodecManager().enabledYuvData(true);
+                cameraController.getCodecManager().setYuvDataCallback(this);
                 break;
         }
     }
 
     private void checkAndRequestPermissions() {
-        for (String eachPermission : REQUIRED_PERMISSION_LIST) {
-            if (ContextCompat.checkSelfPermission(this, eachPermission) != PackageManager.PERMISSION_GRANTED) {
+        for (String eachPermission : REQUIRED_PERMISSION_LIST)
+            if (ContextCompat.checkSelfPermission(this, eachPermission) != PackageManager.PERMISSION_GRANTED)
                 missingPermission.add(eachPermission);
-            }
-        }
 
-        if (missingPermission.isEmpty()) {
+        if (missingPermission.isEmpty())
             startSDKRegistration();
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             showToast( getResources().getString(R.string.permissionNeeded));
             ActivityCompat.requestPermissions(this,
                     missingPermission.toArray(new String[missingPermission.size()]),
@@ -156,19 +182,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == REQUEST_PERMISSION_CODE) {
-            for (int i = grantResults.length - 1; i >= 0; i--) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == REQUEST_PERMISSION_CODE)
+            for (int i = grantResults.length - 1; i >= 0; i--)
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED)
                     missingPermission.remove(permissions[i]);
-                }
-            }
-        }
 
-        if (missingPermission.isEmpty()) {
+        if (missingPermission.isEmpty())
             startSDKRegistration();
-        } else {
+        else
             showToast(getResources().getString(R.string.missingPermissions));
-        }
     }
 
     private void startSDKRegistration() {
@@ -225,6 +247,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new Handler(Looper.getMainLooper()).post(() -> {
                     btnStart.setEnabled(true);
                     btnLand.setEnabled(true);
+                    btnCamera.setEnabled(true);
+                    btnScreenshot.setEnabled(true);
 
                     cameraController = new CameraController(controller.getAircraft());
                     if (textureAvailable)
@@ -262,6 +286,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 new Handler(Looper.getMainLooper()).post(() -> {
                                     btnStart.setEnabled(true);
                                     btnLand.setEnabled(true);
+                                    btnCamera.setEnabled(true);
+                                    btnScreenshot.setEnabled(true);
                                 });
                                 showToast("Fin du parcours carrée");
                             });
@@ -287,6 +313,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 new Handler(Looper.getMainLooper()).post(() -> {
                                                     btnStart.setEnabled(true);
                                                     btnLand.setEnabled(true);
+                                                    btnCamera.setEnabled(true);
+                                                    btnScreenshot.setEnabled(true);
                                                 });
                                                 showToast("Fin du parcours carrée avec rotation du drone");
                                             });
@@ -330,4 +358,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surfaceTexture) { }
+
+    @Override
+    public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer byteBuffer, int size, int width, int height) {
+        if (byteBuffer != null) {
+            final byte[] bytes = new byte[size];
+            byteBuffer.get(bytes);
+
+            ivScreenshot.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
+            cameraController.getCodecManager().enabledYuvData(false);
+            cameraController.getCodecManager().setYuvDataCallback(null);
+        }
+    }
 }

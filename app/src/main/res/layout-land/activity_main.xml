@@ -4,26 +4,53 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/btnTest"
-        android:enabled="false"
-        android:layout_width="wrap_content"
+    <TableRow
         android:layout_height="wrap_content"
-        android:text="Faire un carrée"/>
+        android:layout_width="wrap_content">
+        <Button
+            android:id="@+id/btnTest"
+            android:enabled="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Faire un carrée"/>
 
-    <Button
-        android:id="@+id/btnTestStop"
-        android:enabled="false"
-        android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/btnTestStop"
+            android:enabled="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Faire un carrée avec rotations"/>
+
+        <Button
+            android:id="@+id/btnCamera"
+            android:enabled="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bouger caméra" />
+        <Button
+            android:id="@+id/btnScreenshot"
+            android:enabled="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Screenshot" />
+    </TableRow>
+
+    <TableRow
         android:layout_height="wrap_content"
-        android:text="Faire un carrée avec rotations"/>
+        android:layout_width="wrap_content">
+        <TextureView
+            android:id="@+id/cameraPreviewSurface"
+            android:layout_width="500dp"
+            android:layout_height="wrap_content">
+        </TextureView>
+        <ImageView
+            android:id="@+id/ivScreenshot"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+    </TableRow>
 
-    <TextureView
-        android:id="@+id/cameraPreviewSurface"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
 
-    </TextureView>
+
 
     <!--<TextView
         android:layout_width="wrap_content"
