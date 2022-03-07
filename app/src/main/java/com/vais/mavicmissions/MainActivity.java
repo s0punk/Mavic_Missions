@@ -87,8 +87,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnScreenshot;
 
     private TextureView cameraSurface;
-    private ImageView ivScreenshot;
-    private boolean showFrame;
 
     private boolean textureAvailable;
     private SurfaceTexture texture;
@@ -112,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnCamera = findViewById(R.id.btnCamera);
         btnScreenshot = findViewById(R.id.btnScreenshot);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
-        ivScreenshot = findViewById(R.id.ivScreenshot);
 
         btnStart.setOnClickListener(this);
         btnLand.setOnClickListener(this);
@@ -163,7 +160,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
-                showFrame = true;
+                cameraController.getCodecManager().enabledYuvData(true);
+                cameraController.getCodecManager().setYuvDataCallback(this);
                 break;
         }
     }
@@ -337,11 +335,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surfaceTexture, int w, int h) {
         if (controller != null && cameraController != null) {
-            if (cameraController.getCodecManager() == null) {
+            if (cameraController.getCodecManager() == null)
                 cameraController.setCodecManager(new DJICodecManager(this, surfaceTexture, w, h));
-                cameraController.getCodecManager().enabledYuvData(true);
-                cameraController.getCodecManager().setYuvDataCallback(this);
-            }
         }
         else {
             textureAvailable = true;
@@ -369,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer yuvFrame, int dataSize, int width, int height) {
-        if (yuvFrame != null && showFrame) {
+        if (yuvFrame != null) {
             final byte[] bytes = new byte[dataSize];
             yuvFrame.get(bytes);
 
@@ -386,15 +381,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 bytes[length + 2 * i + 1] = v[i];
             }
 
-            // Temporaire: Affichage des bytes à l'écran.
-            YuvImage yuvImage = new YuvImage(bytes, ImageFormat.NV21, width, height, null);
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            yuvImage.compressToJpeg(new Rect(0, 0, width, height), 50, output);
-            byte[] imageBytes = output.toByteArray();
-            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-            ivScreenshot.setImageBitmap(bitmap);
-
-            showFrame = false;
+            cameraController.getCodecManager().enabledYuvData(false);
+            cameraController.getCodecManager().setYuvDataCallback(null);
         }
     }
 }
