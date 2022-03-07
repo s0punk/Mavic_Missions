@@ -10,7 +10,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,6 +30,8 @@ import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.VerificationUnit;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextureView cameraSurface;
     private ImageView ivScreenshot;
+    private boolean showFrame;
 
     private boolean textureAvailable;
     private SurfaceTexture texture;
@@ -157,8 +163,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
-                cameraController.getCodecManager().enabledYuvData(true);
-                cameraController.getCodecManager().setYuvDataCallback(this);
+                showFrame = true;
                 break;
         }
     }
@@ -332,8 +337,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surfaceTexture, int w, int h) {
         if (controller != null && cameraController != null) {
-            if (cameraController.getCodecManager() == null)
+            if (cameraController.getCodecManager() == null) {
                 cameraController.setCodecManager(new DJICodecManager(this, surfaceTexture, w, h));
+                cameraController.getCodecManager().enabledYuvData(true);
+                cameraController.getCodecManager().setYuvDataCallback(this);
+            }
         }
         else {
             textureAvailable = true;
@@ -361,12 +369,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer yuvFrame, int dataSize, int width, int height) {
-        if (yuvFrame != null) {
+        if (yuvFrame != null && showFrame) {
             final byte[] bytes = new byte[dataSize];
             yuvFrame.get(bytes);
 
-            cameraController.getCodecManager().enabledYuvData(false);
-            cameraController.getCodecManager().setYuvDataCallback(null);
+            int length = width * height;
+
+            byte[] u = new byte[width * height / 4];
+            byte[] v = new byte[width * height / 4];
+            for (int i = 0; i < u.length; i++) {
+                v[i] = bytes[length + 2 * i];
+                u[i] = bytes[length + 2 * i + 1];
+            }
+            for (int i = 0; i < u.length; i++) {
+                bytes[length + 2 * i] = u[i];
+                bytes[length + 2 * i + 1] = v[i];
+            }
+
+            // Temporaire: Affichage des bytes à l'écran.
+            YuvImage yuvImage = new YuvImage(bytes, ImageFormat.NV21, width, height, null);
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            yuvImage.compressToJpeg(new Rect(0, 0, width, height), 50, output);
+            byte[] imageBytes = output.toByteArray();
+            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+            ivScreenshot.setImageBitmap(bitmap);
+
+            showFrame = false;
         }
     }
 }
