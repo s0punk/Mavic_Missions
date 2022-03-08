@@ -19,6 +19,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
@@ -53,7 +54,7 @@ import dji.thirdparty.afinal.core.AsyncTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener, DJICodecManager.YuvDataCallback {
     private static final String TAG = "MainActivity";
-
+    // https://www.youtube.com/watch?v=psoeNfFAKL8
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
+
 
 
         btnStart = findViewById(R.id.btnTest);

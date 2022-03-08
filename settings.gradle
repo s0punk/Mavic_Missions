@@ -14,3 +14,9 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Mavic Missions"
 include ':app'
+
+
+
+
+
+include ':openCVLibrary3414'
