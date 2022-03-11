@@ -54,7 +54,7 @@ import dji.thirdparty.afinal.core.AsyncTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener, DJICodecManager.YuvDataCallback {
     private static final String TAG = "MainActivity";
-    // https://www.youtube.com/watch?v=psoeNfFAKL8
+
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
@@ -98,9 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = (MavicMissionApp)getApplication();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            checkAndRequestPermissions();
+        checkAndRequestPermissions();
 
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
@@ -131,8 +129,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
 
         mHandler = new Handler(Looper.getMainLooper());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            checkAndRequestPermissions();
+        checkAndRequestPermissions();
 
         if (cameraController != null)
             cameraController.subscribeToVideoFeed();
@@ -185,16 +182,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void startSDKRegistration() {
+        String registering = getResources().getString(R.string.registering);
+        String registerComplete = getResources().getString(R.string.registerComplete);
         String registerError = getResources().getString(R.string.registerError);
 
         if (isRegistrationInProgress.compareAndSet(false, true)) {
             AsyncTask.execute(() -> {
+                showToast(registering);
                 DJISDKManager.getInstance().registerApp(MainActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
                     @Override
                     public void onRegister(DJIError djiError) {
                         if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                             app.setRegistered(true);
                             DJISDKManager.getInstance().startConnectionToProduct();
+                            showToast(registerComplete);
                         } else {
                             showToast(registerError);
                             app.setRegistered(false);
