@@ -105,8 +105,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
 
-
-
         btnStart = findViewById(R.id.btnTest);
         btnLand = findViewById(R.id.btnTestStop);
         btnCamera = findViewById(R.id.btnCamera);
@@ -123,7 +121,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        controller.destroy();
+
+        if (controller != null)
+            controller.destroy();
     }
 
     @Override
@@ -141,20 +141,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.btnTest:
-                btnStart.setEnabled(false);
-                btnLand.setEnabled(false);
-                btnCamera.setEnabled(false);
-                btnScreenshot.setEnabled(false);
-                doSquare();
-                break;
-            case R.id.btnTestStop:
-                btnStart.setEnabled(false);
-                btnLand.setEnabled(false);
-                btnCamera.setEnabled(false);
-                btnScreenshot.setEnabled(false);
-                doSquareRotations();
-                break;
             case R.id.btnCamera:
                 if (cameraController.isLookingDown())
                     cameraController.lookForward();
@@ -199,20 +185,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void startSDKRegistration() {
-        String registering = getResources().getString(R.string.registering);
-        String registerComplete = getResources().getString(R.string.registerComplete);
         String registerError = getResources().getString(R.string.registerError);
 
         if (isRegistrationInProgress.compareAndSet(false, true)) {
             AsyncTask.execute(() -> {
-                showToast(registering);
                 DJISDKManager.getInstance().registerApp(MainActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
                     @Override
                     public void onRegister(DJIError djiError) {
                         if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                             app.setRegistered(true);
                             DJISDKManager.getInstance().startConnectionToProduct();
-                            showToast(registerComplete);
                         } else {
                             showToast(registerError);
                             app.setRegistered(false);
@@ -280,60 +262,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show());
     }
 
-    private void doSquare() {
-        showToast("Parcours carrée");
-        controller.takeOff(() -> {
-            controller.goForward(2000, () -> {
-                controller.goRight(2000, () -> {
-                    controller.goBack(2000, () -> {
-                        controller.goLeft(2000, () -> {
-                            controller.land(() -> {
-                                new Handler(Looper.getMainLooper()).post(() -> {
-                                    btnStart.setEnabled(true);
-                                    btnLand.setEnabled(true);
-                                    btnCamera.setEnabled(true);
-                                    btnScreenshot.setEnabled(true);
-                                });
-                                showToast("Fin du parcours carrée");
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    }
-
-    private void doSquareRotations() {
-        showToast("Parcours carrée avec rotation du drone");
-        controller.takeOff(() -> {
-            controller.goForward(2000, () -> {
-                controller.faceRight(() -> {
-                    controller.goForward(2000, () -> {
-                        controller.faceBack(() -> {
-                            controller.goForward(2000, () -> {
-                                controller.faceLeft(() -> {
-                                    controller.goForward(2000, () -> {
-                                        controller.faceFront(() -> {
-                                            controller.land(() -> {
-                                                new Handler(Looper.getMainLooper()).post(() -> {
-                                                    btnStart.setEnabled(true);
-                                                    btnLand.setEnabled(true);
-                                                    btnCamera.setEnabled(true);
-                                                    btnScreenshot.setEnabled(true);
-                                                });
-                                                showToast("Fin du parcours carrée avec rotation du drone");
-                                            });
-                                        });
-                                    });
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    }
-
     @Override
     public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surfaceTexture, int w, int h) {
         if (controller != null && cameraController != null) {
@@ -370,18 +298,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             final byte[] bytes = new byte[dataSize];
             yuvFrame.get(bytes);
 
-            int length = width * height;
-
-            byte[] u = new byte[width * height / 4];
-            byte[] v = new byte[width * height / 4];
-            for (int i = 0; i < u.length; i++) {
-                v[i] = bytes[length + 2 * i];
-                u[i] = bytes[length + 2 * i + 1];
-            }
-            for (int i = 0; i < u.length; i++) {
-                bytes[length + 2 * i] = u[i];
-                bytes[length + 2 * i + 1] = v[i];
-            }
+            byte[] yuvBytes = cameraController.getCodecManager().getYuvData(width, height);
 
             cameraController.getCodecManager().enabledYuvData(false);
             cameraController.getCodecManager().setYuvDataCallback(null);
