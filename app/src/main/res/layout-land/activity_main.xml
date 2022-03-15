@@ -34,12 +34,22 @@
             android:layout_height="wrap_content"
             android:text="Screenshot" />
     </TableRow>
+    <TableRow
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content">
+        <TextureView
+            android:id="@+id/cameraPreviewSurface"
+            android:layout_width="500dp"
+            android:layout_height="wrap_content">
+        </TextureView>
+        <ImageView
+            android:id="@+id/iv_result"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-    <TextureView
-        android:id="@+id/cameraPreviewSurface"
-        android:layout_width="500dp"
-        android:layout_height="wrap_content">
-    </TextureView>
+        </ImageView>
+    </TableRow>
+
 
 
 

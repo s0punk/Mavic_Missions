@@ -96,5 +96,4 @@ dependencies {
 
     // Open CV
     testImplementation "junit:junit:4.13.2"
-    implementation ":sdk"
 }

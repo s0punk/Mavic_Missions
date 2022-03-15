@@ -1,11 +1,14 @@
 package com.vais.mavicmissions.services;
 
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
+
+import org.opencv.android.OpenCVLoader;
 
 import java.util.Timer;
 import java.util.TimerTask;

@@ -31,6 +31,21 @@ import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.VerificationUnit;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.android.Utils;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -41,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.common.util.CommonCallbacks;
+import dji.internal.util.Util;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.codec.DJICodecManager;
@@ -52,7 +68,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.sdkmanager.LDMManager;
 import dji.thirdparty.afinal.core.AsyncTask;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener, DJICodecManager.YuvDataCallback {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener{
     private static final String TAG = "MainActivity";
 
     public static final String FLAG_CONNECTION_CHANGE = "dji_sdk_connection_change";
@@ -81,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private CameraController cameraController;
     
     private MavicMissionApp app;
+    private boolean openCVLoaded;
 
     private Button btnStart;
     private Button btnLand;
@@ -88,11 +105,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnScreenshot;
 
     private TextureView cameraSurface;
+    private ImageView ivResult;
 
     private boolean textureAvailable;
     private SurfaceTexture texture;
     private int textureWidth;
     private int textureHeight;
+
+    private BaseLoaderCallback cvLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            super.onManagerConnected(status);
+            if (status == LoaderCallbackInterface.SUCCESS) {
+                Log.d(TAG, "OpenCV initialisé.");
+                openCVLoaded = true;
+            } else {
+                super.onManagerConnected(status);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnCamera = findViewById(R.id.btnCamera);
         btnScreenshot = findViewById(R.id.btnScreenshot);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
+        ivResult = findViewById(R.id.iv_result);
 
         btnStart.setOnClickListener(this);
         btnLand.setOnClickListener(this);
@@ -133,6 +165,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (cameraController != null)
             cameraController.subscribeToVideoFeed();
+
+        if (!OpenCVLoader.initDebug())
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, cvLoaderCallback);
+        else
+            cvLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
     }
 
     @Override
@@ -145,8 +182,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
-                cameraController.getCodecManager().enabledYuvData(true);
-                cameraController.getCodecManager().setYuvDataCallback(this);
+                Bitmap feed = cameraSurface.getBitmap();
+                Mat matFeed = new Mat();
+                Utils.bitmapToMat(feed, matFeed);
+                Imgproc.cvtColor(matFeed, matFeed, Imgproc.COLOR_RGB2GRAY);
+
+
+                Bitmap result = Bitmap.createBitmap(matFeed.cols(), matFeed.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(matFeed, result);
+                ivResult.setImageBitmap(result);
                 break;
         }
     }
@@ -159,7 +203,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (missingPermission.isEmpty())
             startSDKRegistration();
         else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            showToast( getResources().getString(R.string.permissionNeeded));
             ActivityCompat.requestPermissions(this,
                     missingPermission.toArray(new String[missingPermission.size()]),
                     REQUEST_PERMISSION_CODE);
@@ -177,8 +220,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (missingPermission.isEmpty())
             startSDKRegistration();
-        else
-            showToast(getResources().getString(R.string.missingPermissions));
     }
 
     private void startSDKRegistration() {
@@ -292,17 +333,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surfaceTexture) { }
-
-    @Override
-    public void onYuvDataReceived(MediaFormat mediaFormat, ByteBuffer yuvFrame, int dataSize, int width, int height) {
-        if (yuvFrame != null) {
-            final byte[] bytes = new byte[dataSize];
-            yuvFrame.get(bytes);
-
-            byte[] yuvBytes = cameraController.getCodecManager().getYuvData(width, height);
-
-            cameraController.getCodecManager().enabledYuvData(false);
-            cameraController.getCodecManager().setYuvDataCallback(null);
-        }
-    }
 }
