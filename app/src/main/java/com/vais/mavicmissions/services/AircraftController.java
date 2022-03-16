@@ -13,11 +13,13 @@ import org.opencv.android.OpenCVLoader;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import dji.common.error.DJIError;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
+import dji.common.util.CommonCallbacks;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -43,6 +45,7 @@ public class AircraftController {
 
     private boolean hasTakenOff;
     private boolean controllerReady;
+    private boolean calibrated;
 
     private float pitch;
     private float roll;
@@ -68,6 +71,7 @@ public class AircraftController {
     public AircraftController(@NonNull Aircraft aircraft, @NonNull MavicMissionApp app, @Nullable ControllerListener listener) {
         controllerReady = false;
         hasTakenOff = false;
+        calibrated = false;
 
         if (app.getRegistered()) {
             this.aircraft = aircraft;
@@ -90,6 +94,23 @@ public class AircraftController {
             velocityMode = true;
             resetAxis();
         }
+    }
+
+    public void calibrate(ControllerListener listener) {
+        takeOff(() -> {
+            new Handler().postDelayed(() -> {
+                goForward(1000, () -> {
+                    goBack(1000, () -> {
+                        land(() -> {
+                            calibrated = true;
+
+                            if (listener != null)
+                                listener.onControllerReady();
+                        });
+                    });
+                });
+            }, COMMAND_TIMEOUT);
+        });
     }
 
     public void destroy() {
@@ -152,6 +173,13 @@ public class AircraftController {
                 resetAxis();
                 new Handler().postDelayed(() -> listener.onControllerReady(), COMMAND_RESET);
             }, time);
+    }
+
+    public void goHome(ControllerListener listener) {
+        flightController.startGoHome(djiError -> {
+            if (listener != null)
+                listener.onControllerReady();
+        });
     }
 
     public void goLeft(int time, ControllerListener listener) {
@@ -228,4 +256,6 @@ public class AircraftController {
     public Aircraft getAircraft() {
         return aircraft;
     }
+
+    public boolean isCalibrated() { return calibrated; }
 }

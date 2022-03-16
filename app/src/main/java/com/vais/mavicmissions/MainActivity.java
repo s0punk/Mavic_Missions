@@ -30,6 +30,7 @@ import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.VerificationUnit;
+import com.vais.mavicmissions.services.VisionHelper;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -95,9 +96,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private AircraftController controller;
     private CameraController cameraController;
-    
+    private VisionHelper visionHelper;
+
     private MavicMissionApp app;
-    private boolean openCVLoaded;
 
     private Button btnStart;
     private Button btnLand;
@@ -111,19 +112,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SurfaceTexture texture;
     private int textureWidth;
     private int textureHeight;
-
-    private BaseLoaderCallback cvLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            super.onManagerConnected(status);
-            if (status == LoaderCallbackInterface.SUCCESS) {
-                Log.d(TAG, "OpenCV initialisé.");
-                openCVLoaded = true;
-            } else {
-                super.onManagerConnected(status);
-            }
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +134,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnCamera.setOnClickListener(this);
         btnScreenshot.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
+
+        visionHelper = new VisionHelper(this);
     }
 
     @Override
@@ -166,15 +156,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (cameraController != null)
             cameraController.subscribeToVideoFeed();
 
-        if (!OpenCVLoader.initDebug())
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, cvLoaderCallback);
-        else
-            cvLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        visionHelper.initCV();
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.btnTest:
+                btnStart.setEnabled(false);
+                btnLand.setEnabled(false);
+
+                if (!controller.isCalibrated())
+                    controller.calibrate(() -> doSquare());
+                else
+                    doSquare();
+                break;
+            case R.id.btnTestStop:
+                btnStart.setEnabled(false);
+                btnLand.setEnabled(false);
+
+                if (!controller.isCalibrated())
+                    controller.calibrate(() -> doSquareRotations());
+                else
+                    doSquareRotations();
+                break;
             case R.id.btnCamera:
                 if (cameraController.isLookingDown())
                     cameraController.lookForward();
@@ -182,15 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
-                Bitmap feed = cameraSurface.getBitmap();
-                Mat matFeed = new Mat();
-                Utils.bitmapToMat(feed, matFeed);
-                Imgproc.cvtColor(matFeed, matFeed, Imgproc.COLOR_RGB2GRAY);
-
-
-                Bitmap result = Bitmap.createBitmap(matFeed.cols(), matFeed.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(matFeed, result);
-                ivResult.setImageBitmap(result);
+                ivResult.setImageBitmap(visionHelper.matToBitmap(visionHelper.erode(visionHelper.bitmapToMap(cameraSurface.getBitmap()), 15)));
                 break;
         }
     }
@@ -302,6 +299,60 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void showToast(final String toastMsg) {
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show());
+    }
+
+    private void doSquare() {
+        showToast("Parcours carrée");
+        controller.takeOff(() -> {
+            controller.goForward(2000, () -> {
+                controller.goRight(2000, () -> {
+                    controller.goBack(2000, () -> {
+                        controller.goLeft(2000, () -> {
+                            controller.land(() -> {
+                                new Handler(Looper.getMainLooper()).post(() -> {
+                                    btnStart.setEnabled(true);
+                                    btnLand.setEnabled(true);
+                                    btnCamera.setEnabled(true);
+                                    btnScreenshot.setEnabled(true);
+                                });
+                                showToast("Fin du parcours carrée");
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+
+    private void doSquareRotations() {
+        showToast("Parcours carrée avec rotation du drone");
+        controller.takeOff(() -> {
+            controller.goForward(2000, () -> {
+                controller.faceRight(() -> {
+                    controller.goForward(2000, () -> {
+                        controller.faceBack(() -> {
+                            controller.goForward(2000, () -> {
+                                controller.faceLeft(() -> {
+                                    controller.goForward(2000, () -> {
+                                        controller.faceFront(() -> {
+                                            controller.land(() -> {
+                                                new Handler(Looper.getMainLooper()).post(() -> {
+                                                    btnStart.setEnabled(true);
+                                                    btnLand.setEnabled(true);
+                                                    btnCamera.setEnabled(true);
+                                                    btnScreenshot.setEnabled(true);
+                                                });
+                                                showToast("Fin du parcours carrée avec rotation du drone");
+                                            });
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     }
 
     @Override
