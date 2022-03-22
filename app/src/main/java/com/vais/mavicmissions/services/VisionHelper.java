@@ -13,6 +13,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.android.Utils;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.android.CameraBridgeViewBase;
@@ -63,13 +64,16 @@ public class VisionHelper {
 
     public Mat toGrayscale(Mat src) {
         Mat result = new Mat();
+        Imgproc.cvtColor(src, result, Imgproc.COLOR_RGB2GRAY);
 
-        if (openCVLoaded) {
-            Imgproc.cvtColor(src, result, Imgproc.COLOR_RGB2GRAY);
-            return result;
-        }
-        else
-            return null;
+        return result;
+    }
+
+    public Mat smooth(Mat src, int maskSize) {
+        Mat result = new Mat();
+        Imgproc.GaussianBlur(src, result, new Size(maskSize, maskSize), 0, 0);
+
+        return result;
     }
 
     public Mat erode(Mat src, int maskSize) {
@@ -92,5 +96,33 @@ public class VisionHelper {
 
     public Mat close(Mat src, int maskSize) {
         return erode(dilate(src, maskSize), maskSize);
+    }
+
+    public Mat prepareCornerDetection(Mat src) {
+        final int threshold = 200;
+
+        src = toGrayscale(src);
+        src = smooth(src, 15);
+
+        Mat result = Mat.zeros(src.size(), CvType.CV_32F);
+        Mat resultNorm = new Mat();
+        Mat resultNormScaled = new Mat();
+
+        Imgproc.cornerEigenValsAndVecs(src, result, 3, 3);
+
+
+        /*Core.normalize(result, resultNorm, 0, 255, Core.NORM_MINMAX);
+        Core.convertScaleAbs(resultNorm, resultNormScaled);
+
+        float[] resultNormData = new float[(int) (resultNorm.total() * resultNorm.channels())];
+        resultNorm.get(0, 0, resultNormData);
+        for (int i = 0; i < resultNorm.rows(); i++) {
+            for (int j = 0; j < resultNorm.cols(); j++) {
+                if ((int) resultNormData[i * resultNorm.cols() + j] > threshold)
+                    Imgproc.circle(resultNormScaled, new Point(j, i), 5, new Scalar(0), 2, 8, 0);
+            }
+        }
+
+        return resultNormScaled;*/
     }
 }

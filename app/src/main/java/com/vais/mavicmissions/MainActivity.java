@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
-                ivResult.setImageBitmap(visionHelper.matToBitmap(visionHelper.erode(visionHelper.bitmapToMap(cameraSurface.getBitmap()), 15)));
+                ivResult.setImageBitmap(visionHelper.matToBitmap(visionHelper.prepareCornerDetection(visionHelper.bitmapToMap(cameraSurface.getBitmap()))));
                 break;
         }
     }
