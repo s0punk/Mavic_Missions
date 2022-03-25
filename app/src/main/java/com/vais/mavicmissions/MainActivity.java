@@ -26,9 +26,11 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
+import com.vais.mavicmissions.services.ShapeDetector;
 import com.vais.mavicmissions.services.VerificationUnit;
 import com.vais.mavicmissions.services.VisionHelper;
 
@@ -41,6 +43,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.android.Utils;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.android.CameraBridgeViewBase;
@@ -187,7 +190,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
-                ivResult.setImageBitmap(visionHelper.matToBitmap(visionHelper.prepareCornerDetection(visionHelper.bitmapToMap(cameraSurface.getBitmap()))));
+                Bitmap source = cameraSurface.getBitmap();
+                Mat matSource = visionHelper.bitmapToMap(source);
+                List<MatOfPoint> contours = visionHelper.contoursDetection(matSource);
+
+                MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+                if (biggerContour == null)
+                    return;
+
+                // https://www.programcreek.com/java-api-examples/?class=org.opencv.imgproc.Imgproc&method=arcLength
+                Shape detectedShape = ShapeDetector.detect(biggerContour);
+                if (detectedShape == Shape.ARROW) {
+                    showToast("AVANCE EN DIRECTION");
+                }
+                else if (detectedShape == Shape.U) {
+                    showToast("VA EN HAUT");
+                }
+                else if (detectedShape == Shape.D) {
+                    showToast("VA EN BAS");
+                }
+                else if (detectedShape == Shape.H) {
+                    showToast("ATTÉRIT/DÉCOLLE");
+                }
+                else {
+                    showToast("NON-RECONNUE");
+                }
+
+                // https://pyimagesearch.com/2016/02/08/opencv-shape-detection/
+
+                Mat matContours = visionHelper.drawAllContours(matSource);
+                Bitmap output = visionHelper.matToBitmap(matContours);
+                ivResult.setImageBitmap(output);
                 break;
         }
     }

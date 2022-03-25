@@ -20,11 +20,14 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class VisionHelper {
+    private static int CONTOURS_THRESHOLD = 150;
+
     private Context context;
-
     private boolean openCVLoaded;
-
     private BaseLoaderCallback cvLoaderCallback;
 
     public VisionHelper(Context context) {
@@ -98,31 +101,95 @@ public class VisionHelper {
         return erode(dilate(src, maskSize), maskSize);
     }
 
-    public Mat prepareCornerDetection(Mat src) {
-        final int threshold = 200;
-
+    public Mat prepare(Mat src) {
         src = toGrayscale(src);
         src = smooth(src, 15);
 
-        Mat result = Mat.zeros(src.size(), CvType.CV_32F);
+        Mat result = new Mat();
         Mat resultNorm = new Mat();
         Mat resultNormScaled = new Mat();
+        Imgproc.cornerHarris(src, result, 2, 3, 0.04);
 
-        Imgproc.cornerEigenValsAndVecs(src, result, 3, 3);
-
-
-        /*Core.normalize(result, resultNorm, 0, 255, Core.NORM_MINMAX);
+        Core.normalize(result, resultNorm, 0, 255, Core.NORM_MINMAX);
         Core.convertScaleAbs(resultNorm, resultNormScaled);
 
-        float[] resultNormData = new float[(int) (resultNorm.total() * resultNorm.channels())];
-        resultNorm.get(0, 0, resultNormData);
-        for (int i = 0; i < resultNorm.rows(); i++) {
-            for (int j = 0; j < resultNorm.cols(); j++) {
-                if ((int) resultNormData[i * resultNorm.cols() + j] > threshold)
-                    Imgproc.circle(resultNormScaled, new Point(j, i), 5, new Scalar(0), 2, 8, 0);
+        return resultNormScaled;
+    }
+
+    public List<MatOfPoint> contoursDetection(Mat src) {
+        // Préparer l'image.
+        src = prepare(src);
+
+        // Trouver les contours.
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Mat binary = new Mat();
+        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
+        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        return contours;
+    }
+
+    public Mat drawAllContours(Mat src) {
+        // Préparer l'image.
+        Mat srcCopy = src;
+        src = prepare(src);
+
+        // Trouver les contours.
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Mat binary = new Mat();
+        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
+        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        // Dessiner les contours.
+        for (int i = 0; i < contours.size(); i++) {
+            Scalar color = new Scalar(255, 0, 0);
+            Imgproc.drawContours(srcCopy, contours, i, color, 2, Imgproc.LINE_8, hierarchy, 0, new Point());
+        }
+
+        return srcCopy;
+    }
+
+    public Mat drawContour(Mat src, int id) {
+        // Préparer l'image.
+        Mat srcCopy = src;
+        src = prepare(src);
+
+        // Trouver les contours.
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Mat binary = new Mat();
+        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
+        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+        MatOfPoint targetContour = contours.get(id);
+        List<MatOfPoint> contourToRemove = new ArrayList<MatOfPoint>();
+        for (int i = 0; i < contours.size(); i++)
+            if (contours.get(i) != targetContour)
+                contourToRemove.add(contours.get(i));
+        for (int i = 0; i < contourToRemove.size(); i++)
+            contours.remove(contourToRemove.get(i));
+
+        // Dessiner les contours.
+        for (int i = 0; i < contours.size(); i++) {
+            Scalar color = new Scalar(255, 0, 0);
+            Imgproc.drawContours(srcCopy, contours, i, color, 2, Imgproc.LINE_8, hierarchy, 0, new Point());
+        }
+
+        return srcCopy;
+    }
+
+    public MatOfPoint getBiggerContour(List<MatOfPoint> contours) {
+        MatOfPoint biggerContour = null;
+        int biggerRowCount = 0;
+        for (MatOfPoint contour : contours) {
+            if (contour.rows() > biggerRowCount) {
+                biggerRowCount = contour.rows();
+                biggerContour = contour;
             }
         }
 
-        return resultNormScaled;*/
+        return biggerContour;
     }
 }
