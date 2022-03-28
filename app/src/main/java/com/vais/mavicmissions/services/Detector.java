@@ -8,7 +8,10 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
-public class ShapeDetector {
+import java.util.ArrayList;
+import java.util.List;
+
+public class Detector {
     private static double DEFAULT_EPSILON = 0.04;
 
     public static Shape detect(MatOfPoint contour) {
@@ -37,26 +40,34 @@ public class ShapeDetector {
         return detectedShape;
     }
 
-    public static String detectDirection(Point[] corners) {
-        Point c1;
-        Point c2;
-        Point c3;
+    public static double detectDirection(Point[] corners) {
+        double angle = 0;
+        Point c1 = null;
+        Point c2 = null;
+        double smallestDistance = 0;
 
-        //StringBuilder result = new StringBuilder();
-        /*for (int i = 0; i < corners.length; i++) {
-            // Si il y a un autre coins après celui-ci.
-            if (corners.length < i + 1) {
+        // Trouver le point central, c1.
+
+
+        for (int i = 0; i < corners.length; i++) {
+            for (int j = 0; j < corners.length; j++) {
                 // Trouver la distance entre le point présent et le suivant (d=√((x_2-x_1)²+(y_2-y_1)²)).
-                double r1 = Math.pow(corners[i + 1].x - corners[i].x, 2);
-                double r2 = Math.pow(corners[i + 1].y - corners[i].y, 2);
-                double distance = Math.sqrt(r1 + r2);
-                result.append(distance).append(", ");
+                double r1 = Math.pow(corners[i].x - corners[j].x, 2);
+                double r2 = Math.pow(corners[i].y - corners[j].y, 2);
+                double d = Math.sqrt(r1 + r2);
+
+                if (smallestDistance == 0 || d < smallestDistance && d != 0) {
+                    smallestDistance = d;
+                    c1 = corners[i];
+                    c2 = corners[j];
+                }
             }
-        }*/
+        }
 
+        if (c1 != null)
+            angle = Math.atan2(c2.y - c1.y, c2.x - c1.x);
 
-
-        return "";
+        return smallestDistance;
     }
 
     public static int getSidesCount(MatOfPoint contour) {

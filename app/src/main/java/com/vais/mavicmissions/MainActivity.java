@@ -30,7 +30,7 @@ import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
-import com.vais.mavicmissions.services.ShapeDetector;
+import com.vais.mavicmissions.services.Detector;
 import com.vais.mavicmissions.services.VerificationUnit;
 import com.vais.mavicmissions.services.VisionHelper;
 
@@ -198,11 +198,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (biggerContour == null)
                     return;
 
-                Shape detectedShape = ShapeDetector.detect(biggerContour);
+                Shape detectedShape = Detector.detect(biggerContour);
                 if (detectedShape == Shape.ARROW) {
-                    //showToast("AVANCE EN DIRECTION");
                     // Détecter le sens de la flèche.
-                    showToast(ShapeDetector.detectDirection(visionHelper.detectCorners(matSource, 8).toArray()));
+                    showToast("S Distance: " + Detector.detectDirection(visionHelper.detectCorners(matSource, 8).toArray()));
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
