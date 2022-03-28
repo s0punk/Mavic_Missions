@@ -101,7 +101,7 @@ public class VisionHelper {
         return erode(dilate(src, maskSize), maskSize);
     }
 
-    public Mat prepare(Mat src) {
+    public Mat prepareContourDetection(Mat src) {
         src = toGrayscale(src);
         src = smooth(src, 15);
 
@@ -116,9 +116,43 @@ public class VisionHelper {
         return resultNormScaled;
     }
 
+    public Mat prepareCornerDetection(Mat src) {
+        src = toGrayscale(src);
+        src = smooth(src, 15);
+
+        return src;
+    }
+
+    public MatOfPoint detectCorners(Mat src, int maxCorner) {
+        // Préparer l'image.
+        src = prepareCornerDetection(src);
+
+        // Détecter les coins.
+        MatOfPoint corners = new MatOfPoint();
+        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
+
+        return corners;
+    }
+
+    public Mat drawAllCorners(Mat src, int maxCorner) {
+        // Préparer l'image.
+        src = prepareCornerDetection(src);
+
+        // Détecter les coins.
+        MatOfPoint corners = new MatOfPoint();
+        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
+
+        Point[] points = corners.toArray();
+        for (int i = 0; i < points.length; i++) {
+            Imgproc.circle(src, new Point(points[i].x, points[i].y), 10, new Scalar(255, 0, 0), 10);
+        }
+
+        return src;
+    }
+
     public List<MatOfPoint> contoursDetection(Mat src) {
         // Préparer l'image.
-        src = prepare(src);
+        src = prepareContourDetection(src);
 
         // Trouver les contours.
         List<MatOfPoint> contours = new ArrayList<>();
@@ -133,7 +167,7 @@ public class VisionHelper {
     public Mat drawAllContours(Mat src) {
         // Préparer l'image.
         Mat srcCopy = src;
-        src = prepare(src);
+        src = prepareContourDetection(src);
 
         // Trouver les contours.
         List<MatOfPoint> contours = new ArrayList<>();
@@ -141,35 +175,6 @@ public class VisionHelper {
         Mat binary = new Mat();
         Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
         Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        // Dessiner les contours.
-        for (int i = 0; i < contours.size(); i++) {
-            Scalar color = new Scalar(255, 0, 0);
-            Imgproc.drawContours(srcCopy, contours, i, color, 2, Imgproc.LINE_8, hierarchy, 0, new Point());
-        }
-
-        return srcCopy;
-    }
-
-    public Mat drawContour(Mat src, int id) {
-        // Préparer l'image.
-        Mat srcCopy = src;
-        src = prepare(src);
-
-        // Trouver les contours.
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        Mat binary = new Mat();
-        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
-        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        MatOfPoint targetContour = contours.get(id);
-        List<MatOfPoint> contourToRemove = new ArrayList<MatOfPoint>();
-        for (int i = 0; i < contours.size(); i++)
-            if (contours.get(i) != targetContour)
-                contourToRemove.add(contours.get(i));
-        for (int i = 0; i < contourToRemove.size(); i++)
-            contours.remove(contourToRemove.get(i));
 
         // Dessiner les contours.
         for (int i = 0; i < contours.size(); i++) {

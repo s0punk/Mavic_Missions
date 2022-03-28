@@ -198,10 +198,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (biggerContour == null)
                     return;
 
-                // https://www.programcreek.com/java-api-examples/?class=org.opencv.imgproc.Imgproc&method=arcLength
                 Shape detectedShape = ShapeDetector.detect(biggerContour);
                 if (detectedShape == Shape.ARROW) {
-                    showToast("AVANCE EN DIRECTION");
+                    //showToast("AVANCE EN DIRECTION");
+                    // Détecter le sens de la flèche.
+                    showToast(ShapeDetector.detectDirection(visionHelper.detectCorners(matSource, 8).toArray()));
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -216,10 +217,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     showToast("NON-RECONNUE");
                 }
 
-                // https://pyimagesearch.com/2016/02/08/opencv-shape-detection/
-
-                Mat matContours = visionHelper.drawAllContours(matSource);
-                Bitmap output = visionHelper.matToBitmap(matContours);
+                Bitmap output = visionHelper.matToBitmap(visionHelper.drawAllCorners(matSource, 8));
                 ivResult.setImageBitmap(output);
                 break;
         }

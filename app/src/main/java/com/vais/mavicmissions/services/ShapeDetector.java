@@ -1,8 +1,11 @@
 package com.vais.mavicmissions.services;
 
 import com.vais.mavicmissions.Enum.Shape;
+
+import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
 public class ShapeDetector {
@@ -32,6 +35,28 @@ public class ShapeDetector {
         }
 
         return detectedShape;
+    }
+
+    public static String detectDirection(Point[] corners) {
+        Point c1;
+        Point c2;
+        Point c3;
+
+        //StringBuilder result = new StringBuilder();
+        /*for (int i = 0; i < corners.length; i++) {
+            // Si il y a un autre coins après celui-ci.
+            if (corners.length < i + 1) {
+                // Trouver la distance entre le point présent et le suivant (d=√((x_2-x_1)²+(y_2-y_1)²)).
+                double r1 = Math.pow(corners[i + 1].x - corners[i].x, 2);
+                double r2 = Math.pow(corners[i + 1].y - corners[i].y, 2);
+                double distance = Math.sqrt(r1 + r2);
+                result.append(distance).append(", ");
+            }
+        }*/
+
+
+
+        return "";
     }
 
     public static int getSidesCount(MatOfPoint contour) {
