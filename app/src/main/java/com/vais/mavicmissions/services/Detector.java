@@ -13,12 +13,12 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Detector {
-    private static double DEFAULT_EPSILON = 0.04;
+    private static final double DEFAULT_EPSILON = 0.04;
 
     private static class Edge {
-        Point start;
-        Point end;
-        double length;
+        private final Point start;
+        private final Point end;
+        private final long length;
 
         public Edge(Point start, Point end) {
             this.start = start;
@@ -26,43 +26,36 @@ public class Detector {
             this.length = calculateLength();
         }
 
-        public double calculateLength() {
+        public long calculateLength() {
             if (start == null || end == null ) return 0;
 
             double r1 = Math.pow(start.x - end.x, 2);
             double r2 = Math.pow(start.y - end.y, 2);
-            return Math.sqrt(r1 + r2);
+            return Math.round(Math.sqrt(r1 + r2));
         }
 
-        public static List<Edge> sort(List<Edge> edges) {
+        public static void sort(List<Edge> edges) {
             for (int i = 0; i < edges.size(); i++)
-                if (edges.size() > i + 1 && edges.get(i).getLength() > edges.get(i + 1).getLength()) {
+                if (edges.size() > i + 1 && edges.get(i).length > edges.get(i + 1).length) {
                     Edge tEdge = edges.get(i);
                     edges.set(i, edges.get(i + 1));
                     edges.set(i + 1, tEdge);
                 }
-
-            return edges;
         }
 
         public static Point findMeetingPoint(Edge first, Edge second) {
-            Point meetingPoint = null;
-
             if (first == null || second == null) return null;
 
             if ((first.start.x == second.start.x && first.start.y == second.start.y) || (first.start.x == second.end.x && first.start.y == second.end.y))
                 return first.start;
             else if ((first.end.x == second.start.x && first.end.y == second.start.y) || (first.end.x == second.end.x && first.end.y == second.end.y))
                 return first.end;
-
-            return meetingPoint;
+            else return null;
         }
 
-        public Point getStart() { return start; }
-
-        public Point getEnd() { return end; }
-
-        public double getLength() { return length; }
+        public static Point findMeetingPoint(Edge edge) {
+            return null;
+        }
     }
 
     public static Shape detect(MatOfPoint contour) {
@@ -91,7 +84,7 @@ public class Detector {
         return detectedShape;
     }
 
-    public static double detectDirection(MatOfPoint contour) {
+    public static Point detectDirection(MatOfPoint contour) {
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
         MatOfPoint2f approx = new MatOfPoint2f();
@@ -102,24 +95,42 @@ public class Detector {
 
         Edge first;
         Edge second;
-        Point meetingPoint;
+        Point meetingPoint = null;
 
         // Établir tous les côtés de la flèche.
-        for (Point start : corners)
-            for (Point end : corners)
-                if (start.x != end.x && start.y != end.y)
-                    edges.add(new Edge(start, end));
+        for (int i = 0; i < corners.length - 1; i++)
+            edges.add(new Edge(corners[i], corners[i + 1]));
+        edges.add(new Edge(corners[corners.length - 1], corners[0]));
 
         // Trouver les deux côtés les plus long.
-        edges = Edge.sort(edges);
+        Edge.sort(edges);
         first = edges.get(edges.size() - 1);
         second = edges.get(edges.size() - 2);
 
-        // Trouver le point où les deux côtés se retrouvent.
-        meetingPoint = Edge.findMeetingPoint(first, second);
+        // Cas où la flèche pointe vers le haut ou vers le bas.
+        if (edges.size() == 2) {
+            // Trouver le point le plus au centre.
+            meetingPoint = first.start.x < second.start.x ? first.start : second.start;
+        }
+        // Cas où la flèche pointe vers la gauche ou la droite.
+        else if (edges.size() == 4) {
+            // Trouver le point où les deux côtés se retrouvent.
+            meetingPoint = Edge.findMeetingPoint(first, second);
 
-        // Trouver l'angle du point par rapport au centre de la photo.
-        return meetingPoint != null ? Math.atan2(meetingPoint.y, meetingPoint.x) : 0;
+            // Trouver où se trouve le point de rassemblement par rapport à la ligne qui relie le début de first et second.
+
+        }
+
+        return meetingPoint;
+    }
+
+    public static Point[] getSides(MatOfPoint contour) {
+        MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
+        double perimeter = Imgproc.arcLength(c2f, true);
+        MatOfPoint2f approx = new MatOfPoint2f();
+        Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
+
+        return approx.toArray();
     }
 
     public static int getSidesCount(MatOfPoint contour) {

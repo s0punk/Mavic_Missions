@@ -44,6 +44,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.android.Utils;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.android.CameraBridgeViewBase;
@@ -197,11 +198,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
                 if (biggerContour == null)
                     return;
-
+                Bitmap output = cameraSurface.getBitmap();
                 Shape detectedShape = Detector.detect(biggerContour);
                 if (detectedShape == Shape.ARROW) {
                     // Détecter le sens de la flèche.
-                    showToast("S Distance: " + Detector.detectDirection(biggerContour));
+                    Point t = Detector.detectDirection(biggerContour);
+                    Mat src = visionHelper.bitmapToMap(output);
+                    if (t != null)
+                        Imgproc.circle(src, t, 10, new Scalar(255, 0, 0), 10);
+                    else showToast("t is null");
+
+                    output = visionHelper.matToBitmap(src);
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -216,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     showToast("NON-RECONNUE");
                 }
 
-                Bitmap output = visionHelper.matToBitmap(visionHelper.drawAllCorners(matSource, 8));
+
                 ivResult.setImageBitmap(output);
                 break;
         }
