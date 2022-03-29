@@ -201,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Shape detectedShape = Detector.detect(biggerContour);
                 if (detectedShape == Shape.ARROW) {
                     // Détecter le sens de la flèche.
-                    showToast("S Distance: " + Detector.detectDirection(visionHelper.detectCorners(matSource, 8).toArray()));
+                    showToast("S Distance: " + Detector.detectDirection(biggerContour));
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
