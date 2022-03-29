@@ -201,12 +201,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Bitmap output = cameraSurface.getBitmap();
                 Shape detectedShape = Detector.detect(biggerContour);
                 if (detectedShape == Shape.ARROW) {
+                    Mat src = visionHelper.drawPoly(matSource, biggerContour);
+
+
                     // Détecter le sens de la flèche.
-                    Point t = Detector.detectDirection(biggerContour);
-                    Mat src = visionHelper.bitmapToMap(output);
-                    if (t != null)
-                        Imgproc.circle(src, t, 10, new Scalar(255, 0, 0), 10);
-                    else showToast("t is null");
+                    /*Point[] t = Detector.detectDirection(visionHelper.detectCorners(matSource, 1).toArray());
+
+                    for (Point p : t)
+                        Imgproc.circle(src, p, 10, new Scalar(255, 0, 0), 10);*/
+                    /*Imgproc.line(src, t[0], t[1], new Scalar(255, 0, 0), 3);
+                    Imgproc.line(src, t[2], t[3], new Scalar(255, 0, 0), 3);
+
+                    if (t[4] != null)
+                        Imgproc.circle(src, t[4], 10, new Scalar(255, 0, 0), 10);
+                    else showToast("t[4] is null");*/
 
                     output = visionHelper.matToBitmap(src);
                 }

@@ -134,6 +134,17 @@ public class VisionHelper {
         return corners;
     }
 
+    public MatOfPoint detectCorners(Mat src, int maxCorner, boolean contourDetectionType) {
+        // Préparer l'image.
+        src = contourDetectionType ? prepareContourDetection(src) :prepareCornerDetection(src);
+
+        // Détecter les coins.
+        MatOfPoint corners = new MatOfPoint();
+        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
+
+        return corners;
+    }
+
     public Mat drawAllCorners(Mat src, int maxCorner) {
         // Préparer l'image.
         src = prepareCornerDetection(src);
@@ -143,9 +154,8 @@ public class VisionHelper {
         Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
 
         Point[] points = corners.toArray();
-        for (int i = 0; i < points.length; i++) {
-            Imgproc.circle(src, new Point(points[i].x, points[i].y), 10, new Scalar(255, 0, 0), 10);
-        }
+        for (Point point : points)
+            Imgproc.circle(src, point, 10, new Scalar(255, 0, 0, 255), 10);
 
         return src;
     }
@@ -196,5 +206,14 @@ public class VisionHelper {
         }
 
         return biggerContour;
+    }
+
+    public Mat drawPoly(Mat src, MatOfPoint points) {
+        List<MatOfPoint> list = new ArrayList<>();
+        list.add(points);
+
+        Imgproc.fillPoly(src, list, new Scalar(0, 0, 0, 255), 8);
+
+        return src;
     }
 }

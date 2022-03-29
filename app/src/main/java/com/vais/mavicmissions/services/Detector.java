@@ -44,17 +44,26 @@ public class Detector {
         }
 
         public static Point findMeetingPoint(Edge first, Edge second) {
-            if (first == null || second == null) return null;
+            final int areaLimit = 50;
 
-            if ((first.start.x == second.start.x && first.start.y == second.start.y) || (first.start.x == second.end.x && first.start.y == second.end.y))
-                return first.start;
-            else if ((first.end.x == second.start.x && first.end.y == second.start.y) || (first.end.x == second.end.x && first.end.y == second.end.y))
-                return first.end;
-            else return null;
+            if (first == null || second == null) return null;
+            Point[] allPoints = { first.start, second.start, first.end, second.end };
+
+            for (int i = 0; i < allPoints.length; i++)
+                for (int j = 0; j < allPoints.length; j++)
+                    if (i != j)
+                        if (allPoints[j].x >= allPoints[i].x - areaLimit && allPoints[j].x <= allPoints[i].x + areaLimit && allPoints[j].y >= allPoints[i].y - areaLimit && allPoints[j].y <= allPoints[i].y + areaLimit)
+                            return allPoints[i];
+
+            return null;
         }
 
-        public static Point findMeetingPoint(Edge edge) {
-            return null;
+        private static boolean segmentExist(List<Edge> existingEdges, Point start, Point end) {
+            for (Edge edge : existingEdges)
+                if (edge.start.x == end.x && edge.start.y == end.y && edge.end.x == start.x && edge.end.y == start.y)
+                    return true;
+
+            return false;
         }
     }
 
@@ -84,14 +93,8 @@ public class Detector {
         return detectedShape;
     }
 
-    public static Point detectDirection(MatOfPoint contour) {
-        MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
-        double perimeter = Imgproc.arcLength(c2f, true);
-        MatOfPoint2f approx = new MatOfPoint2f();
-        Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
-
-        Point[] corners = approx.toArray();
-        List<Edge> edges = new ArrayList<Edge>();
+    public static Point[] detectDirection(Point[] corners) {
+        List<Edge> edges = new ArrayList<>();
 
         Edge first;
         Edge second;
@@ -101,27 +104,19 @@ public class Detector {
         for (int i = 0; i < corners.length - 1; i++)
             edges.add(new Edge(corners[i], corners[i + 1]));
         edges.add(new Edge(corners[corners.length - 1], corners[0]));
+        /*for (Point start : corners)
+            for (Point end : corners)
+                if (start.x != end.x && start.y != end.y && !Edge.segmentExist(edges, start, end))
+                    edges.add(new Edge(start, end));*/
 
         // Trouver les deux côtés les plus long.
         Edge.sort(edges);
         first = edges.get(edges.size() - 1);
         second = edges.get(edges.size() - 2);
 
-        // Cas où la flèche pointe vers le haut ou vers le bas.
-        if (edges.size() == 2) {
-            // Trouver le point le plus au centre.
-            meetingPoint = first.start.x < second.start.x ? first.start : second.start;
-        }
-        // Cas où la flèche pointe vers la gauche ou la droite.
-        else if (edges.size() == 4) {
-            // Trouver le point où les deux côtés se retrouvent.
-            meetingPoint = Edge.findMeetingPoint(first, second);
+        meetingPoint = Edge.findMeetingPoint(first, second);
 
-            // Trouver où se trouve le point de rassemblement par rapport à la ligne qui relie le début de first et second.
-
-        }
-
-        return meetingPoint;
+        return new Point[]{first.start, first.end, second.start, second.end, meetingPoint};
     }
 
     public static Point[] getSides(MatOfPoint contour) {
