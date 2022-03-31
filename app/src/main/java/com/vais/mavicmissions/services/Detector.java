@@ -59,7 +59,15 @@ public class Detector {
         }
 
         public static boolean alreadyExist(List<Edge> edges, Point target) {
+            for (Edge e : edges)
+                if (comparePoints(e.start, target) || comparePoints(e.end, target))
+                    return true;
 
+            return false;
+        }
+
+        public static boolean comparePoints(Point p1, Point p2) {
+            return p1.x == p2.x && p1.y == p2.y;
         }
     }
 
@@ -112,8 +120,13 @@ public class Detector {
                 }
             }
 
-            // Établir un lien entre les deux points.
-            // si on est pas rendu au dernier lien, vérifier si le prochain point existe déja dans la liste avec Edge.alreadyExist.
+            if (i != corners.length -1) {
+                // Établir un lien entre les deux points.
+
+            }
+            else
+                // Fermer la forme.
+                edges.add(new Edge(corners[i], edges.get(0).start));
         }
 
         // Trouver les deux côtés les plus long.
