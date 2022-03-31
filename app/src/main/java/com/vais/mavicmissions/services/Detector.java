@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import dji.internal.util.ArrayUtil;
+
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
@@ -109,29 +111,6 @@ public class Detector {
         // Établir tous les côtés de la flèche.
         for (int i = 0; i < corners.length; i++) {
 
-            Point[] copy = corners.clone();
-            int nextPoint = getNextPoint(copy, corners[i]);
-            if (i != corners.length -1) {
-                // Établir un lien entre les deux points.
-                while(Edge.alreadyExist(edges, corners[nextPoint])) {
-                    Point[] newCopy = new Point[copy.length - 1];
-                    int k = 0;
-                    // Enlever l'item de la liste.
-                    for (int j = 0; j < copy.length; j++)
-                        if (j != nextPoint) {
-                            newCopy[k] = copy[j];
-                            k++;
-                        }
-                    copy = newCopy;
-
-                    // Trouver un autre point.
-                    nextPoint = getNextPoint(copy, corners[i]);
-                }
-                edges.add(new Edge(corners[i], corners[nextPoint]));
-            }
-            else
-                // Fermer la forme.
-                edges.add(new Edge(corners[i], edges.get(0).start));
         }
 
         // Trouver les deux côtés les plus long.
@@ -141,23 +120,7 @@ public class Detector {
 
         meetingPoint = Edge.findMeetingPoint(first, second);
 
-        return new Point[]{first.start, first.end, second.start, second.end, meetingPoint};
-    }
-
-    public static int getNextPoint(Point[] corners, Point startCorner) {
-        // Trouver le coin le plus proche.
-        long length = Long.MAX_VALUE;
-        int nextPoint = 0;
-        for (int j = 0; j < corners.length; j++) {
-            long newLength = Edge.getLength(startCorner, corners[j]);
-
-            if (newLength < length && newLength != 0) {
-                length = newLength;
-                nextPoint = j;
-            }
-        }
-
-        return nextPoint;
+        return new Point[]{ first.start, first.end, second.start, second.end, meetingPoint };
     }
 
     public static Point[] getSides(MatOfPoint contour) {
