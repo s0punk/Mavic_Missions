@@ -203,18 +203,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Shape detectedShape = Detector.detect(biggerContour);
 
                 if (detectedShape == Shape.ARROW) {
-                    Mat arr = visionHelper.prepareArrowDetection(matSource);
-
-                    // Détecter les contours de la flèche.
-                    /*Mat hierarchy = new Mat();
-                    List<MatOfPoint> arrContours = new ArrayList<>();
-                    Imgproc.findContours(arr, arrContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-                    // Dessiner par dessus le plus petit contour.
-                    matSource = visionHelper.drawPoly(matSource, visionHelper.getSmallerContour(arrContours));*/
-
                     // Détecter le coins de la flèche.
-                    arr = visionHelper.prepareCornerDetection(matSource);
+                    Mat arr = visionHelper.prepareCornerDetection(matSource);
                     MatOfPoint corners = visionHelper.detectCorners(arr, 4, 40);
                     Point[] p = corners.toArray();
                     Imgproc.circle(matSource, p[0], 10, new Scalar(255, 0, 0, 255), 5);
@@ -223,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Imgproc.circle(matSource, p[3], 10, new Scalar(100, 100, 255, 255), 5);
 
                     // Détecter le sens de la flèche.
-                    /*Point[] t = Detector.detectDirection(corners.toArray());
+                    /*Point[] t = Detector.detectArrowDirection(corners.toArray());
 
                     Imgproc.line(matSource, t[0], t[1], new Scalar(255, 255, 255, 255), 3);
                     Imgproc.line(matSource, t[2], t[3], new Scalar(255, 255, 255, 255), 3);

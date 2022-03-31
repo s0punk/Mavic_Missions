@@ -23,14 +23,14 @@ public class Detector {
         public Edge(Point start, Point end) {
             this.start = start;
             this.end = end;
-            this.length = calculateLength();
+            this.length = getLength(start, end);
         }
 
-        public long calculateLength() {
-            if (start == null || end == null ) return 0;
+        public static long getLength(Point p1, Point p2) {
+            if (p1 == null || p2 == null ) return 0;
 
-            double r1 = Math.pow(start.x - end.x, 2);
-            double r2 = Math.pow(start.y - end.y, 2);
+            double r1 = Math.pow(p1.x - p2.x, 2);
+            double r2 = Math.pow(p1.y - p2.y, 2);
             return Math.round(Math.sqrt(r1 + r2));
         }
 
@@ -58,12 +58,8 @@ public class Detector {
             return null;
         }
 
-        private static boolean segmentExist(List<Edge> existingEdges, Point start, Point end) {
-            for (Edge edge : existingEdges)
-                if (edge.start.x == end.x && edge.start.y == end.y && edge.end.x == start.x && edge.end.y == start.y)
-                    return true;
+        public static boolean alreadyExist(List<Edge> edges, Point target) {
 
-            return false;
         }
     }
 
@@ -93,17 +89,32 @@ public class Detector {
         return detectedShape;
     }
 
-    public static Point[] detectDirection(Point[] corners) {
+    public static Point[] detectArrowDirection(Point[] corners) {
         List<Edge> edges = new ArrayList<>();
+
+        if (corners.length != 4) return null;
 
         Edge first;
         Edge second;
         Point meetingPoint = null;
 
         // Établir tous les côtés de la flèche.
-        for (int i = 0; i < corners.length - 1; i++)
-            edges.add(new Edge(corners[i], corners[i + 1]));
-        edges.add(new Edge(corners[corners.length - 1], corners[0]));
+        for (int i = 0; i < corners.length; i++) {
+            // Trouver le coin le plus proche.
+            long length = Long.MAX_VALUE;
+            Point nextPoint = null;
+            for (int j = 0; j < corners.length; j++) {
+                long newLength = Edge.getLength(corners[i], corners[j]);
+
+                if (newLength < length && newLength != 0) {
+                    length = newLength;
+                    nextPoint = corners[j];
+                }
+            }
+
+            // Établir un lien entre les deux points.
+            // si on est pas rendu au dernier lien, vérifier si le prochain point existe déja dans la liste avec Edge.alreadyExist.
+        }
 
         // Trouver les deux côtés les plus long.
         Edge.sort(edges);

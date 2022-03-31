@@ -116,15 +116,6 @@ public class VisionHelper {
         return resultNormScaled;
     }
 
-    public Mat prepareArrowDetection(Mat src) {
-        src = prepareCornerDetection(src);
-
-        Mat binary = new Mat();
-        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY);
-
-        return binary;
-    }
-
     public Mat prepareCornerDetection(Mat src) {
         src = toGrayscale(src);
         src = smooth(src, 15);
@@ -157,23 +148,6 @@ public class VisionHelper {
         Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         return contours;
-    }
-
-    public Mat drawAllContours(Mat src, Mat target) {
-        // Trouver les contours.
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-        Mat binary = new Mat();
-        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
-        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
-        // Dessiner les contours.
-        for (int i = 0; i < contours.size(); i++) {
-            Scalar color = new Scalar(255, 0, 0, 255);
-            Imgproc.drawContours(target, contours, i, color, 1, Imgproc.LINE_8, hierarchy, 0, new Point());
-        }
-
-        return target;
     }
 
     public MatOfPoint getBiggerContour(List<MatOfPoint> contours) {
