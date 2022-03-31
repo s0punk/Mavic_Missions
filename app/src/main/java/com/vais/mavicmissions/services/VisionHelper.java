@@ -116,6 +116,15 @@ public class VisionHelper {
         return resultNormScaled;
     }
 
+    public Mat prepareArrowDetection(Mat src) {
+        src = prepareCornerDetection(src);
+
+        Mat binary = new Mat();
+        Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY);
+
+        return binary;
+    }
+
     public Mat prepareCornerDetection(Mat src) {
         src = toGrayscale(src);
         src = smooth(src, 15);
@@ -124,46 +133,22 @@ public class VisionHelper {
     }
 
     public MatOfPoint detectCorners(Mat src, int maxCorner) {
-        // Préparer l'image.
-        src = prepareCornerDetection(src);
-
         // Détecter les coins.
         MatOfPoint corners = new MatOfPoint();
-        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
+        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 0.01);
 
         return corners;
     }
 
-    public MatOfPoint detectCorners(Mat src, int maxCorner, boolean contourDetectionType) {
-        // Préparer l'image.
-        src = contourDetectionType ? prepareContourDetection(src) :prepareCornerDetection(src);
-
+    public MatOfPoint detectCorners(Mat src, int maxCorner, int minDistance) {
         // Détecter les coins.
         MatOfPoint corners = new MatOfPoint();
-        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
+        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, minDistance);
 
         return corners;
-    }
-
-    public Mat drawAllCorners(Mat src, int maxCorner) {
-        // Préparer l'image.
-        src = prepareCornerDetection(src);
-
-        // Détecter les coins.
-        MatOfPoint corners = new MatOfPoint();
-        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, 0.01, 10);
-
-        Point[] points = corners.toArray();
-        for (Point point : points)
-            Imgproc.circle(src, point, 10, new Scalar(255, 0, 0, 255), 10);
-
-        return src;
     }
 
     public List<MatOfPoint> contoursDetection(Mat src) {
-        // Préparer l'image.
-        src = prepareContourDetection(src);
-
         // Trouver les contours.
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -174,11 +159,7 @@ public class VisionHelper {
         return contours;
     }
 
-    public Mat drawAllContours(Mat src) {
-        // Préparer l'image.
-        Mat srcCopy = src;
-        src = prepareContourDetection(src);
-
+    public Mat drawAllContours(Mat src, Mat target) {
         // Trouver les contours.
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
@@ -188,11 +169,11 @@ public class VisionHelper {
 
         // Dessiner les contours.
         for (int i = 0; i < contours.size(); i++) {
-            Scalar color = new Scalar(255, 0, 0);
-            Imgproc.drawContours(srcCopy, contours, i, color, 2, Imgproc.LINE_8, hierarchy, 0, new Point());
+            Scalar color = new Scalar(255, 0, 0, 255);
+            Imgproc.drawContours(target, contours, i, color, 1, Imgproc.LINE_8, hierarchy, 0, new Point());
         }
 
-        return srcCopy;
+        return target;
     }
 
     public MatOfPoint getBiggerContour(List<MatOfPoint> contours) {
@@ -206,6 +187,19 @@ public class VisionHelper {
         }
 
         return biggerContour;
+    }
+
+    public MatOfPoint getSmallerContour(List<MatOfPoint> contours) {
+        MatOfPoint smallestContour = null;
+        int smallestContourCount = Integer.MAX_VALUE;
+        for(MatOfPoint contour : contours) {
+            if (contour.rows() < smallestContourCount)
+                smallestContourCount = contour.rows();
+            smallestContour = contour;
+
+        }
+
+        return smallestContour;
     }
 
     public Mat drawPoly(Mat src, MatOfPoint points) {

@@ -167,23 +167,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btnTest:
-                btnStart.setEnabled(false);
+                /*btnStart.setEnabled(false);
                 btnLand.setEnabled(false);
 
                 if (!controller.isCalibrated())
                     controller.calibrate(() -> doSquare());
                 else
-                    doSquare();
+                    doSquare();*/
                 break;
             case R.id.btnTestStop:
-                btnStart.setEnabled(false);
+                /*btnStart.setEnabled(false);
                 btnLand.setEnabled(false);
 
                 if (!controller.isCalibrated())
                     controller.calibrate(() -> doSquareRotations());
                 else
                     doSquareRotations();
-                break;
+                break;*/
             case R.id.btnCamera:
                 if (cameraController.isLookingDown())
                     cameraController.lookForward();
@@ -191,32 +191,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     cameraController.lookDown();
                 break;
             case R.id.btnScreenshot:
+                // Détecter la pancarte.
                 Bitmap source = cameraSurface.getBitmap();
                 Mat matSource = visionHelper.bitmapToMap(source);
-                List<MatOfPoint> contours = visionHelper.contoursDetection(matSource);
+                List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
 
                 MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
                 if (biggerContour == null)
                     return;
                 Bitmap output = cameraSurface.getBitmap();
                 Shape detectedShape = Detector.detect(biggerContour);
-                if (detectedShape == Shape.ARROW) {
-                    Mat src = visionHelper.drawPoly(matSource, biggerContour);
 
+                if (detectedShape == Shape.ARROW) {
+                    Mat arr = visionHelper.prepareArrowDetection(matSource);
+
+                    // Détecter les contours de la flèche.
+                    /*Mat hierarchy = new Mat();
+                    List<MatOfPoint> arrContours = new ArrayList<>();
+                    Imgproc.findContours(arr, arrContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+
+                    // Dessiner par dessus le plus petit contour.
+                    matSource = visionHelper.drawPoly(matSource, visionHelper.getSmallerContour(arrContours));*/
+
+                    // Détecter le coins de la flèche.
+                    arr = visionHelper.prepareCornerDetection(matSource);
+                    MatOfPoint corners = visionHelper.detectCorners(arr, 4, 40);
+                    Point[] p = corners.toArray();
+                    Imgproc.circle(matSource, p[0], 10, new Scalar(255, 0, 0, 255), 5);
+                    Imgproc.circle(matSource, p[1], 10, new Scalar(0, 255, 0, 255), 5);
+                    Imgproc.circle(matSource, p[2], 10, new Scalar(0, 0, 255, 255), 5);
+                    Imgproc.circle(matSource, p[3], 10, new Scalar(100, 100, 255, 255), 5);
 
                     // Détecter le sens de la flèche.
-                    /*Point[] t = Detector.detectDirection(visionHelper.detectCorners(matSource, 1).toArray());
+                    /*Point[] t = Detector.detectDirection(corners.toArray());
 
-                    for (Point p : t)
-                        Imgproc.circle(src, p, 10, new Scalar(255, 0, 0), 10);*/
-                    /*Imgproc.line(src, t[0], t[1], new Scalar(255, 0, 0), 3);
-                    Imgproc.line(src, t[2], t[3], new Scalar(255, 0, 0), 3);
+                    Imgproc.line(matSource, t[0], t[1], new Scalar(255, 255, 255, 255), 3);
+                    Imgproc.line(matSource, t[2], t[3], new Scalar(255, 255, 255, 255), 3);
 
                     if (t[4] != null)
-                        Imgproc.circle(src, t[4], 10, new Scalar(255, 0, 0), 10);
+                        Imgproc.circle(matSource, t[4], 10, new Scalar(255, 0, 0, 255), 10);
                     else showToast("t[4] is null");*/
 
-                    output = visionHelper.matToBitmap(src);
+                    output = visionHelper.matToBitmap(matSource);
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");

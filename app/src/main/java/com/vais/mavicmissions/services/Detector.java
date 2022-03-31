@@ -104,10 +104,6 @@ public class Detector {
         for (int i = 0; i < corners.length - 1; i++)
             edges.add(new Edge(corners[i], corners[i + 1]));
         edges.add(new Edge(corners[corners.length - 1], corners[0]));
-        /*for (Point start : corners)
-            for (Point end : corners)
-                if (start.x != end.x && start.y != end.y && !Edge.segmentExist(edges, start, end))
-                    edges.add(new Edge(start, end));*/
 
         // Trouver les deux côtés les plus long.
         Edge.sort(edges);
