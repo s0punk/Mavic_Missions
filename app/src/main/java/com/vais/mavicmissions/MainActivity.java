@@ -237,7 +237,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     showToast("NON-RECONNUE");
                 }
 
-
                 ivResult.setImageBitmap(output);
                 break;
         }
