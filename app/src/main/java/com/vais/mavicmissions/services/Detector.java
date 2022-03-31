@@ -122,6 +122,7 @@ public class Detector {
                             newCopy[k] = copy[j];
                             k++;
                         }
+                    copy = newCopy;
 
                     // Trouver un autre point.
                     nextPoint = getNextPoint(copy, corners[i]);
