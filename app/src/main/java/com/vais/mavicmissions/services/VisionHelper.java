@@ -117,10 +117,11 @@ public class VisionHelper {
     }
 
     public Mat prepareCornerDetection(Mat src) {
-        src = toGrayscale(src);
-        src = smooth(src, 15);
+        Mat result = src;
+        result = toGrayscale(result);
+        result = smooth(result, 15);
 
-        return src;
+        return result;
     }
 
     public MatOfPoint detectCorners(Mat src, int maxCorner) {

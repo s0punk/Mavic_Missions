@@ -6,72 +6,22 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Moments;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dji.internal.util.ArrayUtil;
 
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
-
-    private static class Edge {
-        private final Point start;
-        private final Point end;
-        private final long length;
-
-        public Edge(Point start, Point end) {
-            this.start = start;
-            this.end = end;
-            this.length = getLength(start, end);
-        }
-
-        public static long getLength(Point p1, Point p2) {
-            if (p1 == null || p2 == null ) return 0;
-
-            double r1 = Math.pow(p1.x - p2.x, 2);
-            double r2 = Math.pow(p1.y - p2.y, 2);
-            return Math.round(Math.sqrt(r1 + r2));
-        }
-
-        public static void sort(List<Edge> edges) {
-            for (int i = 0; i < edges.size(); i++)
-                if (edges.size() > i + 1 && edges.get(i).length > edges.get(i + 1).length) {
-                    Edge tEdge = edges.get(i);
-                    edges.set(i, edges.get(i + 1));
-                    edges.set(i + 1, tEdge);
-                }
-        }
-
-        public static Point findMeetingPoint(Edge first, Edge second) {
-            final int areaLimit = 50;
-
-            if (first == null || second == null) return null;
-            Point[] allPoints = { first.start, second.start, first.end, second.end };
-
-            for (int i = 0; i < allPoints.length; i++)
-                for (int j = 0; j < allPoints.length; j++)
-                    if (i != j)
-                        if (allPoints[j].x >= allPoints[i].x - areaLimit && allPoints[j].x <= allPoints[i].x + areaLimit && allPoints[j].y >= allPoints[i].y - areaLimit && allPoints[j].y <= allPoints[i].y + areaLimit)
-                            return allPoints[i];
-
-            return null;
-        }
-
-        public static boolean alreadyExist(List<Edge> edges, Point target) {
-            for (Edge e : edges)
-                if (comparePoints(e.start, target) || comparePoints(e.end, target))
-                    return true;
-
-            return false;
-        }
-
-        public static boolean comparePoints(Point p1, Point p2) {
-            return p1.x == p2.x && p1.y == p2.y;
-        }
-    }
 
     public static Shape detect(MatOfPoint contour) {
         Shape detectedShape = Shape.UNKNOWN;
@@ -99,28 +49,58 @@ public class Detector {
         return detectedShape;
     }
 
-    public static Point[] detectArrowDirection(Point[] corners) {
-        List<Edge> edges = new ArrayList<>();
+    public static double detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
+        if (corners.length != 3) return 0;
 
-        if (corners.length != 4) return null;
+        // Redimensionner l'image pour y avoir la flèche seulement.
+        List<Integer> x = new ArrayList<>();
+        List<Integer> y = new ArrayList<>();
 
-        Edge first;
-        Edge second;
-        Point meetingPoint = null;
-
-        // Établir tous les côtés de la flèche.
         for (int i = 0; i < corners.length; i++) {
+            x.add((int) corners[i].x);
+            y.add((int) corners[i].y);
+        }
+        Collections.sort(x);
+        Collections.sort(y);
 
+        Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, (x.get(x.size() - 1) - x.get(0)) + 50, (y.get(y.size() - 1) - y.get(0)) + 50);
+        Mat cropped = new Mat(source, crop);
+
+        // Convertir l'image en image binaire.
+        Mat binary = new Mat();
+        Imgproc.threshold(cropped, binary, 115, 115, Imgproc.THRESH_BINARY_INV);
+
+        // Trouver le centre de masse du noir dans l'image.
+        Moments moments = Imgproc.moments(binary);
+        int cX = (int)(moments.get_m10() / moments.get_m00());
+        int cY = (int)(moments.get_m01() / moments.get_m00());
+        Point massCenter = new Point(cX, cY);
+
+        // Refaire la détection des coins puisque la taille de l'image est différente.
+        MatOfPoint newCorners = visionHelper.detectCorners(binary, 3, 30);
+        corners = newCorners.toArray();
+
+        // Calculer la distance entre chaque point et le centre de masse.
+        double smallestDistance = Double.MAX_VALUE;
+        int cornerID = 0;
+        for (int i = 0; i < corners.length; i++) {
+            double currentDistance = getLength(corners[i], massCenter);
+
+            if (currentDistance < smallestDistance) {
+                smallestDistance = currentDistance;
+                cornerID = i;
+            }
         }
 
-        // Trouver les deux côtés les plus long.
-        Edge.sort(edges);
-        first = edges.get(edges.size() - 1);
-        second = edges.get(edges.size() - 2);
+        return Math.atan2();
+    }
 
-        meetingPoint = Edge.findMeetingPoint(first, second);
+    public static double getLength(Point p1, Point p2) {
+        if (p1 == null || p2 == null ) return 0;
 
-        return new Point[]{ first.start, first.end, second.start, second.end, meetingPoint };
+        double r1 = Math.pow(p1.x - p2.x, 2);
+        double r2 = Math.pow(p1.y - p2.y, 2);
+        return Math.round(Math.sqrt(r1 + r2));
     }
 
     public static Point[] getSides(MatOfPoint contour) {

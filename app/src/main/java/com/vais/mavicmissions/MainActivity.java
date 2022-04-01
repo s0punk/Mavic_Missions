@@ -205,24 +205,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (detectedShape == Shape.ARROW) {
                     // Détecter le coins de la flèche.
                     Mat arr = visionHelper.prepareCornerDetection(matSource);
-                    MatOfPoint corners = visionHelper.detectCorners(arr, 4, 40);
-                    Point[] p = corners.toArray();
-                    Imgproc.circle(matSource, p[0], 10, new Scalar(255, 0, 0, 255), 5);
-                    Imgproc.circle(matSource, p[1], 10, new Scalar(0, 255, 0, 255), 5);
-                    Imgproc.circle(matSource, p[2], 10, new Scalar(0, 0, 255, 255), 5);
-                    Imgproc.circle(matSource, p[3], 10, new Scalar(100, 100, 255, 255), 5);
+                    MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
                     // Détecter le sens de la flèche.
-                    /*Point[] t = Detector.detectArrowDirection(corners.toArray());
-
-                    Imgproc.line(matSource, t[0], t[1], new Scalar(255, 255, 255, 255), 3);
-                    Imgproc.line(matSource, t[2], t[3], new Scalar(255, 255, 255, 255), 3);
-
-                    if (t[4] != null)
-                        Imgproc.circle(matSource, t[4], 10, new Scalar(255, 0, 0, 255), 10);
-                    else showToast("t[4] is null");*/
-
-                    output = visionHelper.matToBitmap(matSource);
+                    double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                    showToast(angle + "");
+                    output = visionHelper.matToBitmap(arr);
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -349,6 +337,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void showToast(final String toastMsg) {
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show());
+    }
+
+    private void showToast(final String toastMsg, int length) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, length).show());
     }
 
     private void doSquare() {
