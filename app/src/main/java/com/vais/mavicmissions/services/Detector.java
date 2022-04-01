@@ -23,27 +23,36 @@ import dji.internal.util.ArrayUtil;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detect(MatOfPoint contour) {
+    public static Shape detect(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
         Shape detectedShape = Shape.UNKNOWN;
 
+        // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
         MatOfPoint2f approx = new MatOfPoint2f();
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
-        switch (approx.toArray().length) {
-            case 2:
-            case 4:
-                detectedShape = Shape.ARROW;
-                break;
-            case 5:
-                detectedShape = Shape.U;
-                break;
-            case 6:
-                detectedShape = Shape.D;
-                break;
-            case 8:
-                detectedShape = Shape.H;
+        // Détecter les coins.
+        MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.5f);
+
+        int cornerCount = corners.toArray().length;
+        int sidesCount = approx.toArray().length;
+
+        if (cornerCount == 10)
+            detectedShape = Shape.H;
+        else {
+            switch (sidesCount) {
+                case 2:
+                case 4:
+                    detectedShape = Shape.ARROW;
+                    break;
+                case 5:
+                    detectedShape = Shape.U;
+                    break;
+                case 6:
+                    detectedShape = Shape.D;
+                    break;
+            }
         }
 
         return detectedShape;
@@ -92,7 +101,7 @@ public class Detector {
             }
         }
 
-        return Math.atan2();
+        return 1;
     }
 
     public static double getLength(Point p1, Point p2) {

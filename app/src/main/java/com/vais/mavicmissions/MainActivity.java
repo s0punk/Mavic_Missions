@@ -200,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (biggerContour == null)
                     return;
                 Bitmap output = cameraSurface.getBitmap();
-                Shape detectedShape = Detector.detect(biggerContour);
+                Shape detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
 
                 if (detectedShape == Shape.ARROW) {
                     // Détecter le coins de la flèche.
