@@ -148,6 +148,14 @@ public class VisionHelper {
         return corners;
     }
 
+    public MatOfPoint detectCorners(Mat src, int maxCorner, float quality, int minDistance) {
+        // Détecter les coins.
+        MatOfPoint corners = new MatOfPoint();
+        Imgproc.goodFeaturesToTrack(src, corners, maxCorner, quality, minDistance);
+
+        return corners;
+    }
+
     public List<MatOfPoint> contoursDetection(Mat src) {
         // Trouver les contours.
         List<MatOfPoint> contours = new ArrayList<>();

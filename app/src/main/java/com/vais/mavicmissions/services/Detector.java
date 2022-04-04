@@ -33,27 +33,39 @@ public class Detector {
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
         // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.5f);
+        MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.5f, 10);
+
+        Point[] points = corners.toArray();
+        double lastSlope = 0;
+        boolean sameSlope = true;
+        if (points.length > 2) {
+            for (int i = 0; i < points.length; i++) {
+                // Si on n'est pas au dernier point.
+                if (i + 1 < points.length) {
+                    double currentSlope = (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x);
+
+                    // Calculer la pente avec le points suivant.
+                    if (lastSlope == 0)
+                        lastSlope = currentSlope;
+                    else if (currentSlope < lastSlope + 1 && currentSlope > lastSlope - 1) {
+                        sameSlope = false;
+                        break;
+                    }
+                }
+            }
+        }
 
         int cornerCount = corners.toArray().length;
         int sidesCount = approx.toArray().length;
 
-        if (cornerCount == 10)
+        if (cornerCount > 6)
             detectedShape = Shape.H;
-        else {
-            switch (sidesCount) {
-                case 2:
-                case 4:
-                    detectedShape = Shape.ARROW;
-                    break;
-                case 5:
-                    detectedShape = Shape.U;
-                    break;
-                case 6:
-                    detectedShape = Shape.D;
-                    break;
-            }
-        }
+        else if (sidesCount == 2 || sidesCount == 4)
+            detectedShape = Shape.ARROW;
+        else if (points.length > 2 && !sameSlope)
+            detectedShape = Shape.D;
+        else
+            detectedShape = Shape.U;
 
         return detectedShape;
     }
@@ -65,9 +77,9 @@ public class Detector {
         List<Integer> x = new ArrayList<>();
         List<Integer> y = new ArrayList<>();
 
-        for (int i = 0; i < corners.length; i++) {
-            x.add((int) corners[i].x);
-            y.add((int) corners[i].y);
+        for (Point corner : corners) {
+            x.add((int) corner.x);
+            y.add((int) corner.y);
         }
         Collections.sort(x);
         Collections.sort(y);
