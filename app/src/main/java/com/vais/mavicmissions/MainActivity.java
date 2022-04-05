@@ -24,6 +24,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.Enum.Shape;
@@ -96,6 +97,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private static final int REQUEST_PERMISSION_CODE = 12345;
 
+    private static final int SEEKING_MODE_SCREENSHOT_DELAY = 500;
+
+    private String parcourEnded;
+
     private Handler mHandler;
 
     private AircraftController controller;
@@ -104,10 +109,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private MavicMissionApp app;
 
-    private Button btnStart;
-    private Button btnLand;
-    private Button btnCamera;
-    private Button btnScreenshot;
+    private Button btnDynamicParcour;
+    private Button btnFollowLine;
+    private Button btnBallRescue;
+    private TextView tvPrompt;
+    private boolean rotation = false;
 
     private TextureView cameraSurface;
     private ImageView ivResult;
@@ -126,20 +132,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
 
-        btnStart = findViewById(R.id.btnTest);
-        btnLand = findViewById(R.id.btnTestStop);
-        btnCamera = findViewById(R.id.btnCamera);
-        btnScreenshot = findViewById(R.id.btnScreenshot);
+        btnDynamicParcour = findViewById(R.id.btnDynamicParcour);
+        btnFollowLine = findViewById(R.id.btnFollowLine);
+        btnBallRescue = findViewById(R.id.btnBallRescue);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
         ivResult = findViewById(R.id.iv_result);
+        //tvPrompt = findViewById(R.id.tv_prompt);
 
-        btnStart.setOnClickListener(this);
-        btnLand.setOnClickListener(this);
-        btnCamera.setOnClickListener(this);
-        btnScreenshot.setOnClickListener(this);
+        btnDynamicParcour.setOnClickListener(this);
+        btnFollowLine.setOnClickListener(this);
+        btnBallRescue.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
+        //tvPrompt.setOnClickListener(this);
 
         visionHelper = new VisionHelper(this);
+
+        parcourEnded = getResources().getString(R.string.dynamicParourEnded);
     }
 
     @Override
@@ -166,31 +174,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.btnTest:
-                /*btnStart.setEnabled(false);
-                btnLand.setEnabled(false);
+            case 1:
+                setUIState(false);
 
-                if (!controller.isCalibrated())
-                    controller.calibrate(() -> doSquare());
-                else
-                    doSquare();*/
-                break;
-            case R.id.btnTestStop:
-                /*btnStart.setEnabled(false);
-                btnLand.setEnabled(false);
+                if (rotation) {
+                    if (!controller.isCalibrated())
+                        controller.calibrate(() -> doSquareRotations());
+                    else
+                        doSquareRotations();
+                }
+                else {
+                    if (!controller.isCalibrated())
+                        controller.calibrate(() -> doSquare());
+                    else
+                        doSquare();
+                }
 
-                if (!controller.isCalibrated())
-                    controller.calibrate(() -> doSquareRotations());
-                else
-                    doSquareRotations();
-                break;*/
-            case R.id.btnCamera:
-                if (cameraController.isLookingDown())
-                    cameraController.lookForward();
-                else
-                    cameraController.lookDown();
+                rotation = !rotation;
                 break;
-            case R.id.btnScreenshot:
+            case R.id.btnDynamicParcour:
+                //startDynamicParcour();
+                break;
+            case R.id.btnFollowLine:
+                setUIState(false);
+
+                if (controller.getHasTakenOff()) {
+                    controller.land(() -> {
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            setUIState(true);
+                        });
+                    });
+                }
+                else {
+                    controller.takeOff(() -> {
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            setUIState(true);
+                        });
+                    });
+                }
+                break;
+            case R.id.btnBallRescue:
                 // Détecter la pancarte.
                 Bitmap source = cameraSurface.getBitmap();
                 Mat matSource = visionHelper.bitmapToMap(source);
@@ -208,9 +231,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
                     // Détecter le sens de la flèche.
-                    double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                    Mat angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
                     showToast(angle + "");
-                    output = visionHelper.matToBitmap(arr);
+                    output = visionHelper.matToBitmap(angle);
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -309,14 +332,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onControllerReady() {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    btnStart.setEnabled(true);
-                    btnLand.setEnabled(true);
-                    btnCamera.setEnabled(true);
-                    btnScreenshot.setEnabled(true);
+                    setUIState(true);
 
                     cameraController = new CameraController(controller.getAircraft());
                     if (textureAvailable)
                         onSurfaceTextureAvailable(texture, textureWidth, textureHeight);
+
+                    if (!cameraController.isLookingDown())
+                        cameraController.lookDown();
                 });
             }
         });
@@ -339,9 +362,71 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_SHORT).show());
     }
 
-    private void showToast(final String toastMsg, int length) {
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(() -> Toast.makeText(getApplicationContext(), toastMsg, length).show());
+    private void setUIState(boolean state) {
+        btnDynamicParcour.setEnabled(state);
+        btnFollowLine.setEnabled(state);
+        btnBallRescue.setEnabled(state);
+    }
+
+    private void startDynamicParcour() {
+        setUIState(false);
+        controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
+
+        showToast(getResources().getString(R.string.dynamicParcourStart));
+
+        // Décoller le drone.
+        controller.takeOff(() -> {
+            // Commencer la recherche de pancartes.
+            controller.goForward(1000, this::seekInstructions);
+        });
+    }
+
+    private void seekInstructions() {
+        Shape detectedShape = Shape.UNKNOWN;
+        boolean seek = true;
+
+        // Tant que le drone doit chercher et suivre les pancartes.
+        while (seek) {
+            // Capturer le flux vidéo.
+            Bitmap source = cameraSurface.getBitmap();
+            Mat matSource = visionHelper.bitmapToMap(source);
+
+            // Effectuer une détection de contours et isoler le plus gros.
+            List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
+            MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+            if (biggerContour == null)
+                continue;
+
+            detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+            if (detectedShape == Shape.ARROW) {
+                // Détecter le coins de la flèche.
+                Mat arr = visionHelper.prepareCornerDetection(matSource);
+                MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
+
+                // Détecter le sens de la flèche.
+                /*double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                controller.faceAngle((int)angle, () -> {
+
+                });*/
+            }
+            else if (detectedShape == Shape.U) {
+                controller.goUp(500, () -> {
+
+                });
+            }
+            else if (detectedShape == Shape.D) {
+                controller.goDown(250, () -> {
+
+                });
+            }
+            else if (detectedShape == Shape.H) {
+                seek = false;
+                controller.land(() -> {
+                    showToast(parcourEnded);
+                    setUIState(true);
+                });
+            }
+        }
     }
 
     private void doSquare() {
@@ -353,10 +438,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         controller.goLeft(2000, () -> {
                             controller.land(() -> {
                                 new Handler(Looper.getMainLooper()).post(() -> {
-                                    btnStart.setEnabled(true);
-                                    btnLand.setEnabled(true);
-                                    btnCamera.setEnabled(true);
-                                    btnScreenshot.setEnabled(true);
+                                    setUIState(true);
                                 });
                                 showToast("Fin du parcours carrée");
                             });
@@ -380,10 +462,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         controller.faceFront(() -> {
                                             controller.land(() -> {
                                                 new Handler(Looper.getMainLooper()).post(() -> {
-                                                    btnStart.setEnabled(true);
-                                                    btnLand.setEnabled(true);
-                                                    btnCamera.setEnabled(true);
-                                                    btnScreenshot.setEnabled(true);
+                                                    setUIState(true);
                                                 });
                                                 showToast("Fin du parcours carrée avec rotation du drone");
                                             });

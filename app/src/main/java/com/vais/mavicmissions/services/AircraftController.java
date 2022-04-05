@@ -29,6 +29,8 @@ public class AircraftController {
     public static final int MINIMUM_COMMAND_DURATION = 100;
     public static final int INFINITE_COMMAND = 0;
     public static final int MAXIMUM_AIRCRAFT_SPEED = 1;
+    public static final float AIRCRAFT_SEEKING_MODE_SPEED = 0.5f;
+    public static final int MAXIMUM_VERTICAL_SPEED = 1;
 
     private static final int COMMAND_RESET = 500;
     private static final int ROTATION_DURATION = 1500;
@@ -46,6 +48,8 @@ public class AircraftController {
     private boolean hasTakenOff;
     private boolean controllerReady;
     private boolean calibrated;
+
+    private float currentSpeed;
 
     private float pitch;
     private float roll;
@@ -93,6 +97,8 @@ public class AircraftController {
             flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
             velocityMode = true;
             resetAxis();
+
+            setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
         }
     }
 
@@ -175,6 +181,14 @@ public class AircraftController {
             }, time);
     }
 
+    private void waitThrottleDuration(int time, ControllerListener listener) {
+        if (time >= MINIMUM_COMMAND_DURATION)
+            new Handler().postDelayed(() -> {
+                throttle = 0;
+                new Handler().postDelayed(() -> listener.onControllerReady(), COMMAND_RESET);
+            }, time);
+    }
+
     public void goHome(ControllerListener listener) {
         flightController.startGoHome(djiError -> {
             if (listener != null)
@@ -182,9 +196,25 @@ public class AircraftController {
         });
     }
 
+    public void goUp(int time, ControllerListener listener) {
+        throttle = MAXIMUM_VERTICAL_SPEED;
+        sendTask();
+
+        time = time == INFINITE_COMMAND ? 500 : time;
+        waitThrottleDuration(time, listener);
+    }
+
+    public void goDown(int time, ControllerListener listener) {
+        throttle = -MAXIMUM_VERTICAL_SPEED;
+        sendTask();
+
+        time = time == INFINITE_COMMAND ? 500 : time;
+        waitThrottleDuration(time, listener);
+    }
+
     public void goLeft(int time, ControllerListener listener) {
         resetAxis();
-        pitch = velocityMode ? -MAXIMUM_AIRCRAFT_SPEED : MAXIMUM_AIRCRAFT_SPEED;
+        pitch = velocityMode ? -currentSpeed : currentSpeed;
 
         sendTask();
         waitCommandDuration(time, listener);
@@ -192,7 +222,7 @@ public class AircraftController {
 
     public void goRight(int time, ControllerListener listener) {
         resetAxis();
-        pitch = velocityMode ? MAXIMUM_AIRCRAFT_SPEED : -MAXIMUM_AIRCRAFT_SPEED;
+        pitch = velocityMode ? currentSpeed : -currentSpeed;
 
         sendTask();
         waitCommandDuration(time, listener);
@@ -200,7 +230,7 @@ public class AircraftController {
 
     public void goForward(int time, ControllerListener listener) {
         resetAxis();
-        roll = velocityMode ? MAXIMUM_AIRCRAFT_SPEED : -MAXIMUM_AIRCRAFT_SPEED;
+        roll = velocityMode ? currentSpeed : -currentSpeed;
 
         sendTask();
         waitCommandDuration(time, listener);
@@ -208,7 +238,7 @@ public class AircraftController {
 
     public void goBack(int time, ControllerListener listener) {
         resetAxis();
-        roll = velocityMode ? -MAXIMUM_AIRCRAFT_SPEED : MAXIMUM_AIRCRAFT_SPEED;
+        roll = velocityMode ? -currentSpeed : currentSpeed;
 
         sendTask();
         waitCommandDuration(time, listener);
@@ -258,4 +288,13 @@ public class AircraftController {
     }
 
     public boolean isCalibrated() { return calibrated; }
+
+    public boolean getHasTakenOff() { return hasTakenOff; }
+
+    public void setCurrentSpeed(float speed) {
+        if (currentSpeed >= AIRCRAFT_SEEKING_MODE_SPEED && currentSpeed <= MAXIMUM_AIRCRAFT_SPEED)
+            this.currentSpeed = speed;
+        else
+            this.currentSpeed = AIRCRAFT_SEEKING_MODE_SPEED;
+    }
 }

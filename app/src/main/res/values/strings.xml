@@ -8,7 +8,9 @@
     <string name="ballRescue">Sauvetage d\'une balle</string>
     <string name="permissionNeeded">Les permissions sont requise pour le fonctionnement de l\'application</string>
     <string name="missingPermissions">Permissions manquantes</string>
-    <string name="registering">Authentification en cours...</string>
+    <string name="registering">Authentification en cours…</string>
     <string name="registerComplete">Authentification terminée avec succès</string>
     <string name="registerError">Erreur survenue lors du processus d\'authentification</string>
+    <string name="dynamicParcourStart">Début du parcour dynamique…</string>
+    <string name="dynamicParourEnded">Parcour dynamique terminé</string>
 </resources>

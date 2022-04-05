@@ -36,24 +36,9 @@ public class Detector {
         MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.5f, 10);
 
         Point[] points = corners.toArray();
-        double lastSlope = 0;
-        boolean sameSlope = true;
-        if (points.length > 2) {
-            for (int i = 0; i < points.length; i++) {
-                // Si on n'est pas au dernier point.
-                if (i + 1 < points.length) {
-                    double currentSlope = (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x);
-
-                    // Calculer la pente avec le points suivant.
-                    if (lastSlope == 0)
-                        lastSlope = currentSlope;
-                    else if (currentSlope < lastSlope + 1 && currentSlope > lastSlope - 1) {
-                        sameSlope = false;
-                        break;
-                    }
-                }
-            }
-        }
+        double slope = -1;
+        if (points.length == 2)
+            slope = (points[1].y - points[0].y) / (points[1].x - points[0].x);
 
         int cornerCount = corners.toArray().length;
         int sidesCount = approx.toArray().length;
@@ -62,10 +47,10 @@ public class Detector {
             detectedShape = Shape.H;
         else if (sidesCount == 2 || sidesCount == 4)
             detectedShape = Shape.ARROW;
-        else if (points.length > 2 && !sameSlope)
-            detectedShape = Shape.D;
-        else
+        else if (slope >= -1.5 && slope <= 1.5)
             detectedShape = Shape.U;
+        else
+            detectedShape = Shape.D;
 
         return detectedShape;
     }
@@ -84,7 +69,13 @@ public class Detector {
         Collections.sort(x);
         Collections.sort(y);
 
-        Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, (x.get(x.size() - 1) - x.get(0)) + 50, (y.get(y.size() - 1) - y.get(0)) + 50);
+        int newWidth = (x.get(x.size() - 1) - x.get(0)) + 50;
+        int newHeight = (y.get(y.size() - 1) - y.get(0)) + 50;
+
+        newWidth = newWidth > source.width() ? newWidth - 50 : newWidth;
+        newHeight = newHeight > source.height() ? newHeight - 50 : newHeight;
+
+        Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, newWidth, newHeight);
         Mat cropped = new Mat(source, crop);
 
         // Convertir l'image en image binaire.
@@ -102,6 +93,7 @@ public class Detector {
         corners = newCorners.toArray();
 
         // Calculer la distance entre chaque point et le centre de masse.
+        List<Point> otherCorners = new ArrayList<>();
         double smallestDistance = Double.MAX_VALUE;
         int cornerID = 0;
         for (int i = 0; i < corners.length; i++) {
@@ -113,7 +105,16 @@ public class Detector {
             }
         }
 
-        return 1;
+        // Trouver l'angle de la flèche.
+        double angle = 0;
+        for (Point p : corners)
+            if (p != corners[cornerID])
+                otherCorners.add(p);
+        double delta1 = corners[cornerID].y - otherCorners.get(0).y / corners[cornerID].x - otherCorners.get(0).x;
+        double delta2 = corners[cornerID].y - otherCorners.get(1).y / corners[cornerID].x - otherCorners.get(1).x;
+        double direction = delta1 + delta2;
+
+        return angle;
     }
 
     public static double getLength(Point p1, Point p2) {
