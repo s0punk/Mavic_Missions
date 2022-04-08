@@ -137,13 +137,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnBallRescue = findViewById(R.id.btnBallRescue);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
         ivResult = findViewById(R.id.iv_result);
-        //tvPrompt = findViewById(R.id.tv_prompt);
+        tvPrompt = findViewById(R.id.tv_prompt);
+
 
         btnDynamicParcour.setOnClickListener(this);
         btnFollowLine.setOnClickListener(this);
         btnBallRescue.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
-        //tvPrompt.setOnClickListener(this);
+        tvPrompt.setOnClickListener(this);
 
         visionHelper = new VisionHelper(this);
 
@@ -174,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case 1:
+            case R.id.tv_prompt:
                 setUIState(false);
 
                 if (rotation) {
@@ -231,9 +232,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
                     // Détecter le sens de la flèche.
-                    Mat angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                    double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
                     showToast(angle + "");
-                    output = visionHelper.matToBitmap(angle);
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -385,18 +385,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Shape detectedShape = Shape.UNKNOWN;
         boolean seek = true;
 
-        // Tant que le drone doit chercher et suivre les pancartes.
-        while (seek) {
-            // Capturer le flux vidéo.
-            Bitmap source = cameraSurface.getBitmap();
-            Mat matSource = visionHelper.bitmapToMap(source);
+        // Capturer le flux vidéo.
+        Bitmap source = cameraSurface.getBitmap();
+        Mat matSource = visionHelper.bitmapToMap(source);
 
-            // Effectuer une détection de contours et isoler le plus gros.
-            List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
-            MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
-            if (biggerContour == null)
-                continue;
-
+        // Effectuer une détection de contours et isoler le plus gros.
+        List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
+        MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+        if (biggerContour != null) {
             detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
             if (detectedShape == Shape.ARROW) {
                 // Détecter le coins de la flèche.
@@ -404,17 +400,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
                 // Détecter le sens de la flèche.
-                /*double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                seek = false;
+                double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
                 controller.faceAngle((int)angle, () -> {
 
-                });*/
+                });
             }
             else if (detectedShape == Shape.U) {
+                seek = false;
                 controller.goUp(500, () -> {
 
                 });
             }
             else if (detectedShape == Shape.D) {
+                seek = false;
                 controller.goDown(250, () -> {
 
                 });
@@ -427,6 +426,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
             }
         }
+
+        if (seek)
+            new Handler().postDelayed(this::seekInstructions, 500);
+
     }
 
     private void doSquare() {

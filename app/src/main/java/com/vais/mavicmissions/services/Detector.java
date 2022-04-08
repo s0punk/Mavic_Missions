@@ -33,12 +33,14 @@ public class Detector {
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
         // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.5f, 10);
+        MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.4f, 10);
 
         Point[] points = corners.toArray();
-        double slope = -1;
-        if (points.length == 2)
-            slope = (points[1].y - points[0].y) / (points[1].x - points[0].x);
+        double avgSlope = 0;
+        if (points.length > 1)
+        for (int i = 0; i < points.length - 1; i++)
+            avgSlope += (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x);
+        avgSlope /= points.length;
 
         int cornerCount = corners.toArray().length;
         int sidesCount = approx.toArray().length;
@@ -47,7 +49,7 @@ public class Detector {
             detectedShape = Shape.H;
         else if (sidesCount == 2 || sidesCount == 4)
             detectedShape = Shape.ARROW;
-        else if (slope >= -1.5 && slope <= 1.5)
+        else if (avgSlope >= -1.5 && avgSlope <= 1.5)
             detectedShape = Shape.U;
         else
             detectedShape = Shape.D;
