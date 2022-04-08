@@ -113,8 +113,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnDynamicParcour;
     private Button btnFollowLine;
     private Button btnBallRescue;
-    private TextView tvPrompt;
-    private boolean rotation = false;
 
     private TextureView cameraSurface;
     private ImageView ivResult;
@@ -138,13 +136,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnBallRescue = findViewById(R.id.btnBallRescue);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
         ivResult = findViewById(R.id.iv_result);
-        tvPrompt = findViewById(R.id.tv_prompt);
 
         btnDynamicParcour.setOnClickListener(this);
         btnFollowLine.setOnClickListener(this);
         btnBallRescue.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
-        tvPrompt.setOnClickListener(this);
 
         visionHelper = new VisionHelper(this);
 
@@ -168,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (cameraController != null) {
             cameraController.subscribeToVideoFeed();
-            cameraController.setISO();
+            cameraController.setParameters();
             if (!cameraController.isLookingDown())
                 cameraController.lookDown();
 
@@ -181,31 +177,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.tv_prompt:
-                setUIState(false);
-
-                if (rotation) {
-                    if (!controller.isCalibrated())
-                        controller.calibrate(() -> doSquareRotations());
-                    else
-                        doSquareRotations();
-                }
-                else {
-                    if (!controller.isCalibrated())
-                        controller.calibrate(() -> doSquare());
-                    else
-                        doSquare();
-                }
-
-                rotation = !rotation;
-                break;
             case R.id.btnDynamicParcour:
                 //startDynamicParcour();
+                setUIState(false);
+                controller.goUp(1000, () -> {
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        setUIState(true);
+                    });
+                });
                 break;
             case R.id.btnFollowLine:
                 setUIState(false);
-
-                if (controller.getHasTakenOff()) {
+                controller.goDown(1000, () -> {
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        setUIState(true);
+                    });
+                });
+                /*if (controller.getHasTakenOff()) {
                     controller.land(() -> {
                         new Handler(Looper.getMainLooper()).post(() -> {
                             setUIState(true);
@@ -218,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             setUIState(true);
                         });
                     });
-                }
+                }*/
                 break;
             case R.id.btnBallRescue:
                 // Détecter la pancarte.
@@ -369,9 +357,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setUIState(boolean state) {
-        btnDynamicParcour.setEnabled(state);
-        btnFollowLine.setEnabled(state);
-        btnBallRescue.setEnabled(state);
+        new Handler(Looper.getMainLooper()).post(() -> {
+            btnDynamicParcour.setEnabled(state);
+            btnFollowLine.setEnabled(state);
+            btnBallRescue.setEnabled(state);
+        });
     }
 
     private void startDynamicParcour() {

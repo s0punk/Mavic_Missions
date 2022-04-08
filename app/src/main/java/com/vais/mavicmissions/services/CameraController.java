@@ -38,8 +38,6 @@ public class CameraController {
         camera = aircraft.getCamera();
         gimbal = aircraft.getGimbal();
 
-        setISO();
-
         codecManager = null;
         videoReceiver = new VideoFeeder.VideoDataListener() {
             @Override
@@ -49,11 +47,13 @@ public class CameraController {
             }
         };
 
-        lookingDown = false;
+        setParameters();
+        lookDown();
     }
 
-    public void setISO() {
+    public void setParameters() {
         camera.setISO(SettingsDefinitions.ISO.ISO_400, null);
+        camera.setShutterSpeed(SettingsDefinitions.ShutterSpeed.SHUTTER_SPEED_1_100, null);
     }
 
     public void destroy() {
