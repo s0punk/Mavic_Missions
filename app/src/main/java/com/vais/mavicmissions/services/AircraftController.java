@@ -133,6 +133,10 @@ public class AircraftController {
         throttle = 0;
     }
 
+    public float getHeight() {
+        return flightController.getState().getAircraftLocation().getAltitude();
+    }
+
     public void takeOff(@NonNull ControllerListener listener) {
         if (flightController != null && !hasTakenOff) {
             controllerReady = false;

@@ -114,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnFollowLine;
     private Button btnBallRescue;
 
+    private boolean te = false;
+
     private TextureView cameraSurface;
     private ImageView ivResult;
 
@@ -180,20 +182,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnDynamicParcour:
                 //startDynamicParcour();
                 setUIState(false);
-                controller.goUp(1000, () -> {
-                    new Handler(Looper.getMainLooper()).post(() -> {
+
+                if (te) {
+                    controller.goUp(1000, () -> {
                         setUIState(true);
                     });
-                });
+                }
+                else {
+                    controller.goDown(1000, () -> {
+                        setUIState(true);
+                    });
+                }
+
+                te = !te;
+
                 break;
             case R.id.btnFollowLine:
                 setUIState(false);
-                controller.goDown(1000, () -> {
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        setUIState(true);
-                    });
-                });
-                /*if (controller.getHasTakenOff()) {
+
+                if (controller.getHasTakenOff()) {
                     controller.land(() -> {
                         new Handler(Looper.getMainLooper()).post(() -> {
                             setUIState(true);
@@ -206,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             setUIState(true);
                         });
                     });
-                }*/
+                }
                 break;
             case R.id.btnBallRescue:
                 // Détecter la pancarte.
@@ -218,9 +225,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (biggerContour == null)
                     return;
                 Bitmap output = cameraSurface.getBitmap();
-                Shape detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+                double detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour, controller.getHeight());
 
-                if (detectedShape == Shape.ARROW) {
+                /*if (detectedShape == Shape.ARROW) {
                     // Détecter le coins de la flèche.
                     Mat arr = visionHelper.prepareCornerDetection(matSource);
                     MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
@@ -240,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     showToast("NON-RECONNUE");
-                }
+                }*/
 
                 ivResult.setImageBitmap(output);
                 break;
@@ -387,7 +394,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Effectuer une détection de contours et isoler le plus gros.
         List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
-        MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+        /*MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
         if (biggerContour != null) {
             detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
             if (detectedShape == Shape.ARROW) {
@@ -404,13 +411,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             else if (detectedShape == Shape.U) {
                 seek = false;
-                controller.goUp(500, () -> {
+                controller.goUp(1000, () -> {
 
                 });
             }
             else if (detectedShape == Shape.D) {
                 seek = false;
-                controller.goDown(250, () -> {
+                controller.goDown(1000, () -> {
 
                 });
             }
@@ -421,7 +428,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     setUIState(true);
                 });
             }
-        }
+        }*/
 
         if (seek)
             new Handler().postDelayed(this::seekInstructions, 500);

@@ -23,9 +23,9 @@ import dji.internal.util.ArrayUtil;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detect(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
+    public static double detect(Mat source, VisionHelper visionHelper, MatOfPoint contour, float droneHeight) {
         Shape detectedShape = Shape.UNKNOWN;
-
+        double l = 0;
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
@@ -35,13 +35,6 @@ public class Detector {
         // Détecter les coins.
         MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.4f, 10);
 
-        Point[] points = corners.toArray();
-        double avgSlope = 0;
-        if (points.length > 1)
-        for (int i = 0; i < points.length - 1; i++)
-            avgSlope += (points[i + 1].y - points[i].y) / (points[i + 1].x - points[i].x);
-        avgSlope /= points.length;
-
         int cornerCount = corners.toArray().length;
         int sidesCount = approx.toArray().length;
 
@@ -49,12 +42,21 @@ public class Detector {
             detectedShape = Shape.H;
         else if (sidesCount == 2 || sidesCount == 4)
             detectedShape = Shape.ARROW;
-        else if (avgSlope >= -1.5 && avgSlope <= 1.5)
-            detectedShape = Shape.U;
-        else
-            detectedShape = Shape.D;
+        else {
+            // Détecter deux coins seulement.
+            corners = visionHelper.detectCorners(source, 2, 0.6f, 30);
+            Point[] points = corners.toArray();
 
-        return detectedShape;
+            if (points.length == 2) {
+                l = getLength(points[0], points[1]);
+                if (l > 60)
+                    detectedShape = Shape.D;
+                else
+                    detectedShape = Shape.U;
+            }
+        }
+
+        return l;
     }
 
     public static double detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
