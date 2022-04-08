@@ -36,6 +36,7 @@ import com.vais.mavicmissions.services.VerificationUnit;
 import com.vais.mavicmissions.services.VisionHelper;
 
 import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.CameraActivity;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -139,7 +140,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ivResult = findViewById(R.id.iv_result);
         tvPrompt = findViewById(R.id.tv_prompt);
 
-
         btnDynamicParcour.setOnClickListener(this);
         btnFollowLine.setOnClickListener(this);
         btnBallRescue.setOnClickListener(this);
@@ -166,8 +166,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mHandler = new Handler(Looper.getMainLooper());
         checkAndRequestPermissions();
 
-        if (cameraController != null)
+        if (cameraController != null) {
             cameraController.subscribeToVideoFeed();
+            cameraController.setISO();
+            if (!cameraController.isLookingDown())
+                cameraController.lookDown();
+
+        }
+
 
         visionHelper.initCV();
     }
