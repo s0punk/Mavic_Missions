@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
+import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.codec.DJICodecManager;
@@ -136,6 +137,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (controller != null)
             controller.destroy();
+
+        if (cameraController != null)
+            cameraController.destroy();
     }
 
     @Override
@@ -179,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnFollowLine:
                 setUIState(false);
 
-                if (controller.getHasTakenOff()) {
+                /*if (controller.getHasTakenOff()) {
                     controller.land(() -> {
                         new Handler(Looper.getMainLooper()).post(() -> {
                             setUIState(true);
@@ -192,11 +196,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             setUIState(true);
                         });
                     });
-                }
+                }*/
+                // Zoomer la caméra selon l'altitude du drone.
+                cameraController.setZoom(cameraController.ZOOM_4X, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError) {
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            setUIState(true);
+                        });
+                    }
+                });
                 break;
             case R.id.btnBallRescue:
-                // Zoomer la caméra selon l'altitude du drone.
-
                 // Détecter la pancarte.
                 Bitmap source = cameraSurface.getBitmap();
                 Mat matSource = visionHelper.bitmapToMap(source);
@@ -217,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Imgproc.circle(matSource, p, 2, new Scalar(255, 0, 0, 255), 10);
 
                     // Détecter le sens de la flèche.
-                    Mat angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray(), this);
+                    Mat angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
 
                     output = visionHelper.matToBitmap(angle);
                 }
@@ -237,6 +248,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ivResult.setImageBitmap(output);
                 break;
         }
+    }
+
+    private int getRightZoom() {
+        int zoom = 2;
+        float altitude = controller.getHeight();
+
+        return zoom;
     }
 
     private void checkAndRequestPermissions() {
@@ -318,14 +336,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onControllerReady() {
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    setUIState(true);
-
                     cameraController = new CameraController(controller.getAircraft());
                     if (textureAvailable)
                         onSurfaceTextureAvailable(texture, textureWidth, textureHeight);
 
                     if (!cameraController.isLookingDown())
                         cameraController.lookDown();
+
+                    cameraController.setZoom(CameraController.ZOOM_1X, new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError djiError) {
+                            setUIState(true);
+                        }
+                    });
                 });
             }
         });

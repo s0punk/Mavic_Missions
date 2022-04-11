@@ -62,7 +62,7 @@ public class Detector {
         return detectedShape;
     }
 
-    public static Mat detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners, Context co) {
+    public static Mat detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
         //if (corners.length != 3) return 0;
 
         // Redimensionner l'image pour y avoir la flèche seulement.
@@ -162,7 +162,6 @@ public class Detector {
         Imgproc.line(binary, new Point(halfWidth, 0), new Point(halfWidth, binary.height()), new Scalar(255, 0, 0, 255), 2);
 
         Imgproc.circle(binary, head, 2, new Scalar(255, 0, 0, 255), 5);
-        Toast.makeText(co, angle + " -- " + quadrant, Toast.LENGTH_LONG).show();
         return binary;
     }
 
