@@ -9,22 +9,15 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.ImageFormat;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
-import android.graphics.YuvImage;
-import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.Enum.Shape;
@@ -32,7 +25,6 @@ import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.Detector;
-import com.vais.mavicmissions.services.VerificationUnit;
 import com.vais.mavicmissions.services.VisionHelper;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -53,26 +45,17 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.util.CommonCallbacks;
-import dji.internal.util.Util;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.codec.DJICodecManager;
-import dji.sdk.products.Aircraft;
-import dji.sdk.sdkmanager.BluetoothDevice;
-import dji.sdk.sdkmanager.BluetoothProductConnector;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
-import dji.sdk.sdkmanager.LDMManager;
 import dji.thirdparty.afinal.core.AsyncTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener{
@@ -98,8 +81,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private static final int REQUEST_PERMISSION_CODE = 12345;
 
-    private static final int SEEKING_MODE_SCREENSHOT_DELAY = 500;
-
     private String parcourEnded;
 
     private Handler mHandler;
@@ -110,11 +91,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private MavicMissionApp app;
 
-    private Button btnDynamicParcour;
+    private Button btnDynamicParkour;
     private Button btnFollowLine;
     private Button btnBallRescue;
 
-    private boolean te = false;
+    private boolean temp = false;
 
     private TextureView cameraSurface;
     private ImageView ivResult;
@@ -133,13 +114,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
 
-        btnDynamicParcour = findViewById(R.id.btnDynamicParcour);
+        btnDynamicParkour = findViewById(R.id.btnDynamicParcour);
         btnFollowLine = findViewById(R.id.btnFollowLine);
         btnBallRescue = findViewById(R.id.btnBallRescue);
         cameraSurface = findViewById(R.id.cameraPreviewSurface);
         ivResult = findViewById(R.id.iv_result);
 
-        btnDynamicParcour.setOnClickListener(this);
+        btnDynamicParkour.setOnClickListener(this);
         btnFollowLine.setOnClickListener(this);
         btnBallRescue.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
@@ -169,9 +150,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             cameraController.setParameters();
             if (!cameraController.isLookingDown())
                 cameraController.lookDown();
-
         }
-
 
         visionHelper.initCV();
     }
@@ -183,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //startDynamicParcour();
                 setUIState(false);
 
-                if (te) {
+                if (temp) {
                     controller.goUp(1000, () -> {
                         setUIState(true);
                     });
@@ -194,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     });
                 }
 
-                te = !te;
+                temp = !temp;
 
                 break;
             case R.id.btnFollowLine:
@@ -365,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setUIState(boolean state) {
         new Handler(Looper.getMainLooper()).post(() -> {
-            btnDynamicParcour.setEnabled(state);
+            btnDynamicParkour.setEnabled(state);
             btnFollowLine.setEnabled(state);
             btnBallRescue.setEnabled(state);
         });
@@ -432,7 +411,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (seek)
             new Handler().postDelayed(this::seekInstructions, 500);
-
     }
 
     private void doSquare() {

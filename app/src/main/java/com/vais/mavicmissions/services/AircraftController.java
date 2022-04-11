@@ -1,25 +1,16 @@
 package com.vais.mavicmissions.services;
 
 import android.os.Handler;
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.vais.mavicmissions.application.MavicMissionApp;
-
-import org.opencv.android.OpenCVLoader;
-
 import java.util.Timer;
 import java.util.TimerTask;
-
-import dji.common.error.DJIError;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -31,6 +22,8 @@ public class AircraftController {
     public static final int MAXIMUM_AIRCRAFT_SPEED = 1;
     public static final float AIRCRAFT_SEEKING_MODE_SPEED = 0.5f;
     public static final int MAXIMUM_VERTICAL_SPEED = 1;
+
+    private static final int SEEKING_MODE_SCREENSHOT_DELAY = 500;
 
     private static final int COMMAND_RESET = 500;
     private static final int ROTATION_DURATION = 1500;
@@ -181,7 +174,7 @@ public class AircraftController {
         if (time >= MINIMUM_COMMAND_DURATION)
             new Handler().postDelayed(() -> {
                 resetAxis();
-                new Handler().postDelayed(() -> listener.onControllerReady(), COMMAND_RESET);
+                new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
             }, time);
     }
 
@@ -189,7 +182,7 @@ public class AircraftController {
         if (time >= MINIMUM_COMMAND_DURATION)
             new Handler().postDelayed(() -> {
                 throttle = 0;
-                new Handler().postDelayed(() -> listener.onControllerReady(), COMMAND_RESET);
+                new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
             }, time);
     }
 
