@@ -183,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnFollowLine:
                 setUIState(false);
 
-                /*if (controller.getHasTakenOff()) {
+                if (controller.getHasTakenOff()) {
                     controller.land(() -> {
                         new Handler(Looper.getMainLooper()).post(() -> {
                             setUIState(true);
@@ -196,16 +196,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             setUIState(true);
                         });
                     });
-                }*/
-                // Zoomer la caméra selon l'altitude du drone.
-                cameraController.setZoom(cameraController.ZOOM_4X, new CommonCallbacks.CompletionCallback() {
-                    @Override
-                    public void onResult(DJIError djiError) {
-                        new Handler(Looper.getMainLooper()).post(() -> {
-                            setUIState(true);
-                        });
-                    }
-                });
+                }
                 break;
             case R.id.btnBallRescue:
                 // Détecter la pancarte.
