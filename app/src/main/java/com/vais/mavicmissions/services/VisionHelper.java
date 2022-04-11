@@ -88,7 +88,7 @@ public class VisionHelper {
 
     public Mat dilate(Mat src, int maskSize) {
         Mat result = new Mat();
-        Imgproc.erode(src, result, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(maskSize, maskSize)));
+        Imgproc.dilate(src, result, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(maskSize, maskSize)));
 
         return result;
     }

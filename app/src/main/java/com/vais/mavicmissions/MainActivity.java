@@ -195,6 +195,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btnBallRescue:
+                // Zoomer la caméra selon l'altitude du drone.
+
                 // Détecter la pancarte.
                 Bitmap source = cameraSurface.getBitmap();
                 Mat matSource = visionHelper.bitmapToMap(source);
@@ -204,16 +206,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (biggerContour == null)
                     return;
                 Bitmap output = cameraSurface.getBitmap();
-                double detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour, controller.getHeight());
+                Shape detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour, controller.getHeight());
 
-                /*if (detectedShape == Shape.ARROW) {
+                if (detectedShape == Shape.ARROW) {
                     // Détecter le coins de la flèche.
                     Mat arr = visionHelper.prepareCornerDetection(matSource);
-                    MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
+                    MatOfPoint corners = visionHelper.detectCorners(arr, 3, 70);
+
+                    for(Point p : corners.toArray())
+                        Imgproc.circle(matSource, p, 2, new Scalar(255, 0, 0, 255), 10);
 
                     // Détecter le sens de la flèche.
-                    double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
-                    showToast(angle + "");
+                    Mat angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray(), this);
+
+                    output = visionHelper.matToBitmap(angle);
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -226,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 else {
                     showToast("NON-RECONNUE");
-                }*/
+                }
 
                 ivResult.setImageBitmap(output);
                 break;

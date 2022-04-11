@@ -1,5 +1,8 @@
 package com.vais.mavicmissions.services;
 
+import android.content.Context;
+import android.widget.Toast;
+
 import com.vais.mavicmissions.Enum.Shape;
 
 import org.opencv.core.Mat;
@@ -23,7 +26,7 @@ import dji.internal.util.ArrayUtil;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static double detect(Mat source, VisionHelper visionHelper, MatOfPoint contour, float droneHeight) {
+    public static Shape detect(Mat source, VisionHelper visionHelper, MatOfPoint contour, float droneHeight) {
         Shape detectedShape = Shape.UNKNOWN;
         double l = 0;
         // Détecter les côtés du contour.
@@ -56,11 +59,11 @@ public class Detector {
             }
         }
 
-        return l;
+        return detectedShape;
     }
 
-    public static double detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
-        if (corners.length != 3) return 0;
+    public static Mat detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners, Context co) {
+        //if (corners.length != 3) return 0;
 
         // Redimensionner l'image pour y avoir la flèche seulement.
         List<Integer> x = new ArrayList<>();
@@ -76,15 +79,12 @@ public class Detector {
         int newWidth = (x.get(x.size() - 1) - x.get(0)) + 50;
         int newHeight = (y.get(y.size() - 1) - y.get(0)) + 50;
 
-        newWidth = newWidth > source.width() ? newWidth - 50 : newWidth;
-        newHeight = newHeight > source.height() ? newHeight - 50 : newHeight;
-
         Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, newWidth, newHeight);
         Mat cropped = new Mat(source, crop);
 
         // Convertir l'image en image binaire.
         Mat binary = new Mat();
-        Imgproc.threshold(cropped, binary, 115, 115, Imgproc.THRESH_BINARY_INV);
+        Imgproc.threshold(cropped, binary, 70, 70, Imgproc.THRESH_BINARY_INV);
 
         // Trouver le centre de masse du noir dans l'image.
         Moments moments = Imgproc.moments(binary);
@@ -97,7 +97,6 @@ public class Detector {
         corners = newCorners.toArray();
 
         // Calculer la distance entre chaque point et le centre de masse.
-        List<Point> otherCorners = new ArrayList<>();
         double smallestDistance = Double.MAX_VALUE;
         int cornerID = 0;
         for (int i = 0; i < corners.length; i++) {
@@ -109,16 +108,62 @@ public class Detector {
             }
         }
 
-        // Trouver l'angle de la flèche.
-        double angle = 0;
-        for (Point p : corners)
-            if (p != corners[cornerID])
-                otherCorners.add(p);
-        double delta1 = corners[cornerID].y - otherCorners.get(0).y / corners[cornerID].x - otherCorners.get(0).x;
-        double delta2 = corners[cornerID].y - otherCorners.get(1).y / corners[cornerID].x - otherCorners.get(1).x;
-        double direction = delta1 + delta2;
+        Point head = corners[cornerID];
 
-        return angle;
+        // Trouver l'angle de la flèche.
+        double halfWidth = binary.width() / 2;
+        double halfHeight = binary.height() / 2;
+        double angle = 0;
+
+        // Déterminer le quandrant de la pointe.
+        int quadrant = 0;
+        if (head.x > halfWidth && head.y < halfHeight)
+            quadrant = 1;
+        else if (head.x > halfWidth && head.y > halfHeight)
+            quadrant = 2;
+        else if (head.x < halfWidth && head.y > halfHeight)
+            quadrant = 3;
+        else if (head.x < halfWidth && head.y < halfHeight)
+            quadrant = 4;
+
+        if (quadrant == 0) {
+            if (head.x == halfWidth)
+                angle = head.y > halfHeight ? -180 : 0;
+            else if (head.y == halfHeight)
+                angle = head.x > halfWidth ? 90 : -90;
+        }
+        else {
+            // Trouver l'hypoténuse avec le théorem de pythagore.
+            double headA = Math.abs(head.x - halfWidth);
+            double headB = Math.abs(head.y - halfHeight);
+            double c = Math.sqrt(Math.pow(headA, 2) + Math.pow(headB, 2));
+
+            // Trouver l'arc sinus de l'angle.
+            angle = Math.toDegrees(Math.asin(headB / c));
+
+            // Trouver l'angle à donner au drone.
+            switch (quadrant) {
+                case 1:
+                    angle = 0 + angle;
+                    break;
+                case 2:
+                    angle = 90 + angle;
+                    break;
+                case 3:
+                    angle = -90 - angle;
+                    break;
+                case 4:
+                    angle = - angle;
+                    break;
+            }
+        }
+
+        Imgproc.line(binary, new Point(0, halfHeight), new Point(binary.width(), halfHeight), new Scalar(255, 0, 0, 255), 2);
+        Imgproc.line(binary, new Point(halfWidth, 0), new Point(halfWidth, binary.height()), new Scalar(255, 0, 0, 255), 2);
+
+        Imgproc.circle(binary, head, 2, new Scalar(255, 0, 0, 255), 5);
+        Toast.makeText(co, angle + " -- " + quadrant, Toast.LENGTH_LONG).show();
+        return binary;
     }
 
     public static double getLength(Point p1, Point p2) {
@@ -127,23 +172,5 @@ public class Detector {
         double r1 = Math.pow(p1.x - p2.x, 2);
         double r2 = Math.pow(p1.y - p2.y, 2);
         return Math.round(Math.sqrt(r1 + r2));
-    }
-
-    public static Point[] getSides(MatOfPoint contour) {
-        MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
-        double perimeter = Imgproc.arcLength(c2f, true);
-        MatOfPoint2f approx = new MatOfPoint2f();
-        Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
-
-        return approx.toArray();
-    }
-
-    public static int getSidesCount(MatOfPoint contour) {
-        MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
-        double perimeter = Imgproc.arcLength(c2f, true);
-        MatOfPoint2f approx = new MatOfPoint2f();
-        Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
-
-        return approx.toArray().length;
     }
 }
