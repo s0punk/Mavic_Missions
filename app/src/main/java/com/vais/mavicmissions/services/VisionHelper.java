@@ -72,6 +72,13 @@ public class VisionHelper {
         return result;
     }
 
+    public Mat toColor(Mat src) {
+        Mat result = new Mat();
+        Imgproc.cvtColor(src, result, Imgproc.COLOR_GRAY2RGB);
+
+        return result;
+    }
+
     public Mat smooth(Mat src, int maskSize) {
         Mat result = new Mat();
         Imgproc.GaussianBlur(src, result, new Size(maskSize, maskSize), 0, 0);

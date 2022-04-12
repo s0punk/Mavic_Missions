@@ -264,14 +264,17 @@ public class AircraftController {
         yaw = angle;
 
         sendTask();
-        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
     public void faceFront(ControllerListener listener) {
         resetAxis();
         yaw = ROTATION_FRONT;
         sendTask();
-        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
     public void faceLeft(ControllerListener listener) {
@@ -279,7 +282,8 @@ public class AircraftController {
         yaw = ROTATION_LEFT;
 
         sendTask();
-        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
     public void faceRight(ControllerListener listener) {
@@ -287,7 +291,8 @@ public class AircraftController {
         yaw = ROTATION_RIGHT;
 
         sendTask();
-        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
     public void faceBack(ControllerListener listener) {
@@ -295,13 +300,16 @@ public class AircraftController {
         yaw = ROTATION_BACK;
 
         sendTask();
-        new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
     public void stop(ControllerListener listener) {
         resetAxis();
         sendTask();
-        new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
+
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
     }
 
     public Aircraft getAircraft() {

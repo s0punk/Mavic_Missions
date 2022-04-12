@@ -15,7 +15,7 @@ import java.util.List;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detect(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
+    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
         Shape detectedShape = Shape.UNKNOWN;
 
         // Détecter les côtés du contour.
@@ -30,10 +30,12 @@ public class Detector {
         int cornerCount = corners.toArray().length;
         int sidesCount = approx.toArray().length;
 
-        if (cornerCount > 7)
-            detectedShape = Shape.H;
+        if (contour.rows() < 50)
+            return detectedShape;
         else if (sidesCount == 2 || sidesCount == 4)
             detectedShape = Shape.ARROW;
+        else if (cornerCount > 7)
+            detectedShape = Shape.H;
         else {
             // Détecter deux coins seulement.
             corners = visionHelper.detectCorners(source, 2, 0.01f, 110);
@@ -47,7 +49,6 @@ public class Detector {
                     detectedShape = Shape.D;
             }
         }
-
         return detectedShape;
     }
 
@@ -69,7 +70,8 @@ public class Detector {
         int newHeight = (y.get(y.size() - 1) - y.get(0)) + 50;
 
         Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, newWidth, newHeight);
-        Mat cropped = new Mat(source, crop);
+        Mat cropped;
+        try { cropped = new Mat(source, crop); } catch (Exception e) { return null; }
 
         // Convertir l'image en image binaire.
         Mat binary = new Mat();
@@ -129,23 +131,26 @@ public class Detector {
             // Trouver l'hypoténuse avec le théorem de pythagore.
             double headA = Math.abs(head.x - halfWidth);
             double headB = Math.abs(head.y - halfHeight);
-            double c = Math.sqrt(Math.pow(headA, 2) + Math.pow(headB, 2));
-
-            // Trouver l'arc sinus de l'angle.
-            angle = Math.toDegrees(Math.asin(headB / c));
+            double c = Math.sqrt(Math.pow(headA, 2) + Math.pow(headB, 2));;
 
             // Trouver l'angle à donner au drone.
             switch (quadrant) {
                 case 1:
-                    angle = 0 + angle;
+                    // Trouver l'arc sinus de l'angle.
+                    angle = Math.toDegrees(Math.asin(headA / c));
                     break;
                 case 2:
+                    // Trouver l'arc sinus de l'angle.
+                    angle = Math.toDegrees(Math.asin(headB / c));
                     angle = 90 + angle;
                     break;
                 case 3:
-                    angle = -90 - angle;
+                    angle = Math.toDegrees(Math.asin(headB / c));
+                    angle = -90 + (- angle);
                     break;
                 case 4:
+                    // Trouver l'arc sinus de l'angle.
+                    angle = Math.toDegrees(Math.asin(headA / c));
                     angle = - angle;
                     break;
             }

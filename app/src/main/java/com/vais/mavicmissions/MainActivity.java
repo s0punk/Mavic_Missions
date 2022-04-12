@@ -18,15 +18,20 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.vais.mavicmissions.Enum.FlyInstruction;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.AircraftController;
+import com.vais.mavicmissions.services.AircraftInstruction;
 import com.vais.mavicmissions.services.CameraController;
 import com.vais.mavicmissions.services.Detector;
 import com.vais.mavicmissions.services.VisionHelper;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,13 +73,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String parkourEnded;
 
     private Handler mHandler;
-    private boolean permissionsAccepted;
 
     private AircraftController controller;
     private CameraController cameraController;
     private VisionHelper visionHelper;
 
     private MavicMissionApp app;
+    private AircraftInstruction lastInstruction;
 
     private Button btnDynamicParkour;
     private Button btnFollowLine;
@@ -91,8 +96,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        permissionsAccepted = false;
-
         app = (MavicMissionApp)getApplication();
         checkAndRequestPermissions();
 
@@ -131,9 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
 
         mHandler = new Handler(Looper.getMainLooper());
-
-        if (!permissionsAccepted)
-            checkAndRequestPermissions();
+        checkAndRequestPermissions();
 
         if (cameraController != null) {
             cameraController.subscribeToVideoFeed();
@@ -149,10 +150,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btnDynamicParcour:
-                startDynamicParcour();
+                //startDynamicParcour();
                 break;
             case R.id.btnFollowLine:
-                setUIState(false);
+                /*setUIState(false);
 
                 controller.checkVirtualStick(() -> {
                     if (controller.getHasTakenOff()) {
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             });
                         });
                     }
-                });
+                });*/
                 break;
             case R.id.btnBallRescue:
                 // Détecter la pancarte.
@@ -180,8 +181,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
                 if (biggerContour == null)
                     return;
+
                 Bitmap output = cameraSurface.getBitmap();
-                Shape detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+                Shape detectedShape = Detector.detectShape(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
 
                 if (detectedShape == Shape.ARROW) {
                     // Détecter le coins de la flèche.
@@ -190,8 +192,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     Mat arrow = Detector.detectArrow(arr, visionHelper, corners.toArray());
                     if (arrow != null) {
-                        Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), visionHelper.detectCorners(arrow, 3, 30).toArray());
+                        Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
+                        Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
                         double angle = Detector.detectAngle(arrow, head);
+
+                        arrow = visionHelper.toColor(arrow);
+                        for (Point p : croppedCorners)
+                            Imgproc.circle(arrow, p, 2, new Scalar(255, 0, 0, 255), 10);
+                        Imgproc.circle(arrow, head, 2, new Scalar(0, 255, 255, 255), 11);
 
                         // TEMP.
                         output = visionHelper.matToBitmap(arrow);
@@ -260,8 +268,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void startSDKRegistration() {
-        permissionsAccepted = true;
-
         String registering = getResources().getString(R.string.registering);
         String registerComplete = getResources().getString(R.string.registerComplete);
         String registerError = getResources().getString(R.string.registerError);
@@ -334,6 +340,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void startDynamicParcour() {
         setUIState(false);
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
+        lastInstruction = null;
 
         showToast(getResources().getString(R.string.dynamicParcourStart));
 
@@ -358,6 +365,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void seekInstructions() {
         Shape detectedShape;
         boolean seek = true;
+        boolean stop = false;
 
         // Capturer le flux vidéo.
         Bitmap source = cameraSurface.getBitmap();
@@ -369,58 +377,121 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Détecter l'instruction.
         if (biggerContour != null) {
-            detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+            detectedShape = Detector.detectShape(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
 
             // Exécuter l'action selon l'instruction.
             if (detectedShape == Shape.ARROW) {
-                seek = false;
+                // Détecter les coins de la flèche.
+                double angle = 0;
+                Mat arr = visionHelper.prepareCornerDetection(matSource);
+                MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
-                controller.stop(() -> {
-                    // Détecter les coins de la flèche.
-                    Mat arr = visionHelper.prepareCornerDetection(matSource);
-                    MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
+                Mat arrow = Detector.detectArrow(arr, visionHelper, corners.toArray());
+                if (arrow != null) {
+                    Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
+                    Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
+                    angle = Detector.detectAngle(arrow, head);
 
-                    // Détecter le sens de la flèche.
-                    /*double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
-                    controller.faceAngle((int)angle, () -> {
-                        controller.goForward(AircraftController.INFINITE_COMMAND, null);
-                        seekInstructions();
-                    });*/
-                });
+                    if (lastInstruction == null)
+                        lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
+                    else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
+                        seek = false;
+                        executeInstruction(lastInstruction);
+                        lastInstruction = null;
+                    }
+                    else {
+                        lastInstruction = null;
+                        stop = true;
+                    }
+                }
             }
             else if (detectedShape == Shape.U) {
-                seek = false;
-                controller.stop(() -> {
-                    controller.goUp(1000, () -> {
-                        controller.goForward(AircraftController.INFINITE_COMMAND, null);
-                        seekInstructions();
-                    });
-                });
+                if (lastInstruction == null)
+                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
+                else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
+                    seek = false;
+                    executeInstruction(lastInstruction);
+                    lastInstruction = null;
+                }
+                else {
+                    lastInstruction = null;
+                    stop = true;
+                }
             }
             else if (detectedShape == Shape.D) {
-                seek = false;
+                if (lastInstruction == null)
+                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
+                else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
+                    seek = false;
+                    executeInstruction(lastInstruction);
+                    lastInstruction = null;
+                }
+                else {
+                    lastInstruction = null;
+                    stop = true;
+                }
+            }
+            else if (detectedShape == Shape.H) {
+                if (lastInstruction == null)
+                    lastInstruction = new AircraftInstruction(FlyInstruction.TAKEOFF_LAND);
+                else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
+                    seek = false;
+                    executeInstruction(lastInstruction);
+                    lastInstruction = null;
+                }
+                else {
+                    lastInstruction = null;
+                    stop = true;
+                }
+            }
+        }
+
+        // Continuer la recherche si rien n'a été trouvé.
+        if (seek) {
+            if (stop)
+                controller.stop(null);
+            else
+                controller.goForward(AircraftController.INFINITE_COMMAND, null);
+            new Handler().postDelayed(this::seekInstructions, 500);
+        }
+    }
+
+    private void executeInstruction(AircraftInstruction instruction) {
+        controller.stop(() -> {
+            if (instruction.getInstruction() == FlyInstruction.GO_TOWARDS) {
+                controller.faceAngle((int)instruction.getAngle(), () -> {
+                    controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                    seekInstructions();
+                });
+            }
+            else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
                 controller.stop(() -> {
-                    controller.goDown(1000, () -> {
-                        controller.goForward(AircraftController.INFINITE_COMMAND, null);
-                        seekInstructions();
+                    controller.goUp(1000, () -> {
+                        cameraController.setZoom(getRightZoom(), djiError -> {
+                            controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                            seekInstructions();
+                        });
                     });
                 });
             }
-            else if (detectedShape == Shape.H) {
-                seek = false;
+            else if (instruction.getInstruction() == FlyInstruction.GO_DOWN) {
+                controller.stop(() -> {
+                    controller.goDown(1000, () -> {
+                        cameraController.setZoom(getRightZoom(), djiError -> {
+                            controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                            seekInstructions();
+                        });
+                    });
+                });
+            }
+            else if (instruction.getInstruction() == FlyInstruction.TAKEOFF_LAND) {
                 controller.land(() -> {
                     showToast(parkourEnded);
                     cameraController.lookDown();
                     setUIState(true);
                 });
             }
-        }
-
-        // Continuer la recherche si rien n'a été trouvé.
-        if (seek) {
-            controller.goForward(AircraftController.INFINITE_COMMAND, null);
-            new Handler().postDelayed(this::seekInstructions, 500);
-        }
+        });
     }
 
     @Override
