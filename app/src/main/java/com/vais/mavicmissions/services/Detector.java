@@ -1,27 +1,16 @@
 package com.vais.mavicmissions.services;
 
-import android.content.Context;
-import android.widget.Toast;
-
 import com.vais.mavicmissions.Enum.Shape;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import dji.internal.util.ArrayUtil;
 
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
@@ -62,8 +51,8 @@ public class Detector {
         return detectedShape;
     }
 
-    public static double detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
-        if (corners.length != 3) return 0;
+    public static Mat detectArrow(Mat source, VisionHelper visionHelper, Point[] corners) {
+        if (corners.length != 3) return null;
 
         // Redimensionner l'image pour y avoir la flèche seulement.
         List<Integer> x = new ArrayList<>();
@@ -86,16 +75,17 @@ public class Detector {
         Mat binary = new Mat();
         Imgproc.threshold(cropped, binary, 70, 70, Imgproc.THRESH_BINARY_INV);
 
-        // Trouver le centre de masse du noir dans l'image.
-        Moments moments = Imgproc.moments(binary);
+        return binary;
+    }
+
+    public static Point findCenterMass(Mat source) {
+        Moments moments = Imgproc.moments(source);
         int cX = (int)(moments.get_m10() / moments.get_m00());
         int cY = (int)(moments.get_m01() / moments.get_m00());
-        Point massCenter = new Point(cX, cY);
+        return new Point(cX, cY);
+    }
 
-        // Refaire la détection des coins puisque la taille de l'image est différente.
-        MatOfPoint newCorners = visionHelper.detectCorners(binary, 3, 30);
-        corners = newCorners.toArray();
-
+    public static Point findArrowHead(Point massCenter, Point[] corners) {
         // Calculer la distance entre chaque point et le centre de masse.
         double smallestDistance = Double.MAX_VALUE;
         int cornerID = 0;
@@ -108,12 +98,15 @@ public class Detector {
             }
         }
 
-        Point head = corners[cornerID];
+        return corners[cornerID];
+    }
+
+    public static double detectAngle(Mat source, Point head) {
+        double angle = 0;
 
         // Trouver l'angle de la flèche.
-        int halfWidth = (int)binary.width() / 2;
-        int halfHeight = (int)binary.height() / 2;
-        double angle = 0;
+        int halfWidth = (int)source.width() / 2;
+        int halfHeight = (int)source.height() / 2;
 
         // Déterminer le quandrant de la pointe.
         int quadrant = 0;

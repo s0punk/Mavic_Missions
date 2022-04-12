@@ -1,16 +1,8 @@
 package com.vais.mavicmissions.services;
 
-import android.graphics.SurfaceTexture;
-import android.view.TextureView;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import dji.common.camera.CameraStreamSettings;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
-import dji.common.gimbal.Axis;
-import dji.common.gimbal.ResetDirection;
 import dji.common.gimbal.Rotation;
 import dji.common.gimbal.RotationMode;
 import dji.common.util.CommonCallbacks;
@@ -26,9 +18,12 @@ public class CameraController {
     private static final int MAX_OPTICAL_ZOOM = 1440;
 
     public static final int ZOOM_1X = MIN_OPTICAL_ZOOM;
+    public static final int ZOOM_1_6X = (int)(MIN_OPTICAL_ZOOM * 1.6);
     public static final int ZOOM_2X = MIN_OPTICAL_ZOOM * 2;
+    public static final int ZOOM_2_2X = (int)(MIN_OPTICAL_ZOOM * 2.2);
     public static final int ZOOM_3X = MIN_OPTICAL_ZOOM * 3;
     public static final int ZOOM_4X = MIN_OPTICAL_ZOOM * 4;
+    public static final int ZOOM_4_2X = (int)(MIN_OPTICAL_ZOOM * 4.2);
     public static final int ZOOM_5X = MIN_OPTICAL_ZOOM * 5;
     public static final int ZOOM_6X = MIN_OPTICAL_ZOOM * 6;
 

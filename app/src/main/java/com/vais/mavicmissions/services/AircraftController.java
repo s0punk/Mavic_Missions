@@ -6,11 +6,13 @@ import androidx.annotation.Nullable;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import java.util.Timer;
 import java.util.TimerTask;
+import dji.common.error.DJIError;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
 import dji.common.flightcontroller.virtualstick.VerticalControlMode;
 import dji.common.flightcontroller.virtualstick.YawControlMode;
+import dji.common.util.CommonCallbacks;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -109,6 +111,22 @@ public class AircraftController {
                     });
                 });
             }, COMMAND_TIMEOUT);
+        });
+    }
+
+    public void checkVirtualStick(ControllerListener listener) {
+        flightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
+            @Override
+            public void onSuccess(Boolean virtualStickEnabled) {
+                if (!virtualStickEnabled)
+                    flightController.setVirtualStickModeEnabled(true, djiError -> {
+                        listener.onControllerReady();
+                    });
+                else
+                    listener.onControllerReady();
+            }
+            @Override
+            public void onFailure(DJIError djiError) { }
         });
     }
 
