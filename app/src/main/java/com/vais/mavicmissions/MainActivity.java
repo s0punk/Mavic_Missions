@@ -95,8 +95,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnDynamicParkour;
     private Button btnFollowLine;
     private Button btnBallRescue;
+    private Button btnTest;
 
-    private boolean temp = false;
+    private boolean temp = true;
 
     private TextureView cameraSurface;
     private ImageView ivResult;
@@ -125,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnFollowLine.setOnClickListener(this);
         btnBallRescue.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
+        btnTest = findViewById(R.id.btntest);
+        btnTest.setOnClickListener(this);
 
         visionHelper = new VisionHelper(this);
 
@@ -162,18 +165,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.btntest:
+                startDynamicParcour();
             case R.id.btnDynamicParcour:
-                //startDynamicParcour();
                 setUIState(false);
 
                 if (temp) {
                     controller.goUp(1000, () -> {
                         setUIState(true);
+                        showToast(controller.getHeight() + "");
                     });
                 }
                 else {
                     controller.goDown(1000, () -> {
                         setUIState(true);
+                        showToast(controller.getHeight() + "");
                     });
                 }
 
@@ -208,20 +214,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (biggerContour == null)
                     return;
                 Bitmap output = cameraSurface.getBitmap();
-                Shape detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour, controller.getHeight());
+                Shape detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
 
                 if (detectedShape == Shape.ARROW) {
                     // Détecter le coins de la flèche.
                     Mat arr = visionHelper.prepareCornerDetection(matSource);
                     MatOfPoint corners = visionHelper.detectCorners(arr, 3, 70);
 
-                    for(Point p : corners.toArray())
-                        Imgproc.circle(matSource, p, 2, new Scalar(255, 0, 0, 255), 10);
-
                     // Détecter le sens de la flèche.
-                    Mat angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
-
-                    output = visionHelper.matToBitmap(angle);
+                    double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                    showToast(angle + "");
                 }
                 else if (detectedShape == Shape.U) {
                     showToast("VA EN HAUT");
@@ -242,8 +244,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private int getRightZoom() {
-        int zoom = 2;
+        int zoom = CameraController.ZOOM_2X;
         float altitude = controller.getHeight();
+
+        if (altitude >= 2) {
+
+        }
+        else if (altitude >= 1) {
+
+        }
+        else {
+
+        }
 
         return zoom;
     }
@@ -367,6 +379,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             btnDynamicParkour.setEnabled(state);
             btnFollowLine.setEnabled(state);
             btnBallRescue.setEnabled(state);
+            btnTest.setEnabled(state);
         });
     }
 
@@ -378,13 +391,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Décoller le drone.
         controller.takeOff(() -> {
-            // Commencer la recherche de pancartes.
-            controller.goForward(1000, this::seekInstructions);
+            cameraController.setZoom(getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    // Commencer la recherche de pancartes.
+                    controller.goForward(1000, () -> {
+                        controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
+                        seekInstructions();
+                    });
+                }
+            });
         });
     }
 
     private void seekInstructions() {
-        Shape detectedShape = Shape.UNKNOWN;
+        Shape detectedShape;
         boolean seek = true;
 
         // Capturer le flux vidéo.
@@ -393,44 +414,62 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Effectuer une détection de contours et isoler le plus gros.
         List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
-        /*MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+        MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+
+        // Détecter l'instruction.
         if (biggerContour != null) {
-            detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+            /*detectedShape = Detector.detect(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+
+            // Exécuter l'action selon l'instruction.
             if (detectedShape == Shape.ARROW) {
-                // Détecter le coins de la flèche.
-                Mat arr = visionHelper.prepareCornerDetection(matSource);
-                MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
-
-                // Détecter le sens de la flèche.
                 seek = false;
-                double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
-                controller.faceAngle((int)angle, () -> {
 
+                controller.stop(() -> {
+                    // Détecter les coins de la flèche.
+                    Mat arr = visionHelper.prepareCornerDetection(matSource);
+                    MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
+
+                    // Détecter le sens de la flèche.
+                    double angle = Detector.detectArrowDirection(arr, visionHelper, corners.toArray());
+                    controller.faceAngle((int)angle, () -> {
+                        controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                        seekInstructions();
+                    });
                 });
             }
             else if (detectedShape == Shape.U) {
                 seek = false;
-                controller.goUp(1000, () -> {
-
+                controller.stop(() -> {
+                    controller.goUp(1000, () -> {
+                        controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                        seekInstructions();
+                    });
                 });
             }
             else if (detectedShape == Shape.D) {
                 seek = false;
-                controller.goDown(1000, () -> {
-
+                controller.stop(() -> {
+                    controller.goDown(1000, () -> {
+                        controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                        seekInstructions();
+                    });
                 });
             }
             else if (detectedShape == Shape.H) {
                 seek = false;
                 controller.land(() -> {
                     showToast(parcourEnded);
+                    cameraController.lookDown();
                     setUIState(true);
                 });
-            }
-        }*/
+            }*/
+        }
 
-        if (seek)
+        // Continuer la recherche si rien n'a été trouvé.
+        if (seek) {
+            controller.goForward(AircraftController.INFINITE_COMMAND, null);
             new Handler().postDelayed(this::seekInstructions, 500);
+        }
     }
 
     private void doSquare() {
@@ -454,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void doSquareRotations() {
-        showToast("Parcours carrée avec rotation du drone");
+        showToast("Parcours carrée avec rotation");
         controller.takeOff(() -> {
             controller.goForward(2000, () -> {
                 controller.faceRight(() -> {
@@ -468,7 +507,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                                 new Handler(Looper.getMainLooper()).post(() -> {
                                                     setUIState(true);
                                                 });
-                                                showToast("Fin du parcours carrée avec rotation du drone");
+                                                showToast("Fin du parcours carrée avec rotation");
                                             });
                                         });
                                     });

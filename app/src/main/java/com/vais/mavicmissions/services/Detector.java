@@ -26,9 +26,9 @@ import dji.internal.util.ArrayUtil;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detect(Mat source, VisionHelper visionHelper, MatOfPoint contour, float droneHeight) {
+    public static Shape detect(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
         Shape detectedShape = Shape.UNKNOWN;
-        double l = 0;
+
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
@@ -41,29 +41,29 @@ public class Detector {
         int cornerCount = corners.toArray().length;
         int sidesCount = approx.toArray().length;
 
-        if (cornerCount > 6)
+        if (cornerCount > 7)
             detectedShape = Shape.H;
         else if (sidesCount == 2 || sidesCount == 4)
             detectedShape = Shape.ARROW;
         else {
             // Détecter deux coins seulement.
-            corners = visionHelper.detectCorners(source, 2, 0.6f, 30);
+            corners = visionHelper.detectCorners(source, 2, 0.01f, 110);
             Point[] points = corners.toArray();
 
             if (points.length == 2) {
-                l = getLength(points[0], points[1]);
-                if (l > 60)
-                    detectedShape = Shape.D;
-                else
+                double distance = getLength(points[0], points[1]);
+                if (distance < 250)
                     detectedShape = Shape.U;
+                else
+                    detectedShape = Shape.D;
             }
         }
 
         return detectedShape;
     }
 
-    public static Mat detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
-        //if (corners.length != 3) return 0;
+    public static double detectArrowDirection(Mat source, VisionHelper visionHelper, Point[] corners) {
+        if (corners.length != 3) return 0;
 
         // Redimensionner l'image pour y avoir la flèche seulement.
         List<Integer> x = new ArrayList<>();
@@ -111,8 +111,8 @@ public class Detector {
         Point head = corners[cornerID];
 
         // Trouver l'angle de la flèche.
-        double halfWidth = binary.width() / 2;
-        double halfHeight = binary.height() / 2;
+        int halfWidth = (int)binary.width() / 2;
+        int halfHeight = (int)binary.height() / 2;
         double angle = 0;
 
         // Déterminer le quandrant de la pointe.
@@ -158,11 +158,7 @@ public class Detector {
             }
         }
 
-        Imgproc.line(binary, new Point(0, halfHeight), new Point(binary.width(), halfHeight), new Scalar(255, 0, 0, 255), 2);
-        Imgproc.line(binary, new Point(halfWidth, 0), new Point(halfWidth, binary.height()), new Scalar(255, 0, 0, 255), 2);
-
-        Imgproc.circle(binary, head, 2, new Scalar(255, 0, 0, 255), 5);
-        return binary;
+        return angle;
     }
 
     public static double getLength(Point p1, Point p2) {

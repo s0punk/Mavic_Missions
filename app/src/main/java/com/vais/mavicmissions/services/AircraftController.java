@@ -280,6 +280,12 @@ public class AircraftController {
         new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
+    public void stop(ControllerListener listener) {
+        resetAxis();
+        sendTask();
+        new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
+    }
+
     public Aircraft getAircraft() {
         return aircraft;
     }
