@@ -192,7 +192,9 @@ public class AircraftController {
         if (time >= MINIMUM_COMMAND_DURATION)
             new Handler().postDelayed(() -> {
                 resetAxis();
-                new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
+
+                if (listener != null)
+                    new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
             }, time);
     }
 
@@ -200,7 +202,9 @@ public class AircraftController {
         if (time >= MINIMUM_COMMAND_DURATION)
             new Handler().postDelayed(() -> {
                 throttle = 0;
-                new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
+
+                if (listener != null)
+                    new Handler().postDelayed(listener::onControllerReady, COMMAND_RESET);
             }, time);
     }
 

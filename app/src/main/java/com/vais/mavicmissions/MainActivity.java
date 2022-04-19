@@ -370,12 +370,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Imgproc.circle(matSource, p, 2, new Scalar(255, 0, 0, 255), 10);
 
         // Afficher le résultat.
-        ivResult.setImageBitmap(visionHelper.matToBitmap(matSource));
+        new Handler(Looper.getMainLooper()).post(() -> ivResult.setImageBitmap(visionHelper.matToBitmap(matSource)));
 
         // Détecter la direction de la ligne.
-        if (points.length > 2) {
+        /*if (points.length > 2) {
 
-        }
+        }*/
+
+        // Continuer le suivi.
+        new Handler().postDelayed(this::seekGreenLine, 500);
     }
 
     private void startDynamicParcour() {
@@ -524,7 +527,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (stop)
                 controller.stop(null);
             else
-                controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                controller.goForward(2000, null);
             new Handler().postDelayed(this::seekInstructions, 500);
         }
     }
@@ -533,7 +536,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         controller.stop(() -> {
             if (instruction.getInstruction() == FlyInstruction.GO_TOWARDS) {
                 controller.faceAngle((int)instruction.getAngle(), () -> {
-                    controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                    controller.goForward(2000, null);
                     seekInstructions();
                 });
             }
@@ -541,7 +544,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 controller.stop(() -> {
                     controller.goUp(1000, () -> {
                         cameraController.setZoom(getRightZoom(), djiError -> {
-                            controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                            controller.goForward(2000, null);
                             seekInstructions();
                         });
                     });
@@ -551,7 +554,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 controller.stop(() -> {
                     controller.goDown(1000, () -> {
                         cameraController.setZoom(getRightZoom(), djiError -> {
-                            controller.goForward(AircraftController.INFINITE_COMMAND, null);
+                            controller.goForward(2000, null);
                             seekInstructions();
                         });
                     });
