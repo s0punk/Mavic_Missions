@@ -158,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (!dynamicParkourStarted)
                     startDynamicParcour();
                 else {
+                    setUIState(false);
                     showToast(getResources().getString(R.string.dynamicParourEnded));
                     dynamicParkourStarted = false;
                     btnDynamicParkour.setText(getResources().getString(R.string.dynamicParcour));
@@ -173,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (!followLineStarted)
                     startFollowLine();
                 else {
+                    setUIState(false);
                     showToast(getResources().getString(R.string.followLineEnded));
                     followLineStarted = false;
                     btnFollowLine.setText(getResources().getString(R.string.followLine));
@@ -322,10 +324,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void startFollowLine() {
         // Configurer le bouton d'arrêt du suivi.
-        setUIState(false);
+        setUIState(false, btnFollowLine);
         btnFollowLine.setText(getResources().getString(R.string.stop));
         followLineStarted = true;
-        btnFollowLine.setEnabled(true);
 
         controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
 
@@ -370,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Imgproc.circle(matSource, p, 2, new Scalar(255, 0, 0, 255), 10);
 
         // Afficher le résultat.
-        new Handler(Looper.getMainLooper()).post(() -> ivResult.setImageBitmap(visionHelper.matToBitmap(matSource)));
+        new Handler(Looper.getMainLooper()).post(() -> ivResult.setImageBitmap(visionHelper.matToBitmap(green)));
 
         // Détecter la direction de la ligne.
         /*if (points.length > 2) {
@@ -383,10 +384,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void startDynamicParcour() {
         // Configurer le bouton d'arrêt du parcour.
-        setUIState(false);
+        setUIState(false, btnDynamicParkour);
         btnDynamicParkour.setText(getResources().getString(R.string.stop));
         dynamicParkourStarted = true;
-        btnDynamicParkour.setEnabled(true);
 
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
         lastInstruction = null;
@@ -465,7 +465,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     angle = Detector.detectAngle(arrow, head);
 
                     // Afficher le résultat.
-                    ivResult.setImageBitmap(visionHelper.matToBitmap(arrow));
+                    new Handler(Looper.getMainLooper()).post(() -> ivResult.setImageBitmap(visionHelper.matToBitmap(arrow)));
 
                     if (lastInstruction == null)
                         lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
@@ -622,6 +622,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             btnDynamicParkour.setEnabled(state);
             btnFollowLine.setEnabled(state);
             btnBallRescue.setEnabled(state);
+        });
+    }
+
+    private void setUIState(boolean state, Button exception) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (exception != btnDynamicParkour)
+                btnDynamicParkour.setEnabled(state);
+            if (exception != btnFollowLine)
+                btnFollowLine.setEnabled(state);
+            if (exception != btnBallRescue)
+                btnBallRescue.setEnabled(state);
         });
     }
 }
