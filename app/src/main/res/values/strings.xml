@@ -13,4 +13,7 @@
     <string name="registerError">Erreur survenue lors du processus d\'authentification</string>
     <string name="dynamicParcourStart">Début du parcour dynamique…</string>
     <string name="dynamicParourEnded">Parcour dynamique terminé</string>
+    <string name="followLineStart">Début du suivi d\'une ligne verte…</string>
+    <string name="followLineEnded">Suivi d\'une ligne verte arrêté</string>
+    <string name="stop">Arrêter</string>
 </resources>

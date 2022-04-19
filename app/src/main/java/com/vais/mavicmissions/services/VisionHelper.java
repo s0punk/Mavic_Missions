@@ -30,6 +30,9 @@ public class VisionHelper {
     private boolean openCVLoaded;
     private BaseLoaderCallback cvLoaderCallback;
 
+    private Scalar lowerGreen;
+    private Scalar upperGreen;
+
     public VisionHelper(Context context) {
         this.context = context;
 
@@ -44,6 +47,10 @@ public class VisionHelper {
                 }
             }
         };
+
+        // Définir les limites du vert.
+        lowerGreen = new Scalar(32, 40, 40);
+        upperGreen = new Scalar(82, 240, 240);
     }
 
     public void initCV() {
@@ -187,25 +194,17 @@ public class VisionHelper {
         return biggerContour;
     }
 
-    public MatOfPoint getSmallerContour(List<MatOfPoint> contours) {
-        MatOfPoint smallestContour = null;
-        int smallestContourCount = Integer.MAX_VALUE;
-        for(MatOfPoint contour : contours) {
-            if (contour.rows() < smallestContourCount)
-                smallestContourCount = contour.rows();
-            smallestContour = contour;
+    public Mat filterGreen(Mat src) {
+        Mat greenMask = new Mat();
 
-        }
+        src = smooth(src, 3);
 
-        return smallestContour;
-    }
+        // Transformer en HSV.
+        Mat hsv = new Mat();
+        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
 
-    public Mat drawPoly(Mat src, MatOfPoint points) {
-        List<MatOfPoint> list = new ArrayList<>();
-        list.add(points);
+        Core.inRange(hsv, lowerGreen, upperGreen, greenMask);
 
-        Imgproc.fillPoly(src, list, new Scalar(0, 0, 0, 255), 8);
-
-        return src;
+        return greenMask;
     }
 }
