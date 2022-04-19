@@ -19,6 +19,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 
 public class AircraftController {
     public static final int COMMAND_TIMEOUT = 5000;
+    public static final int TAKEOFF_TIMEOUT = 7500;
     public static final int MINIMUM_COMMAND_DURATION = 100;
     public static final int INFINITE_COMMAND = 0;
     public static final int MAXIMUM_AIRCRAFT_SPEED = 1;
@@ -156,7 +157,7 @@ public class AircraftController {
                         controllerReady = true;
                         hasTakenOff = true;
                         listener.onControllerReady();
-                    }, COMMAND_TIMEOUT)
+                    }, TAKEOFF_TIMEOUT)
             );
         }
     }

@@ -400,7 +400,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 controller.land(() -> {
                     cameraController.lookDown();
                     controller.takeOff(() -> {
-                        cameraController.setZoom(getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                        showToast("Fin décollage");
+                        /*cameraController.setZoom(getRightZoom(), new CommonCallbacks.CompletionCallback() {
                             @Override
                             public void onResult(DJIError djiError) {
                                 // Commencer la recherche de pancartes.
@@ -409,14 +410,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     seekInstructions();
                                 });
                             }
-                        });
+                        });*/
                     });
                 });
             }
             else {
                 // Décoller le drone.
                 controller.takeOff(() -> {
-                    cameraController.setZoom(getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                    showToast("Fin décollage");
+                    /*cameraController.setZoom(getRightZoom(), new CommonCallbacks.CompletionCallback() {
                         @Override
                         public void onResult(DJIError djiError) {
                             // Commencer la recherche de pancartes.
@@ -425,7 +427,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 seekInstructions();
                             });
                         }
-                    });
+                    });*/
                 });
             }
         });
