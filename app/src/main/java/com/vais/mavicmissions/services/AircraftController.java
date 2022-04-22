@@ -31,10 +31,10 @@ public class AircraftController {
     private static final int COMMAND_RESET = 500;
     private static final int ROTATION_DURATION = 1500;
 
-    private static final int ROTATION_FRONT = 0;
-    private static final int ROTATION_LEFT = -90;
-    private static final int ROTATION_RIGHT = 90;
-    private static final int ROTATION_BACK = -180;
+    public static final int ROTATION_FRONT = 0;
+    public static final int ROTATION_LEFT = -90;
+    public static final int ROTATION_RIGHT = 90;
+    public static final int ROTATION_BACK = -180;
 
     private Aircraft aircraft;
     private FlightController flightController;
@@ -98,23 +98,6 @@ public class AircraftController {
         }
     }
 
-    public void calibrate(ControllerListener listener) {
-        takeOff(() -> {
-            new Handler().postDelayed(() -> {
-                goForward(1000, () -> {
-                    goBack(1000, () -> {
-                        land(() -> {
-                            calibrated = true;
-
-                            if (listener != null)
-                                listener.onControllerReady();
-                        });
-                    });
-                });
-            }, COMMAND_TIMEOUT);
-        });
-    }
-
     public void checkVirtualStick(ControllerListener listener) {
         flightController.getVirtualStickModeEnabled(new CommonCallbacks.CompletionCallbackWith<Boolean>() {
             @Override
@@ -142,6 +125,13 @@ public class AircraftController {
     public void resetAxis() {
         pitch = 0;
         roll = 0;
+        throttle = 0;
+    }
+
+    public void resetAxis(boolean resetAll) {
+        pitch = 0;
+        roll = 0;
+        yaw = resetAll ? 0 : yaw;
         throttle = 0;
     }
 
@@ -209,13 +199,6 @@ public class AircraftController {
             }, time);
     }
 
-    public void goHome(ControllerListener listener) {
-        flightController.startGoHome(djiError -> {
-            if (listener != null)
-                listener.onControllerReady();
-        });
-    }
-
     public void goUp(int time, ControllerListener listener) {
         throttle = MAXIMUM_VERTICAL_SPEED;
         sendTask();
@@ -267,6 +250,25 @@ public class AircraftController {
     public void faceAngle(int angle, ControllerListener listener) {
         resetAxis();
         yaw = angle;
+
+        sendTask();
+        if (listener != null)
+            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+    }
+
+    public void faceAngle(int angle, boolean condiderCurrentAngle, ControllerListener listener) {
+        resetAxis();
+
+        if (condiderCurrentAngle) {
+            yaw = angle + yaw;
+
+            if (yaw >= 360)
+                yaw = yaw -= 360;
+            else if (yaw >= 180)
+                yaw = - (yaw - 180);
+        }
+        else
+            yaw = angle;
 
         sendTask();
         if (listener != null)
