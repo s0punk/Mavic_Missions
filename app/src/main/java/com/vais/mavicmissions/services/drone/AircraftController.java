@@ -89,7 +89,7 @@ public class AircraftController {
 
             }, COMMAND_TIMEOUT);
 
-            flightController.setYawControlMode(YawControlMode.ANGLE);
+            flightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
             flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
             flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
             flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);

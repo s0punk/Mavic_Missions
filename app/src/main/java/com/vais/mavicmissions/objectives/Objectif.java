@@ -48,25 +48,25 @@ public abstract class Objectif {
                 controller.land(() -> {
                     cameraController.lookDown();
                     controller.takeOff(() -> {
-                        caller.showToast("Fin décollage");
-                        /*cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                        //caller.showToast("Fin décollage");
+                        cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
                             @Override
                             public void onResult(DJIError djiError) {
                                 onReady.onResult(null);
                             }
-                        });*/
+                        });
                     });
                 });
             } else {
                 // Décoller le drone.
                 controller.takeOff(() -> {
-                    caller.showToast("Fin décollage");
-                    /*cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                    //caller.showToast("Fin décollage");
+                    cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
                         @Override
                         public void onResult(DJIError djiError) {
                             onReady.onResult(null);
                         }
-                    });*/
+                    });
                 });
             }
         });
