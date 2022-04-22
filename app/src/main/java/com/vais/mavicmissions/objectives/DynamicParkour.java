@@ -146,7 +146,7 @@ public class DynamicParkour extends Objectif {
     private void executeInstruction(AircraftInstruction instruction) {
         controller.stop(() -> {
             if (instruction.getInstruction() == FlyInstruction.GO_TOWARDS) {
-                controller.faceAngle((int)instruction.getAngle(), true, () -> {
+                controller.faceAngle((int)instruction.getAngle(), () -> {
                     controller.goForward(2000, null);
                     seekInstructions();
                 });

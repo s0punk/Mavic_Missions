@@ -9,6 +9,7 @@ import com.vais.mavicmissions.services.VerificationUnit;
 import java.util.Timer;
 import java.util.TimerTask;
 import dji.common.error.DJIError;
+import dji.common.flightcontroller.FlightOrientationMode;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
@@ -89,14 +90,16 @@ public class AircraftController {
 
             }, COMMAND_TIMEOUT);
 
-            flightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
-            flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
-            flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
-            flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-            velocityMode = true;
-            resetAxis();
+            flightController.setFlightOrientationMode(FlightOrientationMode.AIRCRAFT_HEADING, djiError -> {
+                flightController.setYawControlMode(YawControlMode.ANGLE);
+                flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+                flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+                flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+                velocityMode = true;
+                resetAxis();
 
-            setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
+                setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
+            });
         }
     }
 
@@ -252,25 +255,6 @@ public class AircraftController {
     public void faceAngle(int angle, ControllerListener listener) {
         resetAxis();
         yaw = angle;
-
-        sendTask();
-        if (listener != null)
-            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
-    }
-
-    public void faceAngle(int angle, boolean condiderCurrentAngle, ControllerListener listener) {
-        resetAxis();
-
-        if (condiderCurrentAngle) {
-            yaw = angle + yaw;
-
-            if (yaw >= 360)
-                yaw = yaw -= 360;
-            else if (yaw >= 180)
-                yaw = - (yaw - 180);
-        }
-        else
-            yaw = angle;
 
         sendTask();
         if (listener != null)

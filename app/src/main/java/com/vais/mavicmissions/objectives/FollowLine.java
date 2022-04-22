@@ -89,7 +89,7 @@ public class FollowLine extends Objectif {
             case AircraftController.ROTATION_LEFT:
                 new Handler().postDelayed(() -> {
                     controller.stop(() -> {
-                        controller.faceAngle(direction, true, () -> {
+                        controller.faceAngle(direction, () -> {
                             controller.goForward(2000, null);
                             new Handler().postDelayed(this::seekGreenLine, 500);
                         });
