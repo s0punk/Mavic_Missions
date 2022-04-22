@@ -1,4 +1,4 @@
-package com.vais.mavicmissions.services;
+package com.vais.mavicmissions.services.drone;
 
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;

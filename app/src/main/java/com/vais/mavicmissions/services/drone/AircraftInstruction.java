@@ -1,4 +1,4 @@
-package com.vais.mavicmissions.services;
+package com.vais.mavicmissions.services.drone;
 
 import com.vais.mavicmissions.Enum.FlyInstruction;
 

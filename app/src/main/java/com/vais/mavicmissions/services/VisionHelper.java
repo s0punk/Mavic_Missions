@@ -56,8 +56,8 @@ public class VisionHelper {
         upperGreen = new Scalar(82, 240, 240);
 
         // Définir les limites du jaune.
-        lowerGreen = new Scalar(32, 40, 40);
-        upperGreen = new Scalar(82, 240, 240);
+        lowerYellow = new Scalar(24, 40, 40);
+        upperYellow = new Scalar(36, 240, 240);
     }
 
     public void initCV() {
@@ -213,5 +213,19 @@ public class VisionHelper {
         Core.inRange(hsv, lowerGreen, upperGreen, greenMask);
 
         return greenMask;
+    }
+
+    public Mat filterYellow(Mat src) {
+        Mat yellowMask = new Mat();
+
+        src = smooth(src, 3);
+
+        // Transformer en HSV.
+        Mat hsv = new Mat();
+        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
+
+        Core.inRange(hsv, lowerYellow, upperYellow, yellowMask);
+
+        return yellowMask;
     }
 }

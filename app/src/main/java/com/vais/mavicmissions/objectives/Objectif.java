@@ -1,9 +1,20 @@
 package com.vais.mavicmissions.objectives;
 
+import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Button;
+
 import com.vais.mavicmissions.MainActivity;
-import com.vais.mavicmissions.services.AircraftController;
-import com.vais.mavicmissions.services.CameraController;
+import com.vais.mavicmissions.R;
+import com.vais.mavicmissions.services.drone.AircraftController;
+import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.services.VisionHelper;
+
+import org.opencv.core.Mat;
+
+import dji.common.error.DJIError;
+import dji.common.util.CommonCallbacks;
 
 public abstract class Objectif {
     protected MainActivity caller;
@@ -20,6 +31,54 @@ public abstract class Objectif {
         this.visionHelper = visionHelper;
 
         objectifStarted = false;
+    }
+
+    protected void setStopButton(Button button) {
+        // Configurer le bouton d'arrêt de l'objectif.
+        caller.setUIState(false, button);
+        button.setText(caller.getResources().getString(R.string.stop));
+        objectifStarted = true;
+    }
+
+    protected void startObjectif(CommonCallbacks.CompletionCallback onReady) {
+        // Vérifier l'état du drone.
+        /*controller.checkVirtualStick(() -> {
+            if (controller.getHasTakenOff()) {
+                // Attérir puis décoller le drone.
+                controller.land(() -> {
+                    cameraController.lookDown();
+                    controller.takeOff(() -> {
+                        //showToast("Fin décollage");
+                        cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                            @Override
+                            public void onResult(DJIError djiError) {
+                                onReady.onResult(null);
+                            }
+                        });
+                    });
+                });
+            } else {
+                // Décoller le drone.
+                controller.takeOff(() -> {
+                    //showToast("Fin décollage");
+                    cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError djiError) {
+                            onReady.onResult(null);
+                        }
+                    });
+                });
+            }
+        });*/
+        onReady.onResult(null);
+    }
+
+    protected Mat getFrame() {
+        return visionHelper.bitmapToMap(caller.cameraSurface.getBitmap());
+    }
+
+    protected void showFrame(Mat frame) {
+        new Handler(Looper.getMainLooper()).post(() -> caller.ivResult.setImageBitmap(visionHelper.matToBitmap(frame)));
     }
 
     public boolean isObjectifStarted() {

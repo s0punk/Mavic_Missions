@@ -1,27 +1,19 @@
 package com.vais.mavicmissions.objectives;
 
-import android.graphics.Bitmap;
 import android.os.Handler;
-import android.os.Looper;
-
 import com.vais.mavicmissions.Enum.FlyInstruction;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
-import com.vais.mavicmissions.services.AircraftController;
-import com.vais.mavicmissions.services.AircraftInstruction;
-import com.vais.mavicmissions.services.CameraController;
+import com.vais.mavicmissions.services.drone.AircraftController;
+import com.vais.mavicmissions.services.drone.AircraftInstruction;
+import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.services.Detector;
 import com.vais.mavicmissions.services.VisionHelper;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
-
 import java.util.List;
-
-import dji.common.error.DJIError;
-import dji.common.util.CommonCallbacks;
 
 public class DynamicParkour extends Objectif {
     private AircraftInstruction lastInstruction;
@@ -35,53 +27,19 @@ public class DynamicParkour extends Objectif {
     }
 
     public void startDynamicParkour() {
-        // Configurer le bouton d'arrêt du parcour.
-        caller.setUIState(false, caller.btnDynamicParkour);
-        caller.btnDynamicParkour.setText(caller.getResources().getString(R.string.stop));
-        objectifStarted = true;
+        setStopButton(caller.btnDynamicParkour);
 
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
         lastInstruction = null;
 
         caller.showToast(caller.getResources().getString(R.string.dynamicParcourStart));
 
-        // Vérifier l'état du drone.
-        controller.checkVirtualStick(() -> {
-            if (controller.getHasTakenOff()) {
-                // Attérir puis décoller le drone.
-                controller.land(() -> {
-                    cameraController.lookDown();
-                    controller.takeOff(() -> {
-                        //showToast("Fin décollage");
-                        cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
-                            @Override
-                            public void onResult(DJIError djiError) {
-                                // Commencer la recherche de pancartes.
-                                controller.goForward(1000, () -> {
-                                    controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
-                                    seekInstructions();
-                                });
-                            }
-                        });
-                    });
-                });
-            }
-            else {
-                // Décoller le drone.
-                controller.takeOff(() -> {
-                    //showToast("Fin décollage");
-                    cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
-                        @Override
-                        public void onResult(DJIError djiError) {
-                            // Commencer la recherche de pancartes.
-                            controller.goForward(1000, () -> {
-                                controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
-                                seekInstructions();
-                            });
-                        }
-                    });
-                });
-            }
+        startObjectif(djiError -> {
+            // Commencer la recherche de pancartes.
+            controller.goForward(1000, () -> {
+                controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
+                seekInstructions();
+            });
         });
     }
 
@@ -94,8 +52,7 @@ public class DynamicParkour extends Objectif {
             return;
 
         // Capturer le flux vidéo.
-        Bitmap source = caller.cameraSurface.getBitmap();
-        Mat matSource = visionHelper.bitmapToMap(source);
+        Mat matSource = getFrame();
 
         // Effectuer une détection de contours et isoler le plus gros.
         List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
@@ -119,7 +76,7 @@ public class DynamicParkour extends Objectif {
                     angle = Detector.detectAngle(arrow, head);
 
                     // Afficher le résultat.
-                    new Handler(Looper.getMainLooper()).post(() -> caller.ivResult.setImageBitmap(visionHelper.matToBitmap(arrow)));
+                    showFrame(arrow);
 
                     if (lastInstruction == null)
                         lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);

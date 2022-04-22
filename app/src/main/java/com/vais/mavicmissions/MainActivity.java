@@ -7,7 +7,6 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,16 +21,10 @@ import android.widget.Toast;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.objectives.BallRescue;
 import com.vais.mavicmissions.objectives.FollowLine;
-import com.vais.mavicmissions.services.AircraftController;
-import com.vais.mavicmissions.services.CameraController;
-import com.vais.mavicmissions.services.Detector;
+import com.vais.mavicmissions.services.drone.AircraftController;
+import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.objectives.DynamicParkour;
 import com.vais.mavicmissions.services.VisionHelper;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -160,11 +153,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     parkourManager.setObjectifStarted(false);
                     btnDynamicParkour.setText(getResources().getString(R.string.dynamicParcour));
 
-                    // Arrêter le drone.
-                    controller.land(() -> {
-                        cameraController.lookDown();
+                    if (controller.getHasTakenOff())
+                        quickLand();
+                    else
                         setUIState(true);
-                    });
                 }
                 break;
             case R.id.btnFollowLine:
@@ -176,32 +168,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     lineFollower.setObjectifStarted(false);
                     btnFollowLine.setText(getResources().getString(R.string.followLine));
 
-                    // Arrêter le drone.
-                    controller.land(() -> {
-                        cameraController.lookDown();
+                    if (controller.getHasTakenOff())
+                        quickLand();
+                    else
                         setUIState(true);
-                    });
                 }
                 break;
             case R.id.btnBallRescue:
-                setUIState(false);
+                if (!ballRescuer.isObjectifStarted())
+                    ballRescuer.startBallRescue();
+                else {
+                    setUIState(false);
+                    showToast(getResources().getString(R.string.ballRescueEnded));
+                    ballRescuer.setObjectifStarted(false);
+                    btnBallRescue.setText(getResources().getString(R.string.ballRescue));
 
-                controller.checkVirtualStick(() -> {
-                    if (controller.getHasTakenOff()) {
-                        controller.land(() -> {
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                setUIState(true);
-                            });
-                        });
-                    }
-                    else {
-                        controller.takeOff(() -> {
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                setUIState(true);
-                            });
-                        });
-                    }
-                });
+                    if (controller.getHasTakenOff())
+                        quickLand();
+                    else
+                        setUIState(true);
+                }
                 break;
         }
     }
@@ -220,6 +206,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             zoom = CameraController.ZOOM_1_6X;
 
         return zoom;
+    }
+
+    public void quickLand() {
+        // Arrêter le drone.
+        controller.land(() -> {
+            cameraController.lookDown();
+            setUIState(true);
+        });
     }
 
     @Override

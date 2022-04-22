@@ -1,16 +1,11 @@
 package com.vais.mavicmissions.objectives;
 
-import android.graphics.Bitmap;
 import android.os.Handler;
-import android.os.Looper;
-
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
-import com.vais.mavicmissions.services.AircraftController;
-import com.vais.mavicmissions.services.CameraController;
-import com.vais.mavicmissions.services.Detector;
+import com.vais.mavicmissions.services.drone.AircraftController;
+import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.services.VisionHelper;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
@@ -23,36 +18,16 @@ public class FollowLine extends Objectif {
     }
 
     public void startFollowLine() {
-        // Configurer le bouton d'arrêt du suivi.
-        caller.setUIState(false, caller.btnFollowLine);
-        caller.btnFollowLine.setText(caller.getResources().getString(R.string.stop));
-        objectifStarted = true;
+        setStopButton(caller.btnFollowLine);
 
         controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
 
         caller.showToast(caller.getResources().getString(R.string.followLineStart));
 
-        // Vérifier l'état du drone.
-        cameraController.lookForward();
-        seekGreenLine();
-        controller.checkVirtualStick(() -> {
-            if (controller.getHasTakenOff()) {
-                cameraController.setZoom(CameraController.ZOOM_1X, djiError -> {
-                    // Commencer le suivi de la ligne.
-                    controller.goForward(2000, null);
-                    seekGreenLine();
-                });
-            }
-            else {
-                // Décoller le drone.
-                controller.takeOff(() -> {
-                    cameraController.setZoom(CameraController.ZOOM_1X, djiError -> {
-                        // Commencer le suivi de la ligne.
-                        controller.goForward(2000, null);
-                        seekGreenLine();
-                    });
-                });
-            }
+        startObjectif(djiError -> {
+            // Commencer le suivi de la ligne.
+            controller.goForward(2000, null);
+            seekGreenLine();
         });
     }
 
@@ -61,8 +36,7 @@ public class FollowLine extends Objectif {
             return;
 
         // Capturer le flux vidéo.
-        Bitmap source = caller.cameraSurface.getBitmap();
-        Mat matSource = visionHelper.bitmapToMap(source);
+        Mat matSource = getFrame();
 
         // Isoler le vert.
         Mat green = visionHelper.filterGreen(matSource);
@@ -96,7 +70,7 @@ public class FollowLine extends Objectif {
             generalDirection = AircraftController.ROTATION_LEFT;
 
         // Afficher le résultat.
-        new Handler(Looper.getMainLooper()).post(() -> caller.ivResult.setImageBitmap(visionHelper.matToBitmap(matSource)));
+        showFrame(matSource);
         caller.showToast(generalDirection + "");
 
         // Effectuer l'action requise.
