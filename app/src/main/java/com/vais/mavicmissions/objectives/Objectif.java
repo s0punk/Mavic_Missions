@@ -42,35 +42,34 @@ public abstract class Objectif {
 
     protected void startObjectif(CommonCallbacks.CompletionCallback onReady) {
         // Vérifier l'état du drone.
-        /*controller.checkVirtualStick(() -> {
+        controller.checkVirtualStick(() -> {
             if (controller.getHasTakenOff()) {
                 // Attérir puis décoller le drone.
                 controller.land(() -> {
                     cameraController.lookDown();
                     controller.takeOff(() -> {
-                        //showToast("Fin décollage");
-                        cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                        caller.showToast("Fin décollage");
+                        /*cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
                             @Override
                             public void onResult(DJIError djiError) {
                                 onReady.onResult(null);
                             }
-                        });
+                        });*/
                     });
                 });
             } else {
                 // Décoller le drone.
                 controller.takeOff(() -> {
-                    //showToast("Fin décollage");
-                    cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
+                    caller.showToast("Fin décollage");
+                    /*cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
                         @Override
                         public void onResult(DJIError djiError) {
                             onReady.onResult(null);
                         }
-                    });
+                    });*/
                 });
             }
-        });*/
-        onReady.onResult(null);
+        });
     }
 
     protected Mat getFrame() {
