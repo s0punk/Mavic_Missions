@@ -88,6 +88,14 @@ public class CameraController {
         gimbal.rotate(builder.build(), DJIError -> lookingDown = false);
     }
 
+    public void lookAtAngle(int angle) {
+        Rotation.Builder builder = new Rotation.Builder();
+        builder.mode(RotationMode.ABSOLUTE_ANGLE);
+        builder.pitch(angle);
+
+        gimbal.rotate(builder.build(), null);
+    }
+
     public void lookDown() {
         Rotation.Builder builder = new Rotation.Builder();
         builder.mode(RotationMode.ABSOLUTE_ANGLE);
