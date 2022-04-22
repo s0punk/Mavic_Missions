@@ -1,6 +1,8 @@
 package com.vais.mavicmissions.objectives;
 
 import android.os.Handler;
+
+import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
 import com.vais.mavicmissions.services.drone.AircraftController;
@@ -39,7 +41,7 @@ public class FollowLine extends Objectif {
         Mat matSource = getFrame();
 
         // Isoler le vert.
-        Mat green = visionHelper.filterGreen(matSource);
+        Mat green = visionHelper.filterColor(matSource, Color.LINE_GREEN);
 
         // Détecter les coins.
         Point center = new Point((int)green.width() / 2, (int)green.height() / 2);

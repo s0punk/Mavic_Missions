@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.vais.mavicmissions.Enum.Color;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.LoaderCallbackInterface;
@@ -24,10 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VisionHelper {
-    private static int CONTOURS_THRESHOLD = 150;
+    private static final int CONTOURS_THRESHOLD = 150;
 
     private Context context;
-    private boolean openCVLoaded;
     private BaseLoaderCallback cvLoaderCallback;
 
     private Scalar lowerGreen;
@@ -36,6 +37,9 @@ public class VisionHelper {
     private Scalar lowerYellow;
     private Scalar upperYellow;
 
+    private Scalar lowerBallGreen;
+    private Scalar upperBallGreen;
+
     public VisionHelper(Context context) {
         this.context = context;
 
@@ -43,11 +47,8 @@ public class VisionHelper {
             @Override
             public void onManagerConnected(int status) {
                 super.onManagerConnected(status);
-                if (status == LoaderCallbackInterface.SUCCESS)
-                    openCVLoaded = true;
-                else {
+                if (status != LoaderCallbackInterface.SUCCESS)
                     super.onManagerConnected(status);
-                }
             }
         };
 
@@ -56,8 +57,12 @@ public class VisionHelper {
         upperGreen = new Scalar(82, 240, 240);
 
         // Définir les limites du jaune.
-        lowerYellow = new Scalar(24, 40, 40);
-        upperYellow = new Scalar(36, 240, 240);
+        lowerYellow = new Scalar(20, 100, 100);
+        upperYellow = new Scalar(30, 255, 255);
+
+        // Définir les limites du vert de la balle.
+        lowerBallGreen = new Scalar(32, 100, 100);
+        upperBallGreen = new Scalar(82, 255, 255);
     }
 
     public void initCV() {
@@ -82,13 +87,6 @@ public class VisionHelper {
     public Mat toGrayscale(Mat src) {
         Mat result = new Mat();
         Imgproc.cvtColor(src, result, Imgproc.COLOR_RGB2GRAY);
-
-        return result;
-    }
-
-    public Mat toColor(Mat src) {
-        Mat result = new Mat();
-        Imgproc.cvtColor(src, result, Imgproc.COLOR_GRAY2RGB);
 
         return result;
     }
@@ -201,7 +199,7 @@ public class VisionHelper {
         return biggerContour;
     }
 
-    public Mat filterGreen(Mat src) {
+    public Mat filterColor(Mat src, Color color) {
         Mat greenMask = new Mat();
 
         src = smooth(src, 3);
@@ -210,22 +208,24 @@ public class VisionHelper {
         Mat hsv = new Mat();
         Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
 
-        Core.inRange(hsv, lowerGreen, upperGreen, greenMask);
+        // Définir les limites de couleurs.
+        Scalar lower = null, upper = null;
+
+        if (color == Color.YELLOW) {
+            lower = lowerYellow;
+            upper = upperYellow;
+        }
+        else if (color == Color.LINE_GREEN) {
+            lower = lowerGreen;
+            upper = upperGreen;
+        }
+        else if (color == Color.BALL_GREEN) {
+            lower = lowerBallGreen;
+            upper = upperBallGreen;
+        }
+
+        Core.inRange(hsv, lower, upper, greenMask);
 
         return greenMask;
-    }
-
-    public Mat filterYellow(Mat src) {
-        Mat yellowMask = new Mat();
-
-        src = smooth(src, 3);
-
-        // Transformer en HSV.
-        Mat hsv = new Mat();
-        Imgproc.cvtColor(src, hsv, Imgproc.COLOR_RGB2HSV);
-
-        Core.inRange(hsv, lowerYellow, upperYellow, yellowMask);
-
-        return yellowMask;
     }
 }
