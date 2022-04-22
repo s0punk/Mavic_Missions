@@ -23,24 +23,13 @@ import java.util.List;
 import dji.common.error.DJIError;
 import dji.common.util.CommonCallbacks;
 
-public class DynamicParkour {
-    private MainActivity caller;
-    private AircraftController controller;
-    private CameraController cameraController;
-    private VisionHelper visionHelper;
-
+public class DynamicParkour extends Objectif {
     private AircraftInstruction lastInstruction;
-
     private String parkourEnded;
-    private boolean dynamicParkourStarted;
 
     public DynamicParkour(MainActivity caller, AircraftController controller, CameraController cameraController, VisionHelper visionHelper) {
-        this.caller = caller;
-        this.controller = controller;
-        this.cameraController = cameraController;
-        this.visionHelper = visionHelper;
+        super(caller, controller, cameraController, visionHelper);
 
-        dynamicParkourStarted = false;
         parkourEnded = caller.getResources().getString(R.string.dynamicParourEnded);
         lastInstruction = null;
     }
@@ -49,7 +38,7 @@ public class DynamicParkour {
         // Configurer le bouton d'arrêt du parcour.
         caller.setUIState(false, caller.btnDynamicParkour);
         caller.btnDynamicParkour.setText(caller.getResources().getString(R.string.stop));
-        dynamicParkourStarted = true;
+        objectifStarted = true;
 
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
         lastInstruction = null;
@@ -96,12 +85,12 @@ public class DynamicParkour {
         });
     }
 
-    public void seekInstructions() {
+    private void seekInstructions() {
         Shape detectedShape;
         boolean seek = true;
         boolean stop = false;
 
-        if (!dynamicParkourStarted)
+        if (!objectifStarted)
             return;
 
         // Capturer le flux vidéo.
@@ -178,7 +167,7 @@ public class DynamicParkour {
                     seek = false;
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
-                    dynamicParkourStarted = false;
+                    objectifStarted = false;
                 }
                 else {
                     lastInstruction = null;
@@ -234,7 +223,4 @@ public class DynamicParkour {
             }
         });
     }
-
-    public void setDynamicParkourStarted(boolean dynamicParkourStarted) { this.dynamicParkourStarted = dynamicParkourStarted; }
-    public boolean isDynamicParkourStarted() { return dynamicParkourStarted; }
 }

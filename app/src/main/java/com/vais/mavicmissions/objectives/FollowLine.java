@@ -17,28 +17,16 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-public class FollowLine {
-    private MainActivity caller;
-    private AircraftController controller;
-    private CameraController cameraController;
-    private VisionHelper visionHelper;
-
-    private boolean followLineStarted;
-
+public class FollowLine extends Objectif {
     public FollowLine(MainActivity caller, AircraftController controller, CameraController cameraController, VisionHelper visionHelper) {
-        this.caller = caller;
-        this.controller = controller;
-        this.cameraController = cameraController;
-        this.visionHelper = visionHelper;
-
-        followLineStarted = false;
+        super(caller, controller, cameraController, visionHelper);
     }
 
     public void startFollowLine() {
         // Configurer le bouton d'arrêt du suivi.
         caller.setUIState(false, caller.btnFollowLine);
         caller.btnFollowLine.setText(caller.getResources().getString(R.string.stop));
-        followLineStarted = true;
+        objectifStarted = true;
 
         controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
 
@@ -68,8 +56,8 @@ public class FollowLine {
         });
     }
 
-    public void seekGreenLine() {
-        if (!followLineStarted)
+    private void seekGreenLine() {
+        if (!objectifStarted)
             return;
 
         // Capturer le flux vidéo.
@@ -134,7 +122,4 @@ public class FollowLine {
                 break;
         }
     }
-
-    public boolean isFollowLineStarted() { return followLineStarted; }
-    public void setFollowLineStarted(boolean followLineStarted) { this.followLineStarted = followLineStarted; }
 }

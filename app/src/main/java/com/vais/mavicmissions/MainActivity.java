@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
+import com.vais.mavicmissions.objectives.BallRescue;
 import com.vais.mavicmissions.objectives.FollowLine;
 import com.vais.mavicmissions.services.AircraftController;
 import com.vais.mavicmissions.services.CameraController;
@@ -77,8 +78,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private VisionHelper visionHelper;
 
     private MavicMissionApp app;
+
     private DynamicParkour parkourManager;
     private FollowLine lineFollower;
+    private BallRescue ballRescuer;
 
     public Button btnDynamicParkour;
     public Button btnFollowLine;
@@ -149,12 +152,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btnDynamicParcour:
-                if (!parkourManager.isDynamicParkourStarted())
+                if (!parkourManager.isObjectifStarted())
                     parkourManager.startDynamicParkour();
                 else {
                     setUIState(false);
                     showToast(getResources().getString(R.string.dynamicParourEnded));
-                    parkourManager.setDynamicParkourStarted(false);
+                    parkourManager.setObjectifStarted(false);
                     btnDynamicParkour.setText(getResources().getString(R.string.dynamicParcour));
 
                     // Arrêter le drone.
@@ -165,12 +168,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btnFollowLine:
-                if (!lineFollower.isFollowLineStarted())
+                if (!lineFollower.isObjectifStarted())
                     lineFollower.startFollowLine();
                 else {
                     setUIState(false);
                     showToast(getResources().getString(R.string.followLineEnded));
-                    lineFollower.setFollowLineStarted(false);
+                    lineFollower.setObjectifStarted(false);
                     btnFollowLine.setText(getResources().getString(R.string.followLine));
 
                     // Arrêter le drone.
@@ -380,6 +383,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     parkourManager = new DynamicParkour(self, controller, cameraController, visionHelper);
                     lineFollower = new FollowLine(self, controller, cameraController, visionHelper);
+                    ballRescuer = new BallRescue(self, controller, cameraController, visionHelper);
                 });
             }
         });

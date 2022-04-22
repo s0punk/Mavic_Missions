@@ -33,6 +33,9 @@ public class VisionHelper {
     private Scalar lowerGreen;
     private Scalar upperGreen;
 
+    private Scalar lowerYellow;
+    private Scalar upperYellow;
+
     public VisionHelper(Context context) {
         this.context = context;
 
@@ -49,6 +52,10 @@ public class VisionHelper {
         };
 
         // Définir les limites du vert.
+        lowerGreen = new Scalar(32, 40, 40);
+        upperGreen = new Scalar(82, 240, 240);
+
+        // Définir les limites du jaune.
         lowerGreen = new Scalar(32, 40, 40);
         upperGreen = new Scalar(82, 240, 240);
     }
