@@ -14,26 +14,44 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
+/**
+ * Classe qui gère l'accomplissement de l'objectif 2, le suivi d'une ligne verte.
+ */
 public class FollowLine extends Objectif {
+    /**
+     * Constructeur de la classe FollowLine, créé l'objet et initialise ses données membres.
+     * @param caller MainActivity, instance de l'activité principale, permet d'accéder à différents éléments du UI.
+     * @param controller AircraftController, controlleur du drone.
+     * @param cameraController CameraController, controlleur de la caméra du drone.
+     * @param visionHelper VisionHelper, service de traitement d'images.
+     */
     public FollowLine(MainActivity caller, AircraftController controller, CameraController cameraController, VisionHelper visionHelper) {
         super(caller, controller, cameraController, visionHelper);
     }
 
+    /**
+     * Méthode qui commence le processus de suivi d'une ligne verte.
+     */
     public void startFollowLine() {
+        // Désactiver les boutons, excepté le bouton d'arrêt.
         setStopButton(caller.btnFollowLine);
-
-        controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
-
         caller.showToast(caller.getResources().getString(R.string.followLineStart));
 
+        // Configurer la vitesse du drone à 1 m/s.
+        controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
+
+        // Commencer l'objectif.
         startObjectif(djiError -> {
-            // Commencer le suivi de la ligne.
             controller.goForward(2000, null);
             seekGreenLine();
         });
     }
 
+    /**
+     * Méthode qui permet de trouver une ligne verte.
+     */
     private void seekGreenLine() {
+        // Quitter si l'objectif n'est pas démarré.
         if (!objectifStarted)
             return;
 
@@ -48,9 +66,11 @@ public class FollowLine extends Objectif {
         MatOfPoint corners = visionHelper.detectCorners(green, 25, 0.5f, 15);
         Point[] points = corners.toArray();
 
+        // Trouver la direction de la ligne.
         int generalDirection = AircraftController.ROTATION_FRONT;
         int up = 0, right = 0, left = 0;
 
+        // Pour chaque coins détectés.
         for (Point p : points) {
             // Déterminer la direction du point.
             if (p.y < center.y && p.x > center.x - 75 && p.x < center.x + 75)
@@ -79,17 +99,26 @@ public class FollowLine extends Objectif {
         changeDirection(generalDirection);
     }
 
+    /**
+     * Méthode qui change la direction du drone selon la direction de la ligne.
+     * @param direction Int, rotation que le drone doit effectuer.
+     */
     private void changeDirection(int direction) {
+        // Selon la direction reçue.
         switch (direction) {
             case AircraftController.ROTATION_FRONT:
+                // Avancer pendant 2 sec et continuer à chercher la ligne.
                 controller.goForward(2000, null);
                 new Handler().postDelayed(this::seekGreenLine, 500);
                 break;
             case AircraftController.ROTATION_RIGHT:
             case AircraftController.ROTATION_LEFT:
+                // Attendre 500 ms pour que le drone atteingne le coin de la ligne.
                 new Handler().postDelayed(() -> {
+                    // Arrêter le drone et effectuer la rotation.
                     controller.stop(() -> {
                         controller.faceAngle(direction, () -> {
+                            // Avancer pendant 2 sec et continuer à chercher la ligne.
                             controller.goForward(2000, null);
                             new Handler().postDelayed(this::seekGreenLine, 500);
                         });
