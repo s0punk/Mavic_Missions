@@ -90,6 +90,10 @@ public class FollowLine extends Objectif {
             generalDirection = AircraftController.ROTATION_RIGHT;
         else if (left > right && left > up)
             generalDirection = AircraftController.ROTATION_LEFT;
+        else if (left == 0 && right == 0 && up == 0) {
+            controller.stop(null);
+            return;
+        }
 
         // Afficher le résultat.
         showFrame(matSource);
