@@ -88,15 +88,19 @@ public class AircraftController {
 
             }, COMMAND_TIMEOUT);
 
-            flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
-            flightController.setYawControlMode(YawControlMode.ANGLE);
-            flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
-            flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-            flightController.setFlightOrientationMode(FlightOrientationMode.AIRCRAFT_HEADING, null);
+            setFlightControllerParams();
             velocityMode = true;
-            //resetAxis();
+            resetAxis();
             setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
         }
+    }
+
+    public void setFlightControllerParams() {
+        flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+        flightController.setYawControlMode(YawControlMode.ANGLE);
+        flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+        flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+        flightController.setFlightOrientationMode(FlightOrientationMode.AIRCRAFT_HEADING, null);
     }
 
     public void checkVirtualStick(ControllerListener listener) {
@@ -105,10 +109,13 @@ public class AircraftController {
             public void onSuccess(Boolean virtualStickEnabled) {
                 if (!virtualStickEnabled)
                     flightController.setVirtualStickModeEnabled(true, djiError -> {
+                        setFlightControllerParams();
                         listener.onControllerReady();
                     });
-                else
+                else {
+                    setFlightControllerParams();
                     listener.onControllerReady();
+                }
             }
             @Override
             public void onFailure(DJIError djiError) { }
@@ -155,7 +162,7 @@ public class AircraftController {
 
     public void land(@NonNull ControllerListener listener) {
         if (flightController != null && hasTakenOff) {
-            //resetAxis();
+            resetAxis();
 
             controllerReady = false;
             flightController.startLanding(djiError -> {

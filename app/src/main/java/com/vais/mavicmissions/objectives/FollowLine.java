@@ -109,7 +109,7 @@ public class FollowLine extends Objectif {
             case AircraftController.ROTATION_FRONT:
                 // Avancer pendant 2 sec et continuer à chercher la ligne.
                 controller.goForward(2000, null);
-                new Handler().postDelayed(this::seekGreenLine, 500);
+                new Handler().postDelayed(this::seekGreenLine, 1000);
                 break;
             case AircraftController.ROTATION_RIGHT:
             case AircraftController.ROTATION_LEFT:
@@ -120,7 +120,7 @@ public class FollowLine extends Objectif {
                         controller.faceAngle(direction, () -> {
                             // Avancer pendant 2 sec et continuer à chercher la ligne.
                             controller.goForward(2000, null);
-                            new Handler().postDelayed(this::seekGreenLine, 500);
+                            new Handler().postDelayed(this::seekGreenLine, 1000);
                         });
                     });
                 }, 500);
