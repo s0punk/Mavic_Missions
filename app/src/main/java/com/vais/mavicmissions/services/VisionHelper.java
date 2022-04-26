@@ -228,4 +228,23 @@ public class VisionHelper {
 
         return greenMask;
     }
+
+    public Point getAveragePoint(Point[] points) {
+        if (points == null || points.length == 0)
+            return null;
+
+        int avgX = 0, avgY = 0;
+        for (Point p : points) {
+            avgX += p.x;
+            avgY += p.y;
+        }
+        avgX = avgX / points.length;
+        avgY = avgY / points.length;
+
+        return new Point(avgX, avgY);
+    }
+
+    public Point getCenterPoint(Mat source) {
+        return new Point((int)source.width() / 2, (int)source.height() / 2);
+    }
 }

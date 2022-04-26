@@ -37,7 +37,6 @@ public class DynamicParkour extends Objectif {
         startObjectif(djiError -> {
             // Commencer la recherche de pancartes.
             controller.goForward(1000, () -> {
-                caller.showToast(controller.pitch + " - " + controller.roll + " - " + controller.yaw + " - " + controller.throttle);
                 controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
                 seekInstructions();
             });

@@ -73,16 +73,7 @@ public class BallRescue extends Objectif {
         MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
         Point[] points = biggerContour.toArray();
 
-        // Faire la moyenne des points du contour.
-        Point avg = null;
-        int avgX = 0, avgY = 0;
-        for (Point p : points) {
-            avgX += p.x;
-            avgY += p.y;
-        }
-        avgX = avgX / points.length;
-        avgY = avgY / points.length;
-        avg = new Point(avgX, avgY);
+        Point avg = visionHelper.getAveragePoint(points);
 
         // Afficher la position de la balle.
         Imgproc.circle(matSource, avg, 2, new Scalar(255, 255, 0, 255), 10);

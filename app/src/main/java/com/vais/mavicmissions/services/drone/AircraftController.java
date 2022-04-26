@@ -92,6 +92,7 @@ public class AircraftController {
             velocityMode = true;
             resetAxis();
             setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
+            yaw = flightController.getCompass().getHeading();
         }
     }
 
@@ -266,9 +267,9 @@ public class AircraftController {
 
         angle = droneAngle + desiredAngle;
         if (angle > 180)
-            angle = - 180 - (angle - 180);
+            angle = angle - 360;
         else if (angle < -180)
-            angle = 180 - (angle - 180);
+            angle = angle + 360;
 
         return angle;
     }

@@ -18,6 +18,8 @@ import org.opencv.imgproc.Imgproc;
  * Classe qui gère l'accomplissement de l'objectif 2, le suivi d'une ligne verte.
  */
 public class FollowLine extends Objectif {
+    private Mat currentView;
+
     /**
      * Constructeur de la classe FollowLine, créé l'objet et initialise ses données membres.
      * @param caller MainActivity, instance de l'activité principale, permet d'accéder à différents éléments du UI.
@@ -43,31 +45,74 @@ public class FollowLine extends Objectif {
         // Commencer l'objectif.
         startObjectif(djiError -> {
             controller.goForward(2000, null);
-            seekGreenLine();
+            getOnLine();
         });
     }
 
     /**
-     * Méthode qui permet de trouver une ligne verte.
+     * Méthode qui permet au drone de se placer au dessus de la ligne verte.
      */
-    private void seekGreenLine() {
+    public void getOnLine() {
         // Quitter si l'objectif n'est pas démarré.
         if (!objectifStarted)
             return;
 
+        Point[] points = detectLine();
+
+        if (points.length != 0) {
+            Point avg = visionHelper.getAveragePoint(points);
+            Point center = visionHelper.getCenterPoint(currentView);
+
+            if (avg.x > center.x - 75 && avg.x < center.x + 75) {
+                followLine();
+            }
+            else
+                controller.faceAngle(AircraftController.ROTATION_RIGHT, this::centerLine);
+        }
+        else
+            controller.goForward(250, this::getOnLine);
+    }
+
+    public void centerLine() {
+        Point[] points = detectLine();
+
+        Point avg = visionHelper.getAveragePoint(points);
+        Point center = visionHelper.getCenterPoint(currentView);
+
+        // Déplacer le drone à gauche.
+        if (avg.x < center.x - 75)
+            controller.goLeft(250, this::centerLine);
+        // Déplacer le drone à droite.
+        else if (avg.x > center.x + 75)
+            controller.goRight(250, this::centerLine);
+        else if (avg.x > center.x - 75 && avg.x < center.x + 75)
+            followLine();
+    }
+
+    public Point[] detectLine() {
         // Capturer le flux vidéo.
-        Mat matSource = getFrame();
+        currentView = getFrame();
 
         // Isoler le vert.
-        Mat green = visionHelper.filterColor(matSource, Color.LINE_GREEN);
-
-        // Déterminer si le drone est sur la ligne.
-
+        Mat green = visionHelper.filterColor(currentView, Color.LINE_GREEN);
 
         // Détecter les coins.
-        Point center = new Point((int)green.width() / 2, (int)green.height() / 2);
         MatOfPoint corners = visionHelper.detectCorners(green, 25, 0.5f, 15);
-        Point[] points = corners.toArray();
+
+        return corners.toArray();
+    }
+
+    /**
+     * Méthode qui permet de trouver la direction de la ligne verte.
+     */
+    private void followLine() {
+        // Quitter si l'objectif n'est pas démarré.
+        if (!objectifStarted)
+            return;
+
+        // Détecter les coins.
+        Point[] points = detectLine();
+        Point center = visionHelper.getCenterPoint(currentView);
 
         // Trouver la direction de la ligne.
         int generalDirection = AircraftController.ROTATION_FRONT;
@@ -84,9 +129,9 @@ public class FollowLine extends Objectif {
                 left++;
 
             // Afficher le point.
-            Imgproc.circle(matSource, p, 2, new Scalar(255, 0, 0, 255), 10);
+            Imgproc.circle(currentView, p, 2, new Scalar(255, 0, 0, 255), 10);
         }
-        Imgproc.circle(matSource, center, 2, new Scalar(0, 255, 0, 255), 10);
+        Imgproc.circle(currentView, center, 2, new Scalar(0, 255, 0, 255), 10);
 
         // Déterminer la direction générale.
         if (right > left && right > up)
@@ -99,8 +144,7 @@ public class FollowLine extends Objectif {
         }
 
         // Afficher le résultat.
-        showFrame(matSource);
-        caller.showToast(generalDirection + "");
+        showFrame(currentView);
 
         // Effectuer l'action requise.
         changeDirection(generalDirection);
@@ -116,7 +160,7 @@ public class FollowLine extends Objectif {
             case AircraftController.ROTATION_FRONT:
                 // Avancer pendant 2 sec et continuer à chercher la ligne.
                 controller.goForward(2000, null);
-                new Handler().postDelayed(this::seekGreenLine, 1000);
+                new Handler().postDelayed(this::followLine, 1000);
                 break;
             case AircraftController.ROTATION_RIGHT:
             case AircraftController.ROTATION_LEFT:
@@ -127,7 +171,7 @@ public class FollowLine extends Objectif {
                         controller.faceAngle(direction, () -> {
                             // Avancer pendant 2 sec et continuer à chercher la ligne.
                             controller.goForward(2000, null);
-                            new Handler().postDelayed(this::seekGreenLine, 1000);
+                            new Handler().postDelayed(this::followLine, 1000);
                         });
                     });
                 }, 500);
