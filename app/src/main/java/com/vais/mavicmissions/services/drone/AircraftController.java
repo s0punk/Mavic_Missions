@@ -136,13 +136,6 @@ public class AircraftController {
         throttle = 0;
     }
 
-    public void resetAxis(boolean resetAll) {
-        pitch = 0;
-        roll = 0;
-        yaw = resetAll ? 0 : yaw;
-        throttle = 0;
-    }
-
     public float getHeight() {
         return flightController.getState().getAircraftLocation().getAltitude();
     }
@@ -257,47 +250,27 @@ public class AircraftController {
 
     public void faceAngle(int angle, ControllerListener listener) {
         resetAxis();
-        yaw = angle;
+        yaw = calculateRealAngle(angle);
 
         sendTask();
         if (listener != null)
             new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
     }
 
-    public void faceFront(ControllerListener listener) {
-        resetAxis();
-        yaw = ROTATION_FRONT;
-        sendTask();
+    public int calculateRealAngle(int desiredAngle) {
+        int angle = 0;
+        int droneAngle = (int)flightController.getCompass().getHeading();
 
-        if (listener != null)
-            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
-    }
+        if (desiredAngle == ROTATION_FRONT)
+            return droneAngle;
 
-    public void faceLeft(ControllerListener listener) {
-        resetAxis();
-        yaw = ROTATION_LEFT;
+        angle = droneAngle + desiredAngle;
+        if (angle > 180)
+            angle = - 180 - (angle - 180);
+        else if (angle < -180)
+            angle = 180 - (angle - 180);
 
-        sendTask();
-        if (listener != null)
-            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
-    }
-
-    public void faceRight(ControllerListener listener) {
-        resetAxis();
-        yaw = ROTATION_RIGHT;
-
-        sendTask();
-        if (listener != null)
-            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
-    }
-
-    public void faceBack(ControllerListener listener) {
-        resetAxis();
-        yaw = ROTATION_BACK;
-
-        sendTask();
-        if (listener != null)
-            new Handler().postDelayed(listener::onControllerReady, ROTATION_DURATION);
+        return angle;
     }
 
     public void stop(ControllerListener listener) {

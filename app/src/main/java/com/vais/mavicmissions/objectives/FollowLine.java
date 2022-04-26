@@ -37,7 +37,7 @@ public class FollowLine extends Objectif {
         setStopButton(caller.btnFollowLine);
         caller.showToast(caller.getResources().getString(R.string.followLineStart));
 
-        // Configurer la vitesse du drone à 1 m/s.
+        // Configurer la vitesse du drone à 0.5 m/s.
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
 
         // Commencer l'objectif.
@@ -60,6 +60,9 @@ public class FollowLine extends Objectif {
 
         // Isoler le vert.
         Mat green = visionHelper.filterColor(matSource, Color.LINE_GREEN);
+
+        // Déterminer si le drone est sur la ligne.
+
 
         // Détecter les coins.
         Point center = new Point((int)green.width() / 2, (int)green.height() / 2);
