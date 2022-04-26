@@ -38,7 +38,7 @@ public class FollowLine extends Objectif {
         caller.showToast(caller.getResources().getString(R.string.followLineStart));
 
         // Configurer la vitesse du drone à 1 m/s.
-        controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
+        controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
 
         // Commencer l'objectif.
         startObjectif(djiError -> {

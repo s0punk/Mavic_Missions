@@ -50,19 +50,17 @@ public class AircraftController {
 
     private float currentSpeed;
 
-    private float pitch;
-    private float roll;
-    private float yaw;
-    private float throttle;
+    public float pitch;
+    public float roll;
+    public float yaw;
+    public float throttle;
     private boolean velocityMode;
 
     private class SendVirtualStickDataTask extends TimerTask {
         @Override
         public void run() {
             if (VerificationUnit.isFlightControllerAvailable()) {
-                MavicMissionApp.getAircraftInstance()
-                        .getFlightController()
-                        .sendVirtualStickFlightControlData(new FlightControlData(pitch, roll, yaw, throttle), djiError -> { });
+                flightController.sendVirtualStickFlightControlData(new FlightControlData(pitch, roll, yaw, throttle), djiError -> { });
             }
         }
     }
@@ -90,16 +88,14 @@ public class AircraftController {
 
             }, COMMAND_TIMEOUT);
 
-            flightController.setFlightOrientationMode(FlightOrientationMode.AIRCRAFT_HEADING, djiError -> {
-                flightController.setYawControlMode(YawControlMode.ANGLE);
-                flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
-                flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
-                flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
-                velocityMode = true;
-                resetAxis();
-
-                setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
-            });
+            flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+            flightController.setYawControlMode(YawControlMode.ANGLE);
+            flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+            flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+            flightController.setFlightOrientationMode(FlightOrientationMode.AIRCRAFT_HEADING, null);
+            velocityMode = true;
+            //resetAxis();
+            setCurrentSpeed(MAXIMUM_AIRCRAFT_SPEED);
         }
     }
 
@@ -159,7 +155,7 @@ public class AircraftController {
 
     public void land(@NonNull ControllerListener listener) {
         if (flightController != null && hasTakenOff) {
-            resetAxis();
+            //resetAxis();
 
             controllerReady = false;
             flightController.startLanding(djiError -> {
@@ -308,6 +304,8 @@ public class AircraftController {
     public Aircraft getAircraft() {
         return aircraft;
     }
+
+    public FlightController getFlightController() { return flightController; }
 
     public boolean isCalibrated() { return calibrated; }
 
