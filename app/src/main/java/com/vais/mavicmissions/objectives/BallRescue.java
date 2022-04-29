@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class BallRescue extends Objectif {
     private final int MAX_FAILED_ATTEMPT = 3;
-    private final int BALL_DETECTION_THRESHOLD = 100;
+    private final int BALL_DETECTION_THRESHOLD = 150;
     private final int CHANGE_ZONE_ROTATION = 25;
 
     private int failedAttempt;

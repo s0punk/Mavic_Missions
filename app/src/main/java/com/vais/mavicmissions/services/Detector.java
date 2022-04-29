@@ -1,6 +1,8 @@
 package com.vais.mavicmissions.services;
 
 import com.vais.mavicmissions.Enum.Shape;
+import com.vais.mavicmissions.MainActivity;
+
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -36,23 +38,14 @@ public class Detector {
             detectedShape = Shape.ARROW;
         else if (cornerCount > 7)
             detectedShape = Shape.H;
-        else {
-            // Détecter deux coins seulement.
-            corners = visionHelper.detectCorners(source, 2, 0.01f, 110);
-            Point[] points = corners.toArray();
-
-            if (points.length == 2) {
-                double distance = getLength(points[0], points[1]);
-                if (distance < 450)
-                    detectedShape = Shape.U;
-                else
-                    detectedShape = Shape.D;
-            }
-        }
+        else if (sidesCount == 8 || sidesCount == 9)
+            detectedShape = Shape.U;
+        else if (sidesCount == 6 || sidesCount == 7)
+            detectedShape = Shape.D;
         return detectedShape;
     }
 
-    public static Mat detectArrow(Mat source, VisionHelper visionHelper, Point[] corners) {
+    public static Mat detectArrow(Mat source, Point[] corners) {
         if (corners.length != 3) return null;
 
         // Redimensionner l'image pour y avoir la flèche seulement.
@@ -75,7 +68,7 @@ public class Detector {
 
         // Convertir l'image en image binaire.
         Mat binary = new Mat();
-        Imgproc.threshold(cropped, binary, 70, 70, Imgproc.THRESH_BINARY_INV);
+        Imgproc.threshold(cropped, binary, 180, 180, Imgproc.THRESH_BINARY_INV);
 
         return binary;
     }
@@ -165,11 +158,6 @@ public class Detector {
         double r1 = Math.pow(p1.x - p2.x, 2);
         double r2 = Math.pow(p1.y - p2.y, 2);
         return Math.round(Math.sqrt(r1 + r2));
-    }
-
-    public static boolean areLocationsClose(Point p1, Point p2) {
-        final int margin = 25;
-        return ((p1.x > p2.x - margin && p1.x < p2.x + margin) && (p1.y > p2.y - margin && p1.y < p2.y + margin));
     }
 
     public static Point getAveragePoint(Point[] points) {

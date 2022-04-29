@@ -13,6 +13,9 @@ import com.vais.mavicmissions.services.VisionHelper;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
 import java.util.List;
 
 public class DynamicParkour extends Objectif {
@@ -60,7 +63,9 @@ public class DynamicParkour extends Objectif {
 
         // Détecter l'instruction.
         if (biggerContour != null) {
-            detectedShape = Detector.detectShape(visionHelper.prepareContourDetection(matSource), visionHelper, biggerContour);
+            Mat treatedMat = visionHelper.prepareContourDetection(matSource);
+            detectedShape = Detector.detectShape(treatedMat, visionHelper, biggerContour);
+            showFrame(treatedMat);
 
             // Exécuter l'action selon l'instruction.
             if (detectedShape == Shape.ARROW) {
@@ -69,13 +74,15 @@ public class DynamicParkour extends Objectif {
                 Mat arr = visionHelper.prepareCornerDetection(matSource);
                 MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
-                Mat arrow = Detector.detectArrow(arr, visionHelper, corners.toArray());
+                Mat arrow = Detector.detectArrow(arr, corners.toArray());
                 if (arrow != null) {
                     Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
                     Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
 
-                    if (head != null)
+                    if (head != null) {
                         angle = Detector.detectAngle(arrow, head);
+                        Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 10);
+                    }
 
                     // Afficher le résultat.
                     showFrame(arrow);
@@ -95,7 +102,7 @@ public class DynamicParkour extends Objectif {
             }
             else if (detectedShape == Shape.U) {
                 if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
+                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
                 else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
                     seek = false;
                     executeInstruction(lastInstruction);
@@ -150,7 +157,7 @@ public class DynamicParkour extends Objectif {
             if (instruction.getInstruction() == FlyInstruction.GO_TOWARDS) {
                 controller.faceAngle((int)instruction.getAngle(), () -> {
                     controller.goForward(2000, null);
-                    new Handler().postDelayed(this::seekInstructions, 500);
+                    new Handler().postDelayed(this::seekInstructions, 1000);
                 });
             }
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
@@ -158,7 +165,7 @@ public class DynamicParkour extends Objectif {
                     controller.goUp(1000, () -> {
                         cameraController.setZoom(getRightZoom(), djiError -> {
                             controller.goForward(2000, null);
-                            new Handler().postDelayed(this::seekInstructions, 500);
+                            new Handler().postDelayed(this::seekInstructions, 1000);
                         });
                     });
                 });
@@ -168,7 +175,7 @@ public class DynamicParkour extends Objectif {
                     controller.goDown(1000, () -> {
                         cameraController.setZoom(getRightZoom(), djiError -> {
                             controller.goForward(2000, null);
-                            new Handler().postDelayed(this::seekInstructions, 500);
+                            new Handler().postDelayed(this::seekInstructions, 1000);
                         });
                     });
                 });
