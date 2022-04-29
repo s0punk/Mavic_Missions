@@ -56,7 +56,9 @@ public class BallRescue extends Objectif {
             failedAttempt = 0;
             totalRotation = 0;
             cameraController.lookAtAngle(-55);
-            controller.goUp(3500, this::search);
+            cameraController.setZoom(CameraController.ZOOM_1X, djiError1 -> {
+                controller.goUp(3500, this::search);
+            });
         });
     }
 
