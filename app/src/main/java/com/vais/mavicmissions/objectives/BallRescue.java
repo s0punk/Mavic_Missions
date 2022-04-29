@@ -21,11 +21,11 @@ import org.opencv.imgproc.Imgproc;
 import java.util.List;
 
 /**
- * Classe qui gère l'accomplissement de l'objectif 2, le sauvetage d'une balle.
+ * Classe qui gère l'accomplissement de l'objectif 3, le sauvetage d'une balle.
  */
 public class BallRescue extends Objectif {
-    private final int MAX_FAILED_ATTEMPT = 5;
-    private final int BALL_DETECTION_THRESHOLD = 200;
+    private final int MAX_FAILED_ATTEMPT = 3;
+    private final int BALL_DETECTION_THRESHOLD = 100;
     private final int CHANGE_ZONE_ROTATION = 25;
 
     private int failedAttempt;
@@ -56,8 +56,8 @@ public class BallRescue extends Objectif {
             failedAttempt = 0;
             totalRotation = 0;
             cameraController.lookAtAngle(-55);
-            cameraController.setZoom(CameraController.ZOOM_1X, djiError1 -> {
-                controller.goUp(3500, this::search);
+            cameraController.setZoom(CameraController.ZOOM_1_6X, djiError1 -> {
+                controller.goUp(2000, this::search);
             });
         });
     }
@@ -145,7 +145,7 @@ public class BallRescue extends Objectif {
                         controller.faceAngle(AircraftController.ROTATION_LEFT, () -> {
                             controller.goBack(500, () -> {
                                 cameraController.lookAtAngle(0);
-                                controller.land(() -> new Handler(Looper.getMainLooper()).post(() -> caller.onClick(caller.btnBallRescue)));
+                                controller.land(null);
                             });
                         });
                     }

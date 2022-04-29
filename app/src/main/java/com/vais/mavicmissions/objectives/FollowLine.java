@@ -45,7 +45,6 @@ public class FollowLine extends Objectif {
 
         // Commencer l'objectif.
         startObjectif(djiError -> {
-            controller.goForward(2000, null);
             getOnLine();
         });
     }
@@ -65,7 +64,8 @@ public class FollowLine extends Objectif {
             Point center = Detector.getCenterPoint(currentView);
 
             if (avg.x > center.x - 75 && avg.x < center.x + 75) {
-                followLine();
+                //followLine();
+                caller.showToast("Aligné");
             }
             else
                 controller.faceAngle(AircraftController.ROTATION_RIGHT, this::centerLine);

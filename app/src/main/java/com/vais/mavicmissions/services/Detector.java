@@ -43,7 +43,7 @@ public class Detector {
 
             if (points.length == 2) {
                 double distance = getLength(points[0], points[1]);
-                if (distance < 250)
+                if (distance < 450)
                     detectedShape = Shape.U;
                 else
                     detectedShape = Shape.D;
