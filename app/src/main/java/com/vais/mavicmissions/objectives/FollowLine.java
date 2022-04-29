@@ -5,6 +5,7 @@ import android.os.Handler;
 import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
+import com.vais.mavicmissions.services.Detector;
 import com.vais.mavicmissions.services.drone.AircraftController;
 import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.services.VisionHelper;
@@ -60,8 +61,8 @@ public class FollowLine extends Objectif {
         Point[] points = detectLine();
 
         if (points.length != 0) {
-            Point avg = visionHelper.getAveragePoint(points);
-            Point center = visionHelper.getCenterPoint(currentView);
+            Point avg = Detector.getAveragePoint(points);
+            Point center = Detector.getCenterPoint(currentView);
 
             if (avg.x > center.x - 75 && avg.x < center.x + 75) {
                 followLine();
@@ -76,8 +77,8 @@ public class FollowLine extends Objectif {
     public void centerLine() {
         Point[] points = detectLine();
 
-        Point avg = visionHelper.getAveragePoint(points);
-        Point center = visionHelper.getCenterPoint(currentView);
+        Point avg = Detector.getAveragePoint(points);
+        Point center = Detector.getCenterPoint(currentView);
 
         // Déplacer le drone à gauche.
         if (avg.x < center.x - 75)
@@ -112,7 +113,7 @@ public class FollowLine extends Objectif {
 
         // Détecter les coins.
         Point[] points = detectLine();
-        Point center = visionHelper.getCenterPoint(currentView);
+        Point center = Detector.getCenterPoint(currentView);
 
         // Trouver la direction de la ligne.
         int generalDirection = AircraftController.ROTATION_FRONT;

@@ -166,4 +166,28 @@ public class Detector {
         double r2 = Math.pow(p1.y - p2.y, 2);
         return Math.round(Math.sqrt(r1 + r2));
     }
+
+    public static boolean areLocationsClose(Point p1, Point p2) {
+        final int margin = 25;
+        return ((p1.x > p2.x - margin && p1.x < p2.x + margin) && (p1.y > p2.y - margin && p1.y < p2.y + margin));
+    }
+
+    public static Point getAveragePoint(Point[] points) {
+        if (points == null || points.length == 0)
+            return null;
+
+        int avgX = 0, avgY = 0;
+        for (Point p : points) {
+            avgX += p.x;
+            avgY += p.y;
+        }
+        avgX = avgX / points.length;
+        avgY = avgY / points.length;
+
+        return new Point(avgX, avgY);
+    }
+
+    public static Point getCenterPoint(Mat source) {
+        return new Point((int)source.width() / 2, (int)source.height() / 2);
+    }
 }

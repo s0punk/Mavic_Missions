@@ -192,22 +192,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public int getRightZoom() {
-        int zoom = CameraController.ZOOM_2X;
-        float altitude = controller.getHeight();
-
-        if (altitude >= 3)
-            zoom = CameraController.ZOOM_6X;
-        else if (altitude >= 2)
-            zoom = CameraController.ZOOM_4_2X;
-        else if (altitude >= 1)
-            zoom = CameraController.ZOOM_2_2X;
-        else if (altitude < 1)
-            zoom = CameraController.ZOOM_1_6X;
-
-        return zoom;
-    }
-
     public void quickLand() {
         // Arrêter le drone.
         controller.land(() -> {

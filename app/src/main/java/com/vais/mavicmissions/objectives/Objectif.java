@@ -43,37 +43,41 @@ public abstract class Objectif {
     protected void startObjectif(CommonCallbacks.CompletionCallback onReady) {
         // Vérifier l'état du drone.
         controller.checkVirtualStick(() -> {
+            cameraController.lookDown();
             if (controller.getHasTakenOff()) {
                 // Attérir puis décoller le drone.
                 controller.land(() -> {
-                    cameraController.lookDown();
                     controller.takeOff(() -> {
-                        //caller.showToast("Fin décollage");
-                        cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
-                            @Override
-                            public void onResult(DJIError djiError) {
-                                onReady.onResult(null);
-                            }
-                        });
+                        cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
                     });
                 });
             } else {
                 // Décoller le drone.
-                controller.takeOff(() -> {
-                    //caller.showToast("Fin décollage");
-                    cameraController.setZoom(caller.getRightZoom(), new CommonCallbacks.CompletionCallback() {
-                        @Override
-                        public void onResult(DJIError djiError) {
-                            onReady.onResult(null);
-                        }
-                    });
-                });
+               // controller.takeOff(() -> {
+                    cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
+                //});
             }
         });
     }
 
     protected Mat getFrame() {
         return visionHelper.bitmapToMap(caller.cameraSurface.getBitmap());
+    }
+
+    public int getRightZoom() {
+        int zoom = CameraController.ZOOM_2X;
+        float altitude = controller.getHeight();
+
+        if (altitude >= 3)
+            zoom = CameraController.ZOOM_6X;
+        else if (altitude >= 2)
+            zoom = CameraController.ZOOM_4_2X;
+        else if (altitude >= 1)
+            zoom = CameraController.ZOOM_2_2X;
+        else if (altitude < 1)
+            zoom = CameraController.ZOOM_1_6X;
+
+        return zoom;
     }
 
     protected void showFrame(Mat frame) {

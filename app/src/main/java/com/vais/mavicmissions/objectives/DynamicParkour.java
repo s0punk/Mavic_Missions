@@ -73,7 +73,9 @@ public class DynamicParkour extends Objectif {
                 if (arrow != null) {
                     Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
                     Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
-                    angle = Detector.detectAngle(arrow, head);
+
+                    if (head != null)
+                        angle = Detector.detectAngle(arrow, head);
 
                     // Afficher le résultat.
                     showFrame(arrow);
@@ -154,7 +156,7 @@ public class DynamicParkour extends Objectif {
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
                 controller.stop(() -> {
                     controller.goUp(1000, () -> {
-                        cameraController.setZoom(caller.getRightZoom(), djiError -> {
+                        cameraController.setZoom(getRightZoom(), djiError -> {
                             controller.goForward(2000, null);
                             seekInstructions();
                         });
@@ -164,7 +166,7 @@ public class DynamicParkour extends Objectif {
             else if (instruction.getInstruction() == FlyInstruction.GO_DOWN) {
                 controller.stop(() -> {
                     controller.goDown(1000, () -> {
-                        cameraController.setZoom(caller.getRightZoom(), djiError -> {
+                        cameraController.setZoom(getRightZoom(), djiError -> {
                             controller.goForward(2000, null);
                             seekInstructions();
                         });
