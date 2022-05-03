@@ -64,9 +64,10 @@ public class DynamicParkour extends Objectif {
         List<MatOfPoint> contours = visionHelper.contoursDetection(filteredMat);
         MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
 
+        showFrame(filteredMat);
         // Détecter l'instruction.
         if (biggerContour != null) {
-            detectedShape = Detector.detectShape(filteredMat, visionHelper, biggerContour);
+            detectedShape = Detector.detectShape(filteredMat, visionHelper, biggerContour, caller);
             showFrame(filteredMat);
 
             // Exécuter l'action selon l'instruction.
@@ -93,7 +94,7 @@ public class DynamicParkour extends Objectif {
                         lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
                     else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
                         seek = false;
-                        executeInstruction(lastInstruction);
+                        //executeInstruction(lastInstruction);
                         lastInstruction = null;
                     }
                     else {
@@ -107,7 +108,8 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
                 else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
                     seek = false;
-                    executeInstruction(lastInstruction);
+                    //executeInstruction(lastInstruction);
+                    caller.showToast("U");
                     lastInstruction = null;
                 }
                 else {
@@ -120,7 +122,8 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
                 else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
                     seek = false;
-                    executeInstruction(lastInstruction);
+                    //executeInstruction(lastInstruction);
+                    caller.showToast("D");
                     lastInstruction = null;
                 }
                 else {
@@ -133,9 +136,10 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.TAKEOFF_LAND);
                 else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
                     seek = false;
-                    executeInstruction(lastInstruction);
+                    //executeInstruction(lastInstruction);
+                    caller.showToast("H");
                     lastInstruction = null;
-                    objectifStarted = false;
+                    //objectifStarted = false;
                 }
                 else {
                     lastInstruction = null;
@@ -145,13 +149,14 @@ public class DynamicParkour extends Objectif {
         }
 
         // Continuer la recherche si rien n'a été trouvé.
-        if (seek) {
+        /*if (seek) {
             if (stop)
                 controller.stop(null);
             else
                 controller.goForward(4500, null);
             new Handler().postDelayed(this::seekInstructions, 250);
-        }
+        }*/
+        new Handler().postDelayed(this::seekInstructions, 500);
     }
 
     private void executeInstruction(AircraftInstruction instruction) {

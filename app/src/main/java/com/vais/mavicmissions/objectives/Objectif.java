@@ -39,19 +39,10 @@ public abstract class Objectif {
         // Vérifier l'état du drone.
         controller.checkVirtualStick(() -> {
             cameraController.lookDown();
-            if (controller.getHasTakenOff()) {
-                // Attérir puis décoller le drone.
-                controller.land(() -> {
-                    controller.takeOff(() -> {
-                        cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
-                    });
-                });
-            } else {
-                // Décoller le drone.
-                controller.takeOff(() -> {
-                    cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
-                });
-            }
+            // Décoller le drone.
+            //controller.takeOff(() -> {
+                cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
+            //});
         });
     }
 
@@ -60,7 +51,7 @@ public abstract class Objectif {
     }
 
     public int getRightZoom() {
-        int zoom = CameraController.ZOOM_2X;
+        int zoom = CameraController.ZOOM_3X;
         float altitude = controller.getHeight();
 
         if (altitude >= 3)
@@ -68,7 +59,7 @@ public abstract class Objectif {
         else if (altitude >= 2)
             zoom = CameraController.ZOOM_4_2X;
         else if (altitude >= 1)
-            zoom = CameraController.ZOOM_2_2X;
+            zoom = CameraController.ZOOM_3X;
         else if (altitude < 1)
             zoom = CameraController.ZOOM_1_6X;
 

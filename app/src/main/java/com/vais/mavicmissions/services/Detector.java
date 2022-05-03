@@ -17,7 +17,7 @@ import java.util.List;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
+    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
         Shape detectedShape = Shape.UNKNOWN;
 
         // Détecter les côtés du contour.
@@ -26,17 +26,35 @@ public class Detector {
         MatOfPoint2f approx = new MatOfPoint2f();
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
-        // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 10, 0.4f, 10);
-
-        int cornerCount = corners.toArray().length;
+        int cornerCount = 0;
         int sidesCount = approx.toArray().length;
+
+        // Déterminer les limites de la pancartes.
+        Point[] contourPoints = c2f.toArray();
+        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
+        for (Point p : contourPoints) {
+            if (p.x < xMin)
+                xMin = p.x;
+            else if (p.x > xMax)
+                xMax = p.x;
+
+            if (p.y < yMin)
+                yMin = p.y;
+            else if (p.y > yMax)
+                yMax = p.y;
+        }
+
+        // Détecter les coins.
+        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.4f, 10);
+        for (Point p : corners.toArray())
+            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin)
+                cornerCount++;
 
         if (contour.rows() < 50)
             return detectedShape;
-        else if (sidesCount == 2 || sidesCount == 4)
+        else if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
             detectedShape = Shape.ARROW;
-        else if (cornerCount > 8)
+        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
         else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9)
             detectedShape = Shape.U;

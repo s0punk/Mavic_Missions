@@ -121,6 +121,7 @@ public class VisionHelper {
     public Mat prepareContourDetection(Mat src) {
         // Préparer l'image.
         src = smooth(src, 15);
+        src = dilate(src, 5);
 
         Mat result = new Mat();
         Mat resultNorm = new Mat();
