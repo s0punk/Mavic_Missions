@@ -53,9 +53,9 @@ public abstract class Objectif {
                 });
             } else {
                 // Décoller le drone.
-                //controller.takeOff(() -> {
+                controller.takeOff(() -> {
                     cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
-                //});
+                });
             }
         });
     }

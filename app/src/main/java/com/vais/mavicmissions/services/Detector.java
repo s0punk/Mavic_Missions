@@ -17,7 +17,7 @@ import java.util.List;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
+    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
         Shape detectedShape = Shape.UNKNOWN;
 
         // Détecter les côtés du contour.
@@ -42,6 +42,8 @@ public class Detector {
             detectedShape = Shape.U;
         else if (sidesCount == 6 || sidesCount == 7)
             detectedShape = Shape.D;
+
+        caller.showToast(sidesCount + "");
         return detectedShape;
     }
 

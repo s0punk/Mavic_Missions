@@ -64,7 +64,7 @@ public class DynamicParkour extends Objectif {
         // Détecter l'instruction.
         if (biggerContour != null) {
             Mat treatedMat = visionHelper.prepareContourDetection(matSource);
-            detectedShape = Detector.detectShape(treatedMat, visionHelper, biggerContour);
+            detectedShape = Detector.detectShape(treatedMat, visionHelper, biggerContour, caller);
             showFrame(treatedMat);
 
             // Exécuter l'action selon l'instruction.
@@ -105,7 +105,7 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
                 else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
                     seek = false;
-                    caller.showToast("U");
+                    //caller.showToast("U");
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
@@ -119,7 +119,7 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
                 else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
                     seek = false;
-                    caller.showToast("D");
+                    //caller.showToast("D");
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
