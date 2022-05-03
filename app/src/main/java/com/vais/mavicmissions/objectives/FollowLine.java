@@ -40,11 +40,12 @@ public class FollowLine extends Objectif {
         setStopButton(caller.btnFollowLine);
         caller.showToast(caller.getResources().getString(R.string.followLineStart));
 
-        // Configurer la vitesse du drone à 0.5 m/s.
-        controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
+        // Configurer la vitesse du drone.
+        controller.setCurrentSpeed(AircraftController.AIRCRAFT_FOLLOW_MODE_SPEED);
 
         // Commencer l'objectif.
         startObjectif(djiError -> {
+            cameraController.lookForward(); // TEMP
             getOnLine();
         });
     }
@@ -57,7 +58,7 @@ public class FollowLine extends Objectif {
         if (!objectifStarted)
             return;
 
-        Point[] points = detectLine();
+        /*Point[] points = detectLine();
 
         if (points.length != 0) {
             Point avg = Detector.getAveragePoint(points);
@@ -71,7 +72,8 @@ public class FollowLine extends Objectif {
                 controller.faceAngle(AircraftController.ROTATION_RIGHT, this::centerLine);
         }
         else
-            controller.goForward(250, this::getOnLine);
+            controller.goForward(250, this::getOnLine);*/
+        followLine();
     }
 
     public void centerLine() {
@@ -124,15 +126,17 @@ public class FollowLine extends Objectif {
             // Déterminer la direction du point.
             if (p.y < center.y && p.x > center.x - 75 && p.x < center.x + 75)
                 up++;
-            else if (p.x > center.x && p.y > 50)
+            else if (p.x > center.x && p.y > center.y - 25 && p.y < center.y + 25)
                 right++;
-            else if (p.x < center.x && p.y > 50)
+            else if (p.x < center.x && p.y > center.y - 25 && p.y < center.y + 25)
                 left++;
 
             // Afficher le point.
             Imgproc.circle(currentView, p, 2, new Scalar(255, 0, 0, 255), 10);
         }
         Imgproc.circle(currentView, center, 2, new Scalar(0, 255, 0, 255), 10);
+        Imgproc.circle(currentView, new Point(center.x, center.y - 25), 2, new Scalar(0, 255, 0, 255), 10);
+        Imgproc.circle(currentView, new Point(center.x, center.y + 25), 2, new Scalar(0, 255, 0, 255), 10);
 
         // Déterminer la direction générale.
         if (right > left && right > up)
@@ -144,11 +148,11 @@ public class FollowLine extends Objectif {
             return;
         }
 
-        // Afficher le résultat.
-        showFrame(currentView);
-
         // Effectuer l'action requise.
         changeDirection(generalDirection);
+
+        // Afficher le résultat.
+        showFrame(currentView);
     }
 
     /**
@@ -156,6 +160,8 @@ public class FollowLine extends Objectif {
      * @param direction Int, rotation que le drone doit effectuer.
      */
     private void changeDirection(int direction) {
+        caller.showToast(direction + ""); // TEMP
+
         // Selon la direction reçue.
         switch (direction) {
             case AircraftController.ROTATION_FRONT:
@@ -165,17 +171,14 @@ public class FollowLine extends Objectif {
                 break;
             case AircraftController.ROTATION_RIGHT:
             case AircraftController.ROTATION_LEFT:
-                // Attendre 500 ms pour que le drone atteingne le coin de la ligne.
-                new Handler().postDelayed(() -> {
-                    // Arrêter le drone et effectuer la rotation.
-                    controller.stop(() -> {
-                        controller.faceAngle(direction, () -> {
-                            // Avancer pendant 2 sec et continuer à chercher la ligne.
-                            controller.goForward(2000, null);
-                            new Handler().postDelayed(this::followLine, 1000);
-                        });
+                // Arrêter le drone et effectuer la rotation.
+                controller.stop(() -> {
+                    controller.faceAngle(direction, () -> {
+                        // Avancer pendant 2 sec et continuer à chercher la ligne.
+                        controller.goForward(2000, null);
+                        new Handler().postDelayed(this::followLine, 1000);
                     });
-                }, 500);
+                });
                 break;
         }
     }

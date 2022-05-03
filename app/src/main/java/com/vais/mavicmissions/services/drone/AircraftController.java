@@ -27,6 +27,7 @@ public class AircraftController {
     public static final int INFINITE_COMMAND = 0;
     public static final int MAXIMUM_AIRCRAFT_SPEED = 1;
     public static final float AIRCRAFT_SEEKING_MODE_SPEED = 0.5f;
+    public static final float AIRCRAFT_FOLLOW_MODE_SPEED = 0.25f;
     public static final int MAXIMUM_VERTICAL_SPEED = 1;
 
     private static final int SEEKING_MODE_SCREENSHOT_DELAY = 500;
