@@ -18,4 +18,6 @@
     <string name="ballRescueStart">Début du sauvetage de la balle…</string>
     <string name="ballRescueEnded">Sauvetage de la balle arrêté</string>
     <string name="stop">Arrêter</string>
+    <string name="retry">Réessayer</string>
+    <string name="connectionError">La connexion au drone à échoué. Assurez-vous que le drone soit allumé et réessayez.</string>
 </resources>

@@ -3,7 +3,24 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/tv_error"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/red"
+        android:layout_marginTop="75dp"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/connectionError" />
+    <Button
+        android:id="@+id/btn_retryConnection"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/retry"/>
     <TableRow
+        android:id="@+id/tr_buttons"
         android:layout_gravity="center_horizontal"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content">
@@ -26,6 +43,7 @@
             android:textSize="12sp" />
     </TableRow>
     <LinearLayout
+        android:id="@+id/ll_feed"
         android:orientation="horizontal"
         android:layout_height="wrap_content"
         android:layout_width="match_parent">

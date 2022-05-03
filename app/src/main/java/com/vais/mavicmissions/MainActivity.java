@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
@@ -16,6 +18,9 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.vais.mavicmissions.application.MavicMissionApp;
@@ -36,6 +41,7 @@ import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.codec.DJICodecManager;
+import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.thirdparty.afinal.core.AsyncTask;
@@ -76,6 +82,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private FollowLine lineFollower;
     private BallRescue ballRescuer;
 
+    private TableRow tr_buttons;
+    private LinearLayout ll_feed;
+    private TextView tv_error;
+    private Button btn_retryConnection;
+
     public Button btnDynamicParkour;
     public Button btnFollowLine;
     public Button btnBallRescue;
@@ -97,6 +108,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         mHandler = new Handler(Looper.getMainLooper());
 
+        tr_buttons = findViewById(R.id.tr_buttons);
+        ll_feed = findViewById(R.id.ll_feed);
+        tv_error = findViewById(R.id.tv_error);
+        btn_retryConnection = findViewById(R.id.btn_retryConnection);
+
         btnDynamicParkour = findViewById(R.id.btnDynamicParcour);
         btnFollowLine = findViewById(R.id.btnFollowLine);
         btnBallRescue = findViewById(R.id.btnBallRescue);
@@ -107,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnFollowLine.setOnClickListener(this);
         btnBallRescue.setOnClickListener(this);
         cameraSurface.setSurfaceTextureListener(this);
+        btn_retryConnection.setOnClickListener(this);
 
         visionHelper = new VisionHelper(this);
         self = this;
@@ -188,6 +205,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     else
                         setUIState(true);
                 }
+                break;
+            case R.id.btn_retryConnection:
+                Intent mStartActivity = new Intent(this, MainActivity.class);
+                int mPendingIntentId = 123456;
+                PendingIntent mPendingIntent = PendingIntent.getActivity(this, mPendingIntentId,    mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+                AlarmManager mgr = (AlarmManager)this.getSystemService(this.ALARM_SERVICE);
+                mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+                System.exit(0);
                 break;
         }
     }
@@ -341,7 +366,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void onRegistered() {
-        controller = new AircraftController(MavicMissionApp.getAircraftInstance(), app, new AircraftController.ControllerListener() {
+        Aircraft aircraft = MavicMissionApp.getAircraftInstance();
+
+        if (aircraft.getFlightController() == null) {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                tr_buttons.setVisibility(View.GONE);
+                ll_feed.setVisibility(View.GONE);
+                tv_error.setVisibility(View.VISIBLE);
+                btn_retryConnection.setVisibility(View.VISIBLE);
+            });
+            return;
+        }
+
+        new Handler(Looper.getMainLooper()).post(() -> {
+            tr_buttons.setVisibility(View.VISIBLE);
+            ll_feed.setVisibility(View.VISIBLE);
+            tv_error.setVisibility(View.GONE);
+            btn_retryConnection.setVisibility(View.GONE);
+        });
+
+        controller = new AircraftController(aircraft, app, new AircraftController.ControllerListener() {
             @Override
             public void onControllerReady() {
                 new Handler(Looper.getMainLooper()).post(() -> {
