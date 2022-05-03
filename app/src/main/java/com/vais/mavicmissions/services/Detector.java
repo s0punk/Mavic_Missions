@@ -38,7 +38,7 @@ public class Detector {
             detectedShape = Shape.ARROW;
         else if (cornerCount > 7)
             detectedShape = Shape.H;
-        else if (sidesCount == 8 || sidesCount == 9)
+        else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9)
             detectedShape = Shape.U;
         else if (sidesCount == 6 || sidesCount == 7)
             detectedShape = Shape.D;
@@ -68,7 +68,7 @@ public class Detector {
 
         // Convertir l'image en image binaire.
         Mat binary = new Mat();
-        Imgproc.threshold(cropped, binary, 180, 180, Imgproc.THRESH_BINARY_INV);
+        Imgproc.threshold(cropped, binary, 190, 190, Imgproc.THRESH_BINARY_INV);
 
         return binary;
     }
@@ -93,7 +93,7 @@ public class Detector {
             }
         }
 
-        return corners[cornerID];
+        return corners.length > cornerID ? corners[cornerID] : null;
     }
 
     public static double detectAngle(Mat source, Point head) {

@@ -112,14 +112,6 @@ public class VisionHelper {
         return result;
     }
 
-    public Mat open(Mat src, int maskSize) {
-        return dilate(erode(src, maskSize), maskSize);
-    }
-
-    public Mat close(Mat src, int maskSize) {
-        return erode(dilate(src, maskSize), maskSize);
-    }
-
     public Mat prepareContourDetection(Mat src) {
         src = toGrayscale(src);
         src = smooth(src, 15);
