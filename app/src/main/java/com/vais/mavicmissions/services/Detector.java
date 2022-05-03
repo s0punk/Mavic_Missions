@@ -17,7 +17,7 @@ import java.util.List;
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
+    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
         Shape detectedShape = Shape.UNKNOWN;
 
         // Détecter les côtés du contour.
@@ -36,14 +36,12 @@ public class Detector {
             return detectedShape;
         else if (sidesCount == 2 || sidesCount == 4)
             detectedShape = Shape.ARROW;
-        else if (cornerCount > 7)
+        else if (cornerCount > 8)
             detectedShape = Shape.H;
         else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9)
             detectedShape = Shape.U;
         else if (sidesCount == 6 || sidesCount == 7)
             detectedShape = Shape.D;
-
-        caller.showToast(sidesCount + "");
         return detectedShape;
     }
 
@@ -70,7 +68,7 @@ public class Detector {
 
         // Convertir l'image en image binaire.
         Mat binary = new Mat();
-        Imgproc.threshold(cropped, binary, 190, 190, Imgproc.THRESH_BINARY_INV);
+        Imgproc.threshold(cropped, binary, 100, 100, Imgproc.THRESH_BINARY_INV);
 
         return binary;
     }

@@ -221,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Arrêter le drone.
         controller.land(() -> {
             cameraController.lookDown();
+            controller.loseControl();
             setUIState(true);
         });
     }

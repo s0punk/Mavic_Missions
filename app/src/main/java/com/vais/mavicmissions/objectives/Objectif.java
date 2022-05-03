@@ -1,19 +1,14 @@
 package com.vais.mavicmissions.objectives;
 
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Button;
-
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
 import com.vais.mavicmissions.services.drone.AircraftController;
 import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.services.VisionHelper;
-
 import org.opencv.core.Mat;
-
-import dji.common.error.DJIError;
 import dji.common.util.CommonCallbacks;
 
 public abstract class Objectif {

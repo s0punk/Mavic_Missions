@@ -1,6 +1,8 @@
 package com.vais.mavicmissions.objectives;
 
 import android.os.Handler;
+
+import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.FlyInstruction;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
@@ -58,14 +60,14 @@ public class DynamicParkour extends Objectif {
         Mat matSource = getFrame();
 
         // Effectuer une détection de contours et isoler le plus gros.
-        List<MatOfPoint> contours = visionHelper.contoursDetection(visionHelper.prepareContourDetection(matSource));
+        Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(matSource, Color.BLACK));
+        List<MatOfPoint> contours = visionHelper.contoursDetection(filteredMat);
         MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
 
         // Détecter l'instruction.
         if (biggerContour != null) {
-            Mat treatedMat = visionHelper.prepareContourDetection(matSource);
-            detectedShape = Detector.detectShape(treatedMat, visionHelper, biggerContour, caller);
-            showFrame(treatedMat);
+            detectedShape = Detector.detectShape(filteredMat, visionHelper, biggerContour);
+            showFrame(filteredMat);
 
             // Exécuter l'action selon l'instruction.
             if (detectedShape == Shape.ARROW) {
@@ -105,7 +107,6 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
                 else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
                     seek = false;
-                    //caller.showToast("U");
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
@@ -119,7 +120,6 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
                 else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
                     seek = false;
-                    //caller.showToast("D");
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }

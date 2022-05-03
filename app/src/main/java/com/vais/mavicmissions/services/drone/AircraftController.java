@@ -251,6 +251,10 @@ public class AircraftController {
         return flightController.getState().getAircraftLocation().getAltitude();
     }
 
+    public void loseControl() {
+        flightController.setVirtualStickModeEnabled(false, null);
+    }
+
     /**
      * Méthode qui permet de décoller le drone.
      * @param listener ControllerListener, méthode à appeler lorsque le drone est prêt.

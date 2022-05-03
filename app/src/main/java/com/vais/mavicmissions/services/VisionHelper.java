@@ -40,6 +40,9 @@ public class VisionHelper {
     private Scalar lowerBallGreen;
     private Scalar upperBallGreen;
 
+    private Scalar lowerBlack;
+    private Scalar upperBlack;
+
     public VisionHelper(Context context) {
         this.context = context;
 
@@ -63,6 +66,9 @@ public class VisionHelper {
         // Définir les limites du vert de la balle.
         lowerBallGreen = new Scalar(32, 100, 100);
         upperBallGreen = new Scalar(82, 255, 255);
+
+        lowerBlack = new Scalar(0, 0, 0);
+        upperBlack = new Scalar(180, 255, 30);
     }
 
     public void initCV() {
@@ -113,7 +119,7 @@ public class VisionHelper {
     }
 
     public Mat prepareContourDetection(Mat src) {
-        src = toGrayscale(src);
+        // Préparer l'image.
         src = smooth(src, 15);
 
         Mat result = new Mat();
@@ -192,7 +198,7 @@ public class VisionHelper {
     }
 
     public Mat filterColor(Mat src, Color color) {
-        Mat greenMask = new Mat();
+        Mat colorMask = new Mat();
 
         src = smooth(src, 3);
 
@@ -215,9 +221,13 @@ public class VisionHelper {
             lower = lowerBallGreen;
             upper = upperBallGreen;
         }
+        else if (color == Color.BLACK) {
+            lower = lowerBlack;
+            upper = upperBlack;
+        }
 
-        Core.inRange(hsv, lower, upper, greenMask);
+        Core.inRange(hsv, lower, upper, colorMask);
 
-        return greenMask;
+        return colorMask;
     }
 }
