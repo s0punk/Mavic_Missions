@@ -3,6 +3,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <!-- Message d'erreur de connexion -->
     <TextView
         android:id="@+id/tv_error"
         android:visibility="gone"
@@ -12,6 +13,7 @@
         android:layout_marginTop="75dp"
         android:layout_gravity="center_horizontal"
         android:text="@string/connectionError" />
+    <!-- Bouton de tentative de reconnexion -->
     <Button
         android:id="@+id/btn_retryConnection"
         android:visibility="gone"
@@ -19,40 +21,47 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:text="@string/retry"/>
+    <!-- Liste des boutons des objectifs -->
     <TableRow
         android:id="@+id/tr_buttons"
         android:layout_gravity="center_horizontal"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content">
+        <!-- Parcours dynamique -->
         <Button
             android:id="@+id/btnDynamicParcour"
             android:text="@string/dynamicParcour"
             android:enabled="false"
             android:textSize="12sp"
             android:layout_marginEnd="20dp"/>
+        <!-- Suivi de ligne -->
         <Button
             android:id="@+id/btnFollowLine"
             android:text="@string/followLine"
             android:enabled="false"
             android:textSize="12sp"
             android:layout_marginEnd="20dp"/>
+        <!-- Sauvetage d'une balle -->
         <Button
             android:id="@+id/btnBallRescue"
             android:text="@string/ballRescue"
             android:enabled="false"
             android:textSize="12sp" />
     </TableRow>
+    <!-- Retour du drone -->
     <LinearLayout
         android:id="@+id/ll_feed"
         android:orientation="horizontal"
         android:layout_height="wrap_content"
         android:layout_width="match_parent">
+        <!-- Flux vidéo live -->
         <TextureView
             android:id="@+id/cameraPreviewSurface"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="match_parent">
         </TextureView>
+        <!-- Screenshot du flux -->
         <ImageView
             android:id="@+id/iv_result"
             android:layout_weight="1"
