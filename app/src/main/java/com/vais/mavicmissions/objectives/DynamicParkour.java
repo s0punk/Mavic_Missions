@@ -105,6 +105,7 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
                 else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
                     seek = false;
+                    caller.showToast("U");
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
@@ -118,6 +119,7 @@ public class DynamicParkour extends Objectif {
                     lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
                 else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
                     seek = false;
+                    caller.showToast("D");
                     executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
@@ -147,7 +149,7 @@ public class DynamicParkour extends Objectif {
             if (stop)
                 controller.stop(null);
             else
-                controller.goForward(2000, null);
+                controller.goForward(4500, null);
             new Handler().postDelayed(this::seekInstructions, 250);
         }
     }
@@ -156,16 +158,16 @@ public class DynamicParkour extends Objectif {
         controller.stop(() -> {
             if (instruction.getInstruction() == FlyInstruction.GO_TOWARDS) {
                 controller.faceAngle((int)instruction.getAngle(), () -> {
-                    controller.goForward(2000, null);
-                    new Handler().postDelayed(this::seekInstructions, 1000);
+                    controller.goForward(4500, null);
+                    new Handler().postDelayed(this::seekInstructions, 2000);
                 });
             }
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
                 controller.stop(() -> {
                     controller.goUp(1000, () -> {
                         cameraController.setZoom(getRightZoom(), djiError -> {
-                            controller.goForward(2000, null);
-                            new Handler().postDelayed(this::seekInstructions, 1000);
+                            controller.goForward(4500, null);
+                            new Handler().postDelayed(this::seekInstructions, 2000);
                         });
                     });
                 });
@@ -174,8 +176,8 @@ public class DynamicParkour extends Objectif {
                 controller.stop(() -> {
                     controller.goDown(1000, () -> {
                         cameraController.setZoom(getRightZoom(), djiError -> {
-                            controller.goForward(2000, null);
-                            new Handler().postDelayed(this::seekInstructions, 1000);
+                            controller.goForward(4500, null);
+                            new Handler().postDelayed(this::seekInstructions, 2000);
                         });
                     });
                 });
