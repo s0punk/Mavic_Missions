@@ -379,13 +379,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        new Handler(Looper.getMainLooper()).post(() -> {
-            tr_buttons.setVisibility(View.VISIBLE);
-            ll_feed.setVisibility(View.VISIBLE);
-            tv_error.setVisibility(View.GONE);
-            btn_retryConnection.setVisibility(View.GONE);
-        });
-
         controller = new AircraftController(aircraft, app, new AircraftController.ControllerListener() {
             @Override
             public void onControllerReady() {

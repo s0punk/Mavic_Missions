@@ -251,6 +251,9 @@ public class AircraftController {
         return flightController.getState().getAircraftLocation().getAltitude();
     }
 
+    /**
+     * Méthode qui permet de désactiver les virtuals sticks.
+     */
     public void loseControl() {
         flightController.setVirtualStickModeEnabled(false, null);
     }
