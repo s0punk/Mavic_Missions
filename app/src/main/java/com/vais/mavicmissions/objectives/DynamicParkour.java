@@ -49,10 +49,6 @@ public class DynamicParkour extends Objectif {
     }
 
     private void seekInstructions() {
-        Shape detectedShape;
-        boolean seek = true;
-        boolean stop = false;
-
         if (!objectifStarted)
             return;
 
@@ -67,49 +63,43 @@ public class DynamicParkour extends Objectif {
         showFrame(filteredMat);
         // Détecter l'instruction.
         if (biggerContour != null) {
-            detectedShape = Detector.detectShape(filteredMat, visionHelper, biggerContour, caller);
+            Detector.processImage(visionHelper.matToBitmap(filteredMat), filteredMat, biggerContour, caller);
             showFrame(filteredMat);
+        }
+    }
 
-            // Exécuter l'action selon l'instruction.
-            if (detectedShape == Shape.ARROW) {
-                // Détecter les coins de la flèche.
-                double angle = 0;
-                Mat arr = visionHelper.prepareCornerDetection(matSource);
-                MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
+    public void onResultReceived(Shape detectedShape, Mat source) {
+        boolean seek = true;
+        boolean stop = false;
 
-                Mat arrow = Detector.detectArrow(arr, corners.toArray());
-                if (arrow != null) {
-                    Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
-                    Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
+        if (!objectifStarted)
+            return;
 
-                    if (head != null) {
-                        angle = Detector.detectAngle(arrow, head);
-                        Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 10);
-                    }
+        // Exécuter l'action selon l'instruction.
+        if (detectedShape == Shape.ARROW) {
+            // Détecter les coins de la flèche.
+            double angle = 0;
+            Mat arr = visionHelper.smooth(source, 15);
+            MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
-                    // Afficher le résultat.
-                    showFrame(arrow);
+            Mat arrow = Detector.detectArrow(arr, corners.toArray());
+            if (arrow != null) {
+                Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
+                Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
 
-                    if (lastInstruction == null)
-                        lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
-                    else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
-                        seek = false;
-                        //executeInstruction(lastInstruction);
-                        lastInstruction = null;
-                    }
-                    else {
-                        lastInstruction = null;
-                        stop = true;
-                    }
+                if (head != null) {
+                    angle = Detector.detectAngle(arrow, head);
+                    Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 10);
                 }
-            }
-            else if (detectedShape == Shape.U) {
+
+                // Afficher le résultat.
+                showFrame(arrow);
+
                 if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
-                else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
+                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
+                else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
                     seek = false;
                     //executeInstruction(lastInstruction);
-                    caller.showToast("U");
                     lastInstruction = null;
                 }
                 else {
@@ -117,34 +107,48 @@ public class DynamicParkour extends Objectif {
                     stop = true;
                 }
             }
-            else if (detectedShape == Shape.D) {
-                if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
-                else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
-                    seek = false;
-                    //executeInstruction(lastInstruction);
-                    caller.showToast("D");
-                    lastInstruction = null;
-                }
-                else {
-                    lastInstruction = null;
-                    stop = true;
-                }
+        }
+        else if (detectedShape == Shape.U) {
+            if (lastInstruction == null)
+                lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
+            else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
+                seek = false;
+                //executeInstruction(lastInstruction);
+                caller.showToast("U");
+                lastInstruction = null;
             }
-            else if (detectedShape == Shape.H) {
-                if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.TAKEOFF_LAND);
-                else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
-                    seek = false;
-                    //executeInstruction(lastInstruction);
-                    caller.showToast("H");
-                    lastInstruction = null;
-                    //objectifStarted = false;
-                }
-                else {
-                    lastInstruction = null;
-                    stop = true;
-                }
+            else {
+                lastInstruction = null;
+                stop = true;
+            }
+        }
+        else if (detectedShape == Shape.D) {
+            if (lastInstruction == null)
+                lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
+            else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
+                seek = false;
+                //executeInstruction(lastInstruction);
+                caller.showToast("D");
+                lastInstruction = null;
+            }
+            else {
+                lastInstruction = null;
+                stop = true;
+            }
+        }
+        else if (detectedShape == Shape.H) {
+            if (lastInstruction == null)
+                lastInstruction = new AircraftInstruction(FlyInstruction.TAKEOFF_LAND);
+            else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
+                seek = false;
+                //executeInstruction(lastInstruction);
+                caller.showToast("H");
+                lastInstruction = null;
+                //objectifStarted = false;
+            }
+            else {
+                lastInstruction = null;
+                stop = true;
             }
         }
 
@@ -158,6 +162,7 @@ public class DynamicParkour extends Objectif {
         }*/
         new Handler().postDelayed(this::seekInstructions, 500);
     }
+
 
     private void executeInstruction(AircraftInstruction instruction) {
         controller.stop(() -> {

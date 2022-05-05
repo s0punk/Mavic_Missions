@@ -60,6 +60,9 @@ android {
 }
 
 dependencies {
+    // ML KIT
+    implementation 'com.google.android.gms:play-services-mlkit-text-recognition:16.1.3'
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'com.squareup:otto:1.3.8'

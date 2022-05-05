@@ -1,8 +1,12 @@
 package com.vais.mavicmissions.services;
 
+import android.graphics.Bitmap;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -13,54 +17,60 @@ import org.opencv.imgproc.Moments;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.Executor;
 
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
-    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
-        Shape detectedShape = Shape.UNKNOWN;
+    public static void processImage(Bitmap bitmap, Mat source, MatOfPoint contour, MainActivity caller) {
+        InputImage image = InputImage.fromBitmap(bitmap, 0);
+        TextRecognizer recognizer = TextRecognition.getClient();
 
-        // Détecter les côtés du contour.
-        MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
-        double perimeter = Imgproc.arcLength(c2f, true);
-        MatOfPoint2f approx = new MatOfPoint2f();
-        Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
+        if (image != null) {
+            recognizer.process(image).addOnSuccessListener(text -> {
+                Shape detectedShape = Shape.UNKNOWN;
 
-        int cornerCount = 0;
-        int sidesCount = approx.toArray().length;
+                // Détecter les côtés du contour.
+                MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
+                double perimeter = Imgproc.arcLength(c2f, true);
+                MatOfPoint2f approx = new MatOfPoint2f();
+                Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
+                int sidesCount = approx.toArray().length;
 
-        // Déterminer les limites de la pancartes.
-        Point[] contourPoints = c2f.toArray();
-        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
-        for (Point p : contourPoints) {
-            if (p.x < xMin)
-                xMin = p.x;
-            else if (p.x > xMax)
-                xMax = p.x;
-
-            if (p.y < yMin)
-                yMin = p.y;
-            else if (p.y > yMax)
-                yMax = p.y;
+                if (contour.rows() < 50)
+                    detectedShape = Shape.UNKNOWN;
+                else if (text.getText().toUpperCase() == "U")
+                    detectedShape = Shape.U;
+                else if (text.getText().toUpperCase() == "D")
+                    detectedShape = Shape.D;
+                else if (text.getText().toUpperCase() == "H")
+                    detectedShape = Shape.H;
+                else if (sidesCount == 2 || sidesCount == 4)
+                    detectedShape = Shape.ARROW;
+                caller.showToast(text.getText());
+                caller.parkourManager.onResultReceived(detectedShape, source);
+            }).addOnFailureListener(e -> {
+               caller.showToast(e.getMessage());
+            });
         }
+    }
 
-        // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.4f, 10);
-        for (Point p : corners.toArray())
-            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin)
-                cornerCount++;
-
-        if (contour.rows() < 50)
-            return detectedShape;
-        else if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
-            detectedShape = Shape.ARROW;
-        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
-            detectedShape = Shape.H;
-        else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9)
-            detectedShape = Shape.U;
-        else if (sidesCount == 6 || sidesCount == 7)
-            detectedShape = Shape.D;
-        return detectedShape;
+    /**
+     * Fonction qui va prendre un texte multi-ligne pour les séparer dans une liste de String
+     * où chaque donnée sera une ligne de texte.
+     * @param text String, chaîne de caractères qui contient tout le texte à séparer.
+     * @return List<String>, liste du texte séparé ligne par ligne.
+     */
+    public static List<String> getTextByLine(Text text) {
+        List<String> lines = new Vector<>();
+        for(Text.TextBlock block : text.getTextBlocks()) {
+            for (Text.Line line : block.getLines()) {
+                String lineText = line.getText();
+                lines.add(lineText);
+            }
+        }
+        return lines;
     }
 
     public static Mat detectArrow(Mat source, Point[] corners) {

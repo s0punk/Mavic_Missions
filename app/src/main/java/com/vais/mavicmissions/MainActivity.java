@@ -78,9 +78,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private MavicMissionApp app;
 
-    private DynamicParkour parkourManager;
-    private FollowLine lineFollower;
-    private BallRescue ballRescuer;
+    public DynamicParkour parkourManager;
+    public FollowLine lineFollower;
+    public BallRescue ballRescuer;
 
     private TableRow tr_buttons;
     private LinearLayout ll_feed;
