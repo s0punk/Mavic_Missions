@@ -23,6 +23,7 @@ public class Detector {
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
+        double area = Imgproc.contourArea(contour);
         MatOfPoint2f approx = new MatOfPoint2f();
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
@@ -56,10 +57,12 @@ public class Detector {
             detectedShape = Shape.ARROW;
         else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
-        else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9)
+        else if (area > 2500)
             detectedShape = Shape.U;
-        else if (sidesCount == 6 || sidesCount == 7)
+        else
             detectedShape = Shape.D;
+
+        caller.showToast(area + "");
         return detectedShape;
     }
 

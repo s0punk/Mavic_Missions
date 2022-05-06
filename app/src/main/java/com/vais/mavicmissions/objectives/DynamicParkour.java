@@ -64,7 +64,6 @@ public class DynamicParkour extends Objectif {
         List<MatOfPoint> contours = visionHelper.contoursDetection(filteredMat);
         MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
 
-        showFrame(filteredMat);
         // Détecter l'instruction.
         if (biggerContour != null) {
             detectedShape = Detector.detectShape(filteredMat, visionHelper, biggerContour, caller);
