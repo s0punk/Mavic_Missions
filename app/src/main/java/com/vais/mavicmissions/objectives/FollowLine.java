@@ -45,7 +45,7 @@ public class FollowLine extends Objectif {
 
         // Commencer l'objectif.
         startObjectif(djiError -> {
-            cameraController.lookForward(); // TEMP
+            cameraController.lookDown();
             getOnLine();
         });
     }
@@ -139,14 +139,20 @@ public class FollowLine extends Objectif {
         Imgproc.circle(currentView, new Point(center.x, center.y + 25), 2, new Scalar(0, 255, 0, 255), 10);
 
         // Déterminer la direction générale.
-        if (right > left && right > up)
+        if (right > left && right > up) {
             generalDirection = AircraftController.ROTATION_RIGHT;
-        else if (left > right && left > up)
+            caller.showToast("R");
+        }
+        else if (left > right && left > up) {
             generalDirection = AircraftController.ROTATION_LEFT;
+            caller.showToast("L");
+        }
         else if (left == 0 && right == 0 && up == 0) {
             controller.stop(null);
             return;
         }
+        else
+            caller.showToast("U");
 
         // Effectuer l'action requise.
         changeDirection(generalDirection);
@@ -160,8 +166,6 @@ public class FollowLine extends Objectif {
      * @param direction Int, rotation que le drone doit effectuer.
      */
     private void changeDirection(int direction) {
-        caller.showToast(direction + ""); // TEMP
-
         // Selon la direction reçue.
         switch (direction) {
             case AircraftController.ROTATION_FRONT:
