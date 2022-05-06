@@ -62,11 +62,15 @@ public class DynamicParkour extends Objectif {
         // Effectuer une détection de contours et isoler le plus gros.
         Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(matSource, Color.BLACK));
         List<MatOfPoint> contours = visionHelper.contoursDetection(filteredMat);
-        MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+        MatOfPoint centeredContour = visionHelper.getCenteredContour(filteredMat, contours);
 
         // Détecter l'instruction.
-        if (biggerContour != null) {
-            detectedShape = Detector.detectShape(filteredMat, visionHelper, biggerContour, caller);
+        if (centeredContour != null) {
+            detectedShape = Detector.detectShape(filteredMat, visionHelper, centeredContour, caller);
+
+            // Dessiner le contour.
+            for (Point p : centeredContour.toArray())
+                Imgproc.circle(filteredMat, p, 1, new Scalar(255, 0, 0, 255), 5);
             showFrame(filteredMat);
 
             // Exécuter l'action selon l'instruction.

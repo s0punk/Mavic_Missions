@@ -198,6 +198,25 @@ public class VisionHelper {
         return biggerContour;
     }
 
+    public MatOfPoint getCenteredContour(Mat source, List<MatOfPoint> contours) {
+        MatOfPoint centeredContour = null;
+
+        int targetPos = (int)(source.width() / 2);
+        double smallestDifference = source.width();
+        Point avg;
+
+        for (MatOfPoint contour : contours) {
+            avg = Detector.getAveragePoint(contour.toArray());
+            double difference = Math.abs(targetPos - avg.x);
+            if (difference < smallestDifference) {
+                centeredContour = contour;
+                smallestDifference = difference;
+            }
+        }
+
+        return centeredContour;
+    }
+
     public Mat filterColor(Mat src, Color color) {
         Mat colorMask = new Mat();
 

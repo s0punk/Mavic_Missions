@@ -51,18 +51,15 @@ public class Detector {
             if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin)
                 cornerCount++;
 
-        if (contour.rows() < 50)
-            return detectedShape;
-        else if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
+        if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
             detectedShape = Shape.ARROW;
         else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
-        else if (area > 2500)
+        else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9 && area > 5000)
             detectedShape = Shape.U;
-        else
+        else if (sidesCount == 6 || sidesCount == 7 && area <= 5000)
             detectedShape = Shape.D;
 
-        caller.showToast(area + "");
         return detectedShape;
     }
 
