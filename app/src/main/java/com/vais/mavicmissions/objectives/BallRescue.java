@@ -28,8 +28,12 @@ public class BallRescue extends Objectif {
     private final int BALL_DETECTION_THRESHOLD = 150;
     private final int CHANGE_ZONE_ROTATION = 25;
 
+    private final String rescueEnded;
+
     private int failedAttempt;
     private int totalRotation;
+
+    private int zoom;
 
     /**
      * Constructeur de la classe FollowLine, créé l'objet et initialise ses données membres.
@@ -40,6 +44,7 @@ public class BallRescue extends Objectif {
      */
     public BallRescue(MainActivity caller, AircraftController controller, CameraController cameraController, VisionHelper visionHelper) {
         super(caller, controller, cameraController, visionHelper);
+        rescueEnded = caller.getResources().getString(R.string.ballRescueEnded);
     }
 
     /**
@@ -55,8 +60,9 @@ public class BallRescue extends Objectif {
             // Commencer la recherche de la balle.
             failedAttempt = 0;
             totalRotation = 0;
+            zoom = 6;
             cameraController.lookAtAngle(-55);
-            cameraController.setZoom(CameraController.ZOOM_1_6X, djiError1 -> {
+            cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * zoom, djiError1 -> {
                 controller.goUp(2000, this::search);
             });
         });
@@ -81,27 +87,47 @@ public class BallRescue extends Objectif {
             Imgproc.circle(matSource, ball, 2, new Scalar(255, 255, 0, 255), 10);
             showFrame(matSource);
 
-            rescue();
+            //rescue();
+            caller.showToast("Trouvé");
+            objectifStarted = false;
+            controller.land(() -> {
+                caller.showToast(rescueEnded);
+                cameraController.lookDown();
+                caller.setUIState(true);
+            });
         }
         else {
-            if (++failedAttempt > MAX_FAILED_ATTEMPT) {
-                failedAttempt = 0;
-                totalRotation += CHANGE_ZONE_ROTATION;
+            if (zoom == 1) {
+                zoom = 6;
+                if (++failedAttempt > MAX_FAILED_ATTEMPT) {
+                    failedAttempt = 0;
+                    totalRotation += CHANGE_ZONE_ROTATION;
 
-                if (totalRotation < 360)
-                    // Rotationner le drone pour chercher une nouvelle zone.
-                    controller.faceAngle(CHANGE_ZONE_ROTATION, this::search);
-                else if (!cameraController.isLookingDown()) {
-                    // Regarder directement en dessous du drone.
-                    cameraController.lookDown();
-                    totalRotation = 0;
-                    search();
+                    if (totalRotation < 360)
+                        // Rotationner le drone pour chercher une nouvelle zone.
+                        controller.faceAngle(CHANGE_ZONE_ROTATION, this::search);
+                    else if (!cameraController.isLookingDown()) {
+                        // Regarder directement en dessous du drone.
+                        cameraController.lookDown();
+                        totalRotation = 0;
+                        search();
+                    }
+                    else {
+                        objectifStarted = false;
+                        controller.land(() -> {
+                            caller.showToast(rescueEnded);
+                            cameraController.lookDown();
+                            caller.setUIState(true);
+                        });
+                    }
                 }
                 else
-                    new Handler(Looper.getMainLooper()).post(() -> caller.onClick(caller.btnBallRescue));
+                    new Handler().postDelayed(this::search, 500);
             }
             else
-                new Handler().postDelayed(this::search, 500);
+                cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * --zoom, djiError -> {
+                    search();
+                });
         }
     }
 

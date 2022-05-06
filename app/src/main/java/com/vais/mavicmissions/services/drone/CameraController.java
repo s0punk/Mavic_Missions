@@ -13,9 +13,9 @@ import dji.sdk.gimbal.Gimbal;
 import dji.sdk.products.Aircraft;
 
 public class CameraController {
-    private static final float GIMBAL_DOWN_ANGLE = -90;
-    private static final int MIN_OPTICAL_ZOOM = 240;
-    private static final int MAX_OPTICAL_ZOOM = 1440;
+    public static final float GIMBAL_DOWN_ANGLE = -90;
+    public static final int MIN_OPTICAL_ZOOM = 240;
+    public static final int MAX_OPTICAL_ZOOM = 1440;
 
     public static final int ZOOM_1X = MIN_OPTICAL_ZOOM;
     public static final int ZOOM_1_6X = (int)(MIN_OPTICAL_ZOOM * 1.6);
