@@ -68,7 +68,7 @@ public class VisionHelper {
         upperBallGreen = new Scalar(82, 255, 255);
 
         lowerBlack = new Scalar(0, 0, 0);
-        upperBlack = new Scalar(180, 255, 30);
+        upperBlack = new Scalar(145, 255, 30);
     }
 
     public void initCV() {
@@ -136,7 +136,6 @@ public class VisionHelper {
 
     public Mat prepareCornerDetection(Mat src) {
         Mat result = src;
-        result = toGrayscale(result);
         result = smooth(result, 15);
 
         return result;

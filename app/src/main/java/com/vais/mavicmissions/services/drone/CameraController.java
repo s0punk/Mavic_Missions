@@ -1,5 +1,7 @@
 package com.vais.mavicmissions.services.drone;
 
+import android.os.Handler;
+
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;
@@ -16,6 +18,8 @@ public class CameraController {
     public static final float GIMBAL_DOWN_ANGLE = -90;
     public static final int MIN_OPTICAL_ZOOM = 240;
     public static final int MAX_OPTICAL_ZOOM = 1440;
+
+    private static final int ZOOM_OPERATION_DELAY = 2500;
 
     public static final int ZOOM_1X = MIN_OPTICAL_ZOOM;
     public static final int ZOOM_1_6X = (int)(MIN_OPTICAL_ZOOM * 1.6);
@@ -67,7 +71,8 @@ public class CameraController {
             public void onSuccess(SettingsDefinitions.OpticalZoomSpec opticalZoomSpec) {
                 int minZoom = opticalZoomSpec.getMinFocalLength();
                 int maxZoom = opticalZoomSpec.getMaxFocalLength();
-                camera.setOpticalZoomFocalLength(zoom >= minZoom && zoom <= maxZoom && (zoom % opticalZoomSpec.getFocalLengthStep() == 0) ? zoom : minZoom, callback);
+                camera.setOpticalZoomFocalLength(zoom >= minZoom && zoom <= maxZoom && (zoom % opticalZoomSpec.getFocalLengthStep() == 0) ? zoom : minZoom, null);
+                new Handler().postDelayed(() -> callback.onResult(null), ZOOM_OPERATION_DELAY);
             }
             @Override
             public void onFailure(DJIError djiError) { }
