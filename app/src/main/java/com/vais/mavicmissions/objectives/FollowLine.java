@@ -19,6 +19,11 @@ import org.opencv.imgproc.Imgproc;
  * Classe qui gère l'accomplissement de l'objectif 2, le suivi d'une ligne verte.
  */
 public class FollowLine extends Objectif {
+    private final static int DIRECTION_DETECTION = 25;
+    private final static int ALIGNEMENT_DETECTION = 2;
+    private final static int DIRECTION_DISTANCE = 15;
+    private final static int ALIGNEMENT_DISTANCE = 35;
+
     private Mat currentView;
 
     /**
@@ -77,7 +82,7 @@ public class FollowLine extends Objectif {
     }
 
     public void centerLine() {
-        Point[] points = detectLine();
+        Point[] points = detectLine(DIRECTION_DETECTION, DIRECTION_DISTANCE);
 
         Point avg = Detector.getAveragePoint(points);
         Point center = Detector.getCenterPoint(currentView);
@@ -92,7 +97,7 @@ public class FollowLine extends Objectif {
             followLine();
     }
 
-    public Point[] detectLine() {
+    public Point[] detectLine(int maxCorners, int minDistance) {
         // Capturer le flux vidéo.
         currentView = getFrame();
 
@@ -114,7 +119,7 @@ public class FollowLine extends Objectif {
             return;
 
         // Détecter les coins.
-        Point[] points = detectLine();
+        Point[] points = detectLine(DIRECTION_DETECTION, DIRECTION_DISTANCE);
         Point center = Detector.getCenterPoint(currentView);
 
         // Trouver la direction de la ligne.
@@ -161,6 +166,35 @@ public class FollowLine extends Objectif {
         showFrame(currentView);
     }
 
+    private void align() {
+        int halfX = currentView.width() / 2;
+        Point[] corners = detectLine(ALIGNEMENT_DETECTION, ALIGNEMENT_DISTANCE);
+
+        if (corners.length == 2)
+            controller.faceAngle((int)Detector.detectAngle(corners[0], corners[1]), () -> {
+                // Centrer le drone par rapport à la ligne.
+                Point[] nCorners = detectLine(ALIGNEMENT_DETECTION, ALIGNEMENT_DISTANCE);
+                if (nCorners[0].x >= halfX - 50 && nCorners[0].x <= halfX + 50)
+                    followLine();
+                else if (nCorners[0].x < halfX) {
+                    controller.setCurrentSpeed(0.1f);
+                    controller.goRight(1000, () -> {
+                        controller.setCurrentSpeed(AircraftController.AIRCRAFT_FOLLOW_MODE_SPEED);
+                        followLine();
+                    });
+                }
+                else if (nCorners[0].x > halfX) {
+                    controller.setCurrentSpeed(0.1f);
+                    controller.goLeft(1000, () -> {
+                        controller.setCurrentSpeed(AircraftController.AIRCRAFT_FOLLOW_MODE_SPEED);
+                        followLine();
+                    });
+                }
+            });
+        else
+            align();
+    }
+
     /**
      * Méthode qui change la direction du drone selon la direction de la ligne.
      * @param direction Int, rotation que le drone doit effectuer.
@@ -171,7 +205,7 @@ public class FollowLine extends Objectif {
             case AircraftController.ROTATION_FRONT:
                 // Avancer pendant 2 sec et continuer à chercher la ligne.
                 controller.goForward(2000, null);
-                new Handler().postDelayed(this::followLine, 1000);
+                new Handler().postDelayed(this::align, 1000);
                 break;
             case AircraftController.ROTATION_RIGHT:
             case AircraftController.ROTATION_LEFT:
@@ -180,7 +214,7 @@ public class FollowLine extends Objectif {
                     controller.faceAngle(direction, () -> {
                         // Avancer pendant 2 sec et continuer à chercher la ligne.
                         controller.goForward(2000, null);
-                        new Handler().postDelayed(this::followLine, 1000);
+                        new Handler().postDelayed(this::align, 1000);
                     });
                 });
                 break;

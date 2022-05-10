@@ -92,7 +92,7 @@ public class DynamicParkour extends Objectif {
                     Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
 
                     if (head != null) {
-                        angle = Detector.detectAngle(arrow, head);
+                        angle = Detector.detectAngle(new Point((int)arrow.width() / 2, (int)arrow.height() / 2), head);
                         Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 10);
                     }
 

@@ -114,34 +114,30 @@ public class Detector {
         return corners.length > cornerID ? corners[cornerID] : null;
     }
 
-    public static double detectAngle(Mat source, Point head) {
+    public static double detectAngle(Point base, Point head) {
         double angle = 0;
-
-        // Trouver l'angle de la flèche.
-        int halfWidth = (int)source.width() / 2;
-        int halfHeight = (int)source.height() / 2;
 
         // Déterminer le quandrant de la pointe.
         int quadrant = 0;
-        if (head.x > halfWidth && head.y < halfHeight)
+        if (head.x > base.x && head.y < base.y)
             quadrant = 1;
-        else if (head.x > halfWidth && head.y > halfHeight)
+        else if (head.x > base.x && head.y > base.y)
             quadrant = 2;
-        else if (head.x < halfWidth && head.y > halfHeight)
+        else if (head.x < base.x && head.y > base.y)
             quadrant = 3;
-        else if (head.x < halfWidth && head.y < halfHeight)
+        else if (head.x < base.x && head.y < base.y)
             quadrant = 4;
 
         if (quadrant == 0) {
-            if (head.x == halfWidth)
-                angle = head.y > halfHeight ? -180 : 0;
-            else if (head.y == halfHeight)
-                angle = head.x > halfWidth ? 90 : -90;
+            if (head.x == base.x)
+                angle = head.y > base.y ? -180 : 0;
+            else if (head.y == base.y)
+                angle = head.x > base.y ? 90 : -90;
         }
         else {
             // Trouver l'hypoténuse avec le théorem de pythagore.
-            double headA = Math.abs(head.x - halfWidth);
-            double headB = Math.abs(head.y - halfHeight);
+            double headA = Math.abs(head.x - base.x);
+            double headB = Math.abs(head.y - base.y);
             double c = Math.sqrt(Math.pow(headA, 2) + Math.pow(headB, 2));;
 
             // Trouver l'angle à donner au drone.
