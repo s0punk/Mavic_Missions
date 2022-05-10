@@ -21,8 +21,12 @@ import org.opencv.imgproc.Imgproc;
 import java.util.List;
 
 public class DynamicParkour extends Objectif {
+    private final static int MAX_UNKNOWN_DETECTION = 25;
+
     private AircraftInstruction lastInstruction;
     private String parkourEnded;
+
+    private int unknownDetectionCount;
 
     public DynamicParkour(MainActivity caller, AircraftController controller, CameraController cameraController, VisionHelper visionHelper) {
         super(caller, controller, cameraController, visionHelper);
@@ -38,6 +42,8 @@ public class DynamicParkour extends Objectif {
         lastInstruction = null;
 
         caller.showToast(caller.getResources().getString(R.string.dynamicParcourStart));
+
+        unknownDetectionCount = 0;
 
         startObjectif(djiError -> {
             // Commencer la recherche de pancartes.
@@ -153,7 +159,13 @@ public class DynamicParkour extends Objectif {
 
         // Continuer la recherche si rien n'a été trouvé.
         if (seek) {
-            if (stop)
+            if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
+                controller.land(() -> {
+                    caller.showToast(parkourEnded);
+                    cameraController.lookDown();
+                    caller.setUIState(true);
+                });
+            else if (stop)
                 controller.stop(null);
             else
                 controller.goForward(4500, null);
