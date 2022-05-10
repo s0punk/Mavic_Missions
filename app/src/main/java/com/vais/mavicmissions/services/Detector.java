@@ -66,9 +66,27 @@ public class Detector {
     public static Mat detectArrow(Mat source, Point[] corners) {
         if (corners.length != 3) return null;
 
+        // Redimensionner l'image pour y avoir la flèche seulement.
+        List<Integer> x = new ArrayList<>();
+        List<Integer> y = new ArrayList<>();
+
+        for (Point corner : corners) {
+            x.add((int) corner.x);
+            y.add((int) corner.y);
+        }
+        Collections.sort(x);
+        Collections.sort(y);
+
+        int newWidth = (x.get(x.size() - 1) - x.get(0)) + 50;
+        int newHeight = (y.get(y.size() - 1) - y.get(0)) + 50;
+
+        Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, newWidth, newHeight);
+        Mat cropped;
+        try { cropped = new Mat(source, crop); } catch (Exception e) { return null; }
+
         // Convertir l'image en image binaire.
         Mat binary = new Mat();
-        Imgproc.threshold(source, binary, 100, 100, Imgproc.THRESH_BINARY_INV);
+        Imgproc.threshold(cropped, binary, 100, 100, Imgproc.THRESH_BINARY_INV);
 
         return binary;
     }

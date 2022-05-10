@@ -136,6 +136,7 @@ public class VisionHelper {
 
     public Mat prepareCornerDetection(Mat src) {
         Mat result = src;
+        result = toGrayscale(src);
         result = smooth(result, 15);
 
         return result;
