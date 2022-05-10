@@ -23,7 +23,6 @@ import java.util.List;
 public class DynamicParkour extends Objectif {
     private final static int MAX_UNKNOWN_DETECTION = 25;
 
-    private AircraftInstruction lastInstruction;
     private String parkourEnded;
 
     private int unknownDetectionCount;
@@ -32,15 +31,12 @@ public class DynamicParkour extends Objectif {
         super(caller, controller, cameraController, visionHelper);
 
         parkourEnded = caller.getResources().getString(R.string.dynamicParourEnded);
-        lastInstruction = null;
     }
 
     public void startDynamicParkour() {
         setStopButton(caller.btnDynamicParkour);
 
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
-        lastInstruction = null;
-
         caller.showToast(caller.getResources().getString(R.string.dynamicParcourStart));
 
         unknownDetectionCount = 0;
@@ -55,12 +51,10 @@ public class DynamicParkour extends Objectif {
     }
 
     private void seekInstructions() {
-        Shape detectedShape;
-        boolean seek = true;
-        boolean stop = false;
-
         if (!objectifStarted)
             return;
+
+        Shape detectedShape;
 
         // Capturer le flux vidéo.
         Mat matSource = getFrame();
@@ -103,76 +97,29 @@ public class DynamicParkour extends Objectif {
 
                     // Afficher le résultat.
                     showFrame(arrow);
-
-                    if (lastInstruction == null)
-                        lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
-                    else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
-                        seek = false;
-                        executeInstruction(lastInstruction);
-                        lastInstruction = null;
-                    }
-                    else {
-                        lastInstruction = null;
-                        stop = true;
-                    }
+                    executeInstruction(new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle));
                 }
             }
-            else if (detectedShape == Shape.U) {
-                if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
-                else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
-                    seek = false;
-                    executeInstruction(lastInstruction);
-                    lastInstruction = null;
-                }
-                else {
-                    lastInstruction = null;
-                    stop = true;
-                }
-            }
-            else if (detectedShape == Shape.D) {
-                if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
-                else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
-                    seek = false;
-                    executeInstruction(lastInstruction);
-                    lastInstruction = null;
-                }
-                else {
-                    lastInstruction = null;
-                    stop = true;
-                }
-            }
+            else if (detectedShape == Shape.U)
+                executeInstruction(new AircraftInstruction(FlyInstruction.GO_UP));
+            else if (detectedShape == Shape.D)
+                executeInstruction(new AircraftInstruction(FlyInstruction.GO_DOWN));
             else if (detectedShape == Shape.H) {
-                if (lastInstruction == null)
-                    lastInstruction = new AircraftInstruction(FlyInstruction.TAKEOFF_LAND);
-                else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
-                    seek = false;
-                    executeInstruction(lastInstruction);
-                    lastInstruction = null;
-                    objectifStarted = false;
-                }
-                else {
-                    lastInstruction = null;
-                    stop = true;
-                }
+                executeInstruction(new AircraftInstruction(FlyInstruction.TAKEOFF_LAND));
+                objectifStarted = false;
             }
         }
 
         // Continuer la recherche si rien n'a été trouvé.
-        if (seek) {
-            if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
-                controller.land(() -> {
-                    caller.showToast(parkourEnded);
-                    cameraController.lookDown();
-                    caller.setUIState(true);
-                });
-            else if (stop)
-                controller.stop(null);
-            else
-                controller.goForward(2500, null);
-            new Handler().postDelayed(this::seekInstructions, 250);
-        }
+        if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
+            controller.land(() -> {
+                caller.showToast(parkourEnded);
+                cameraController.lookDown();
+                caller.setUIState(true);
+            });
+        else
+            controller.goForward(2500, null);
+        new Handler().postDelayed(this::seekInstructions, 250);
     }
 
     private void executeInstruction(AircraftInstruction instruction) {
