@@ -130,10 +130,13 @@ public class DynamicParkour extends Objectif {
                     executeInstruction(new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle));
                 }
             }
+            // Up.
             else if (detectedShape == Shape.U)
                 executeInstruction(new AircraftInstruction(FlyInstruction.GO_UP));
+            // Down.
             else if (detectedShape == Shape.D)
                 executeInstruction(new AircraftInstruction(FlyInstruction.GO_DOWN));
+            // Attérir.
             else if (detectedShape == Shape.H) {
                 executeInstruction(new AircraftInstruction(FlyInstruction.TAKEOFF_LAND));
                 objectifStarted = false;
