@@ -189,6 +189,17 @@ public class Detector {
         return new Point(avgX, avgY);
     }
 
+    public static Point[] detectPointAlignement(Point base, Point head) {
+        int difference = (int)(base.x - head.x);
+
+        if (difference > 5)
+            base.x -= 10;
+        else if (difference < 5)
+            base.x += 10;
+
+        return new Point[] { base, head };
+    }
+
     public static Point getCenterPoint(Mat source) {
         return new Point((int)source.width() / 2, (int)source.height() / 2);
     }
