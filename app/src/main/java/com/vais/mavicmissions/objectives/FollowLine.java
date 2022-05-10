@@ -19,11 +19,26 @@ import org.opencv.imgproc.Imgproc;
  * Classe qui gère l'accomplissement de l'objectif 2, le suivi d'une ligne verte.
  */
 public class FollowLine extends Objectif {
+    /**
+     * Int, indique le nombre de coins à détecter lors de la détection de la direction de la ligne.
+     */
     private final static int DIRECTION_DETECTION = 55;
+    /**
+     * Int, indique le nombre de coins à détecter lors de la détection de l'alignement du drone.
+     */
     private final static int ALIGNEMENT_DETECTION = 2;
+    /**
+     * Int, indique la distance minimum des coins lors de la détection de la direction de la ligne.
+     */
     private final static int DIRECTION_DISTANCE = 25;
+    /**
+     * Int, indique la distance minimum des coins lors de l'alignement du drone.
+     */
     private final static int ALIGNEMENT_DISTANCE = 175;
 
+    /**
+     * Mat, dernière capture du flux vidéo prise.
+     */
     private Mat currentView;
 
     /**
@@ -118,10 +133,15 @@ public class FollowLine extends Objectif {
         changeDirection(generalDirection);
     }
 
+    /**
+     * Méthode qui aligne le drone par rapport à la ligne.
+     */
     private void align() {
+        // Détecter deux coins sur la ligne.
         Point[] corners = detectLine(ALIGNEMENT_DETECTION, ALIGNEMENT_DISTANCE);
         int halfX = currentView.width() / 2;
 
+        // S'il y a 2 coins.
         if (corners.length == 2) {
             Point base = corners[1];
             Point head = corners[0];
@@ -137,17 +157,20 @@ public class FollowLine extends Objectif {
             else if (angle < -90)
                 angle = angle + 180;
 
+            // Afficher les coins.
             Imgproc.circle(currentView, base, 2, new Scalar(0, 0, 255, 255), 10);
             Imgproc.circle(currentView, head, 2, new Scalar(0, 0, 255, 255), 10);
             showFrame(currentView);
             caller.showToast(angle + "");
 
+            // Rotationner le drone correctement.
             controller.faceAngle(angle, () -> {
                 // Centrer le drone par rapport à la ligne.
                 Point[] nCorners = detectLine(ALIGNEMENT_DETECTION, ALIGNEMENT_DISTANCE);
                 if (nCorners[0].x >= halfX - 100 && nCorners[0].x <= halfX + 100)
                     followLine();
                 else if (nCorners[0].x < halfX) {
+                    // Déplacer le drone à gauche.
                     controller.setCurrentSpeed(0.1f);
                     controller.goLeft(500, () -> {
                         controller.setCurrentSpeed(AircraftController.AIRCRAFT_FOLLOW_MODE_SPEED);
@@ -155,6 +178,7 @@ public class FollowLine extends Objectif {
                     });
                 }
                 else if (nCorners[0].x > halfX) {
+                    // Déplacer le drone à droite.
                     controller.setCurrentSpeed(0.1f);
                     controller.goRight(500, () -> {
                         controller.setCurrentSpeed(AircraftController.AIRCRAFT_FOLLOW_MODE_SPEED);
@@ -165,9 +189,8 @@ public class FollowLine extends Objectif {
                     followLine();
             });
         }
-        else {
+        else
             align();
-        }
     }
 
     /**
