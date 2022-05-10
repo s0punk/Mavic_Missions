@@ -29,6 +29,10 @@ public class DynamicParkour extends Objectif {
      */
     private final static int MAX_UNKNOWN_DETECTION = 25;
 
+    /**
+     * AircraftInstruction, dernière instruction détectée par le drone.
+     */
+    private AircraftInstruction lastInstruction;
 
     /**
      * String, message affiché lors de l'arrêt du parcours.
@@ -51,6 +55,7 @@ public class DynamicParkour extends Objectif {
         super(caller, controller, cameraController, visionHelper);
 
         parkourEnded = caller.getResources().getString(R.string.dynamicParourEnded);
+        lastInstruction = null;
     }
 
     /**
@@ -84,6 +89,9 @@ public class DynamicParkour extends Objectif {
             return;
 
         Shape detectedShape;
+        boolean seek = true;
+        boolean stop = false;
+
         // Capturer le flux vidéo.
         Mat matSource = getFrame();
 
@@ -127,29 +135,78 @@ public class DynamicParkour extends Objectif {
 
                     // Afficher le résultat.
                     showFrame(arrow);
-                    executeInstruction(new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle));
+
+                    if (lastInstruction == null)
+                        lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
+                    else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
+                        seek = false;
+                        executeInstruction(lastInstruction);
+                        lastInstruction = null;
+                    }
+                    else {
+                        lastInstruction = null;
+                        stop = true;
+                    }
                 }
             }
-            else if (detectedShape == Shape.U)
-                executeInstruction(new AircraftInstruction(FlyInstruction.GO_UP));
-            else if (detectedShape == Shape.D)
-                executeInstruction(new AircraftInstruction(FlyInstruction.GO_DOWN));
+            else if (detectedShape == Shape.U) {
+                if (lastInstruction == null)
+                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_UP);
+                else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
+                    seek = false;
+                    executeInstruction(lastInstruction);
+                    lastInstruction = null;
+                }
+                else {
+                    lastInstruction = null;
+                    stop = true;
+                }
+            }
+            // Down.
+            else if (detectedShape == Shape.D) {
+                if (lastInstruction == null)
+                    lastInstruction = new AircraftInstruction(FlyInstruction.GO_DOWN);
+                else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
+                    seek = false;
+                    executeInstruction(lastInstruction);
+                    lastInstruction = null;
+                }
+                else {
+                    lastInstruction = null;
+                    stop = true;
+                }
+            }
+            // Attérir.
             else if (detectedShape == Shape.H) {
-                executeInstruction(new AircraftInstruction(FlyInstruction.TAKEOFF_LAND));
-                objectifStarted = false;
+                if (lastInstruction == null)
+                    lastInstruction = new AircraftInstruction(FlyInstruction.TAKEOFF_LAND);
+                else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
+                    seek = false;
+                    executeInstruction(lastInstruction);
+                    lastInstruction = null;
+                    objectifStarted = false;
+                }
+                else {
+                    lastInstruction = null;
+                    stop = true;
+                }
             }
         }
 
         // Continuer la recherche si rien n'a été trouvé.
-        if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
-            controller.land(() -> {
-                caller.showToast(parkourEnded);
-                cameraController.lookDown();
-                caller.setUIState(true);
-            });
-        else
-            controller.goForward(2500, null);
-        new Handler().postDelayed(this::seekInstructions, 250);
+        if (seek) {
+            if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
+                controller.land(() -> {
+                    caller.showToast(parkourEnded);
+                    cameraController.lookDown();
+                    caller.setUIState(true);
+                });
+            else if (stop)
+                controller.stop(null);
+            else
+                controller.goForward(2500, null);
+            new Handler().postDelayed(this::seekInstructions, 250);
+        }
     }
 
     /**
