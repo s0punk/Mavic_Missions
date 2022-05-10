@@ -20,27 +20,53 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.List;
 
+/**
+ * Classe qui gère le suivi d'un parcours dynamique.
+ */
 public class DynamicParkour extends Objectif {
+    /**
+     * Int, nombre de maximum de détection non-reconnue permis.
+     */
     private final static int MAX_UNKNOWN_DETECTION = 25;
 
+
+    /**
+     * String, message affiché lors de l'arrêt du parcours.
+     */
     private String parkourEnded;
 
+    /**
+     * Int, nombre actuelle de détection non-reconnue.
+     */
     private int unknownDetectionCount;
 
+    /**
+     * Constructeur de la classe DynamicParkour, créé l'objet et initialise ses données membres.
+     * @param caller MainActivity, activité principale de l'application.
+     * @param controller AircraftController, controlleur du drone.
+     * @param cameraController CameraController, controlleur de la caméra du drone.
+     * @param visionHelper VisionHelper, service de traitement d'images.
+     */
     public DynamicParkour(MainActivity caller, AircraftController controller, CameraController cameraController, VisionHelper visionHelper) {
         super(caller, controller, cameraController, visionHelper);
 
         parkourEnded = caller.getResources().getString(R.string.dynamicParourEnded);
     }
 
+    /**
+     * Méthode qui commence le suivi du parcours.
+     */
     public void startDynamicParkour() {
+        // Désactiver les boutons, excepté le bouton d'arrêt.
         setStopButton(caller.btnDynamicParkour);
 
+        // Changer la vitesse du drone.
         controller.setCurrentSpeed(AircraftController.AIRCRAFT_SEEKING_MODE_SPEED);
         caller.showToast(caller.getResources().getString(R.string.dynamicParcourStart));
 
         unknownDetectionCount = 0;
 
+        // Commencer l'objectif.
         startObjectif(djiError -> {
             // Commencer la recherche de pancartes.
             controller.goForward(1000, () -> {
@@ -50,12 +76,14 @@ public class DynamicParkour extends Objectif {
         });
     }
 
+    /**
+     * Méthode qui recherche une pancarte du parcours.
+     */
     private void seekInstructions() {
         if (!objectifStarted)
             return;
 
         Shape detectedShape;
-
         // Capturer le flux vidéo.
         Mat matSource = getFrame();
 
@@ -74,6 +102,8 @@ public class DynamicParkour extends Objectif {
             showFrame(filteredMat);
 
             // Exécuter l'action selon l'instruction.
+
+            // Flèche.
             if (detectedShape == Shape.ARROW) {
                 // Détecter les coins de la flèche.
                 double angle = 0;
@@ -122,14 +152,21 @@ public class DynamicParkour extends Objectif {
         new Handler().postDelayed(this::seekInstructions, 250);
     }
 
+    /**
+     * Méthode qui exécute l'instruction détecté par le drone.
+     * @param instruction AircraftInstruction, instruction détecté par le drone.
+     */
     private void executeInstruction(AircraftInstruction instruction) {
+        // Arrêter le drone.
         controller.stop(() -> {
+            // Aller en direction de la flèche.
             if (instruction.getInstruction() == FlyInstruction.GO_TOWARDS) {
                 controller.faceAngle((int)instruction.getAngle(), () -> {
                     controller.goForward(2500, null);
                     new Handler().postDelayed(this::seekInstructions, 2000);
                 });
             }
+            // Monter l'altitude.
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
                 controller.stop(() -> {
                     controller.goUp(1000, () -> {
@@ -140,6 +177,7 @@ public class DynamicParkour extends Objectif {
                     });
                 });
             }
+            // Descendre l'altitude.
             else if (instruction.getInstruction() == FlyInstruction.GO_DOWN) {
                 controller.stop(() -> {
                     controller.goDown(1000, () -> {
@@ -150,6 +188,7 @@ public class DynamicParkour extends Objectif {
                     });
                 });
             }
+            // Attérir.
             else if (instruction.getInstruction() == FlyInstruction.TAKEOFF_LAND) {
                 controller.land(() -> {
                     caller.showToast(parkourEnded);
