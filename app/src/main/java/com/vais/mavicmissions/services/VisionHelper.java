@@ -9,6 +9,7 @@ import android.util.Log;
 import androidx.core.content.ContextCompat;
 
 import com.vais.mavicmissions.Enum.Color;
+import com.vais.mavicmissions.R;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -273,5 +274,23 @@ public class VisionHelper {
         Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
 
         return locResult.maxVal;
+    }
+
+    public double matchShape(Mat src, int templateRes) {
+        // Convertir la ressource en matrice.
+        Drawable tSource = ContextCompat.getDrawable(context, templateRes);
+        Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
+
+        // Prendre le contour du template.
+        Mat filteredTemplate = prepareContourDetection(toGrayscale(template));
+        List<MatOfPoint> templateContours = contoursDetection(filteredTemplate);
+        MatOfPoint templateContour = templateRes == R.mipmap.ic_d_foreground ? templateContours.get(1) : getBiggerContour(templateContours);
+
+        // Prendre le contour de la photo.
+        Mat filteredSource = prepareContourDetection(toGrayscale(src));
+        List<MatOfPoint> srcContours = contoursDetection(filteredSource);
+        MatOfPoint srcContour = getCenteredContour(filteredSource, srcContours);
+
+        return Imgproc.matchShapes(templateContour, srcContour, Imgproc.TM_CCORR, 0);
     }
 }
