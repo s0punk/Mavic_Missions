@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 
@@ -266,13 +267,15 @@ public class VisionHelper {
         // Convertir la ressource en matrice.
         Drawable tSource = ContextCompat.getDrawable(context, templateRes);
         Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
+        template = toGrayscale(template);
+        src = toGrayscale(src);
 
         Mat result = new Mat();
-
-        Imgproc.matchTemplate(src, template, result, Imgproc.TM_CCOEFF_NORMED);
+        Imgproc.matchTemplate(src, template, result, Imgproc.TM_SQDIFF);
         Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
-
         Imgproc.rectangle(src, locResult.maxLoc, new Point(locResult.maxLoc.x + template.cols(), locResult.maxLoc.y + template.rows()), new Scalar(255, 0, 0, 255));
+
+        Toast.makeText(context, locResult.maxVal + "", Toast.LENGTH_SHORT).show();
 
         return src;
     }

@@ -27,6 +27,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.objectives.BallRescue;
 import com.vais.mavicmissions.objectives.FollowLine;
@@ -184,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         setUIState(true);
                 }*/
                 Mat source = visionHelper.bitmapToMap(cameraSurface.getBitmap());
-                Mat result = visionHelper.matchTemplate(source, R.mipmap.ic_instruction_u);
+                Mat result = visionHelper.matchTemplate(source, R.mipmap.ic_d_foreground);
                 ivResult.setImageBitmap(visionHelper.matToBitmap(result));
                 break;
             case R.id.btnFollowLine:
