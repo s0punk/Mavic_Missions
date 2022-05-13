@@ -2,7 +2,11 @@ package com.vais.mavicmissions.services;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
+
+import androidx.core.content.ContextCompat;
 
 import com.vais.mavicmissions.Enum.Color;
 
@@ -249,5 +253,25 @@ public class VisionHelper {
         Core.inRange(hsv, lower, upper, colorMask);
 
         return colorMask;
+    }
+
+    /**
+     *
+     * Source: https://www.tabnine.com/code/java/methods/org.opencv.imgproc.Imgproc/matchTemplate
+     * @param src
+     * @param templateRes
+     */
+    public double matchTemplate(Mat src, int templateRes) {
+        // Convertir la ressource en matrice.
+        Drawable tSource = ContextCompat.getDrawable(context, templateRes);
+        Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
+        template = toGrayscale(template);
+        src = toGrayscale(src);
+
+        Mat result = new Mat();
+        Imgproc.matchTemplate(src, template, result, Imgproc.TM_SQDIFF);
+        Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
+
+        return locResult.maxVal;
     }
 }

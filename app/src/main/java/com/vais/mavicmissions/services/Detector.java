@@ -1,7 +1,9 @@
 package com.vais.mavicmissions.services;
 
+import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
+import com.vais.mavicmissions.R;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -20,10 +22,11 @@ public class Detector {
     public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
         Shape detectedShape = Shape.UNKNOWN;
 
+        Mat filteredSource = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
+
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
-        double area = Imgproc.contourArea(contour);
         MatOfPoint2f approx = new MatOfPoint2f();
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
@@ -46,19 +49,29 @@ public class Detector {
         }
 
         // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.4f, 10);
+        MatOfPoint corners = visionHelper.detectCorners(filteredSource, 30, 0.4f, 10);
         for (Point p : corners.toArray())
             if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin)
                 cornerCount++;
+
+        // Effectuer la vérification des templates.
+        double[] similarities = new double[2];
+        int bestMatch = -1;
+        similarities[0] = visionHelper.matchTemplate(source, R.mipmap.ic_d_foreground);
+        similarities[1] = visionHelper.matchTemplate(source, R.mipmap.ic_u_foreground);
+
+        for (int i = 0; i < similarities.length; i++)
+            if (similarities[i] < 2)
+                bestMatch = i;
 
         if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
             detectedShape = Shape.ARROW;
         else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
-        else if (sidesCount == 5 || sidesCount == 8 || sidesCount == 9 && area <= 5000)
-            detectedShape = Shape.U;
-        else if (sidesCount == 6 || sidesCount == 7 && area > 5000)
+        else if (bestMatch == 0)
             detectedShape = Shape.D;
+        else if (bestMatch == 1)
+            detectedShape = Shape.U;
 
         return detectedShape;
     }

@@ -40,9 +40,9 @@ public abstract class Objectif {
         controller.checkVirtualStick(() -> {
             cameraController.lookDown();
             // Décoller le drone.
-            controller.takeOff(() -> {
+            //controller.takeOff(() -> {
                 cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
-            });
+            //});
         });
     }
 
