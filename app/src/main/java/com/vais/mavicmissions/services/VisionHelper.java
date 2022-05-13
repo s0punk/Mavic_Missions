@@ -271,7 +271,7 @@ public class VisionHelper {
         src = toGrayscale(src);
 
         Mat result = new Mat();
-        Imgproc.matchTemplate(src, template, result, Imgproc.TM_SQDIFF);
+        Imgproc.matchTemplate(src, template, result, Imgproc.TM_CCORR);
         Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
         Imgproc.rectangle(src, locResult.maxLoc, new Point(locResult.maxLoc.x + template.cols(), locResult.maxLoc.y + template.rows()), new Scalar(255, 0, 0, 255));
 

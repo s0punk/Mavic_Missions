@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         setUIState(true);
                 }*/
                 Mat source = visionHelper.bitmapToMap(cameraSurface.getBitmap());
-                Mat result = visionHelper.matchTemplate(source, R.mipmap.ic_d_foreground);
+                Mat result = visionHelper.matchTemplate(source, R.mipmap.ic_u_foreground);
                 ivResult.setImageBitmap(visionHelper.matToBitmap(result));
                 break;
             case R.id.btnFollowLine:
