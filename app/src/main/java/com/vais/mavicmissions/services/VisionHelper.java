@@ -269,7 +269,7 @@ public class VisionHelper {
         src = toGrayscale(src);
 
         Mat result = new Mat();
-        Imgproc.matchTemplate(src, template, result, Imgproc.TM_SQDIFF);
+        Imgproc.matchTemplate(src, template, result, Imgproc.TM_CCORR);
         Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
 
         return locResult.maxVal;
