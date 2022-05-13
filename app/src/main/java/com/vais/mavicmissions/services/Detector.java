@@ -18,6 +18,7 @@ import java.util.List;
 
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
+    private static final double MATCH_TEMPLATE_THRESH = 2;
 
     public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
         Shape detectedShape = Shape.UNKNOWN;
@@ -61,17 +62,17 @@ public class Detector {
         similarities[1] = visionHelper.matchTemplate(source, R.mipmap.ic_u_foreground);
 
         for (int i = 0; i < similarities.length; i++)
-            if (similarities[i] < 2)
+            if (similarities[i] < MATCH_TEMPLATE_THRESH)
                 bestMatch = i;
 
-        if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
-            detectedShape = Shape.ARROW;
-        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
-            detectedShape = Shape.H;
-        else if (bestMatch == 0)
+        if (bestMatch == 0)
             detectedShape = Shape.D;
         else if (bestMatch == 1)
             detectedShape = Shape.U;
+        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
+            detectedShape = Shape.H;
+        else if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
+            detectedShape = Shape.ARROW;
 
         return detectedShape;
     }

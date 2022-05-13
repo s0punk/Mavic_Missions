@@ -202,7 +202,7 @@ public class DynamicParkour extends Objectif {
                 controller.goForward(2500, null);
             new Handler().postDelayed(this::seekInstructions, 250);
         }*/
-        new Handler().postDelayed(this::seekInstructions, 1000);
+        new Handler().postDelayed(this::seekInstructions, 250);
     }
 
     /**
