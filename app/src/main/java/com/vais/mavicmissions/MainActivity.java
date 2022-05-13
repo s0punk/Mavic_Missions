@@ -9,7 +9,11 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,6 +35,10 @@ import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.objectives.DynamicParkour;
 import com.vais.mavicmissions.services.VisionHelper;
 
+import org.opencv.core.Mat;
+
+import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -162,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btnDynamicParcour:
-                if (!parkourManager.isObjectifStarted())
+                /*if (!parkourManager.isObjectifStarted())
                     parkourManager.startDynamicParkour();
                 else {
                     setUIState(false);
@@ -174,7 +182,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         quickLand();
                     else
                         setUIState(true);
-                }
+                }*/
+                Mat source = visionHelper.bitmapToMap(cameraSurface.getBitmap());
+                Mat result = visionHelper.matchTemplate(source, R.mipmap.ic_instruction_u);
+                ivResult.setImageBitmap(visionHelper.matToBitmap(result));
                 break;
             case R.id.btnFollowLine:
                 if (!lineFollower.isObjectifStarted())
