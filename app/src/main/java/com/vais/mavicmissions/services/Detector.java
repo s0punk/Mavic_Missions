@@ -18,7 +18,7 @@ import java.util.List;
 
 public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
-    private static final double MATCH_TEMPLATE_THRESH = 2E9;
+    private static final double MATCH_TEMPLATE_THRESH = 6E9;
 
     public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
         Shape detectedShape = Shape.UNKNOWN;
@@ -57,29 +57,19 @@ public class Detector {
 
         // Vérifier qu'il y ait une pancarte.
         double instructionDetection = visionHelper.matchTemplate(source, R.mipmap.ic_d_foreground);
-        if (instructionDetection < MATCH_TEMPLATE_THRESH)
+        if (instructionDetection > MATCH_TEMPLATE_THRESH)
             return detectedShape;
 
-        double[] similarities = new double[2];
-        int bestMatch = -1;
-        similarities[0] = visionHelper.matchShape(source, R.mipmap.ic_d_foreground);
-        similarities[1] = visionHelper.matchShape(source, R.mipmap.ic_u_foreground);
+        double usimilarity = visionHelper.matchShape(source, R.mipmap.ic_u_foreground);
 
-        for (int i = 0; i < similarities.length; i++) {
-            if (bestMatch == -1)
-                bestMatch = i;
-            else if (similarities[i] < similarities[bestMatch])
-                bestMatch = i;
-        }
-
-        if (bestMatch == 0)
-            detectedShape = Shape.D;
-        else if (bestMatch == 1)
-            detectedShape = Shape.U;
+        if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
+            detectedShape = Shape.ARROW;
         else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
-        else if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
-            detectedShape = Shape.ARROW;
+        else if (usimilarity <= 4)
+            detectedShape = Shape.U;
+        else if (usimilarity > 4)
+            detectedShape = Shape.D;
 
         return detectedShape;
     }

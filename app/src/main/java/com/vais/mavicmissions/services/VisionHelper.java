@@ -284,7 +284,7 @@ public class VisionHelper {
         // Prendre le contour du template.
         Mat filteredTemplate = prepareContourDetection(toGrayscale(template));
         List<MatOfPoint> templateContours = contoursDetection(filteredTemplate);
-        MatOfPoint templateContour = templateRes == R.mipmap.ic_d_foreground ? templateContours.get(1) : getBiggerContour(templateContours);
+        MatOfPoint templateContour = getBiggerContour(templateContours);
 
         // Prendre le contour de la photo.
         Mat filteredSource = prepareContourDetection(toGrayscale(src));
