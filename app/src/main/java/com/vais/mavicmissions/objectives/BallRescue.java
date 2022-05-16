@@ -158,49 +158,29 @@ public class BallRescue extends Objectif {
         Mat matSource = getFrame();
 
         Point ball = getBall(detectBall(matSource));
-        int centerX = (int)matSource.width() / 2;
-        int centerY = (int)matSource.height() / 2;
+        Point center = new Point(matSource.width() / 2, matSource.height() / 2);
 
         // Si le drone voit la balle.
         if (ball != null) {
-            // Si la balle est centrée.
-            if (ball.x > centerX - 55 && ball.x < centerX + 55) {
-                if (cameraController.isLookingDown()) {
-                    if (ball.y < centerY - 55 && ball.y < centerY + 55) {
-                        // Attérir le drone.
-                        controller.faceAngle(AircraftController.ROTATION_LEFT, () -> {
-                            controller.goBack(500, () -> {
-                                cameraController.lookAtAngle(0);
-                                controller.land(null);
-                            });
-                        });
-                    }
-                    else if (ball.y < centerY)
-                        controller.goBack(250, this::rescue);
-                    else if (ball.y > centerY)
-                        controller.goForward(250, this::rescue);
-                }
-                else
-                    controller.goForward(1000, this::rescue);
-            }
-            else {
-                // Centrer la balle sur l'axe des x.
-                if (ball.x > centerX)
-                    controller.goLeft(250, this::rescue);
-                else if (ball.x < centerX)
-                    controller.goRight(250, this::rescue);
-            }
+            double angle = Detector.detectAngle(center, ball);
+            if (angle > 90)
+                angle = angle - 180;
+            else if (angle < -90)
+                angle = angle + 180;
+
+            controller.faceAngle((int)angle, () -> {
+                controller.setCurrentSpeed(AircraftController.MAXIMUM_AIRCRAFT_SPEED);
+                controller.goForward(2000, null);
+                rescue();
+            });
         }
         // Si le drone ne voit plus la balle.
-        else {
-            if (cameraController.isLookingDown()) {
-                // Reculer le drone car il a dépasser la balle.
-                controller.goBack(500, this::rescue);
-            }
-            else {
+        else
+            controller.land(() -> {
+                objectifStarted = false;
+                caller.showToast(rescueEnded);
                 cameraController.lookDown();
-                rescue();
-            }
-        }
+                caller.setUIState(true);
+            });
     }
 }
