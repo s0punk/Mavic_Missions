@@ -1,7 +1,6 @@
 package com.vais.mavicmissions.objectives;
 
 import android.os.Handler;
-
 import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
@@ -70,6 +69,12 @@ public class FollowLine extends Objectif {
         });
     }
 
+    /**
+     * Fonction qui permet de détecter des point sur la ligne.
+     * @param maxCorners Int, nombre maximum de points à détecter.
+     * @param minDistance Int, distance minimum des points.
+     * @return Point[], points de la ligne détectées.
+     */
     public Point[] detectLine(int maxCorners, int minDistance) {
         // Capturer le flux vidéo.
         currentView = getFrame();

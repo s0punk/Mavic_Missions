@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.vais.mavicmissions.application.MavicMissionApp;
 import com.vais.mavicmissions.services.VerificationUnit;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import dji.common.error.DJIError;

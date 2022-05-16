@@ -1,7 +1,6 @@
 package com.vais.mavicmissions.services.drone;
 
 import android.os.Handler;
-
 import androidx.annotation.NonNull;
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJIError;

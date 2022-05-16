@@ -1,7 +1,6 @@
 package com.vais.mavicmissions.objectives;
 
 import android.os.Handler;
-
 import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.FlyInstruction;
 import com.vais.mavicmissions.Enum.Shape;
@@ -17,7 +16,6 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-
 import java.util.List;
 
 /**
@@ -102,7 +100,7 @@ public class DynamicParkour extends Objectif {
 
         // Détecter l'instruction.
         if (centeredContour != null) {
-            detectedShape = Detector.detectShape(matSource, visionHelper, centeredContour, caller);
+            detectedShape = Detector.detectShape(matSource, visionHelper, centeredContour);
 
             // Exécuter l'action selon l'instruction.
 
@@ -221,10 +219,8 @@ public class DynamicParkour extends Objectif {
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
                 controller.stop(() -> {
                     controller.goUp(1000, () -> {
-                        cameraController.setZoom(getRightZoom(), djiError -> {
-                            controller.goForward(2500, null);
-                            new Handler().postDelayed(this::seekInstructions, 2000);
-                        });
+                        controller.goForward(2500, null);
+                        new Handler().postDelayed(this::seekInstructions, 2000);
                     });
                 });
             }
@@ -232,10 +228,8 @@ public class DynamicParkour extends Objectif {
             else if (instruction.getInstruction() == FlyInstruction.GO_DOWN) {
                 controller.stop(() -> {
                     controller.goDown(1000, () -> {
-                        cameraController.setZoom(getRightZoom(), djiError -> {
-                            controller.goForward(2500, null);
-                            new Handler().postDelayed(this::seekInstructions, 2000);
-                        });
+                        controller.goForward(2500, null);
+                        new Handler().postDelayed(this::seekInstructions, 2000);
                     });
                 });
             }

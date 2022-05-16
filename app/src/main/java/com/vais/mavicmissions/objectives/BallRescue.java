@@ -24,15 +24,36 @@ import java.util.List;
  * Classe qui gère l'accomplissement de l'objectif 3, le sauvetage d'une balle.
  */
 public class BallRescue extends Objectif {
+    /**
+     * Int, nombre maximum d'essaie pour la détection de la balle.
+     */
     private final int MAX_FAILED_ATTEMPT = 3;
+    /**
+     * Int, threshold utilisée pour la détection de la balle.
+     */
     private final int BALL_DETECTION_THRESHOLD = 150;
+    /**
+     * Int, rotation à effectuer lorsque le drone doit ballayer une nouvelle zone.
+     */
     private final int CHANGE_ZONE_ROTATION = 25;
 
+    /**
+     * String, message affiché lorsque le sauvetage est terminé.
+     */
     private final String rescueEnded;
 
+    /**
+     * Int, nombre d'essaie effectué pour la détection de la balle.
+     */
     private int failedAttempt;
+    /**
+     * Int, angle de rotation total effectuée.
+     */
     private int totalRotation;
 
+    /**
+     * Int, zoom actuelle de la caméra du drone.
+     */
     private int zoom;
 
     /**
@@ -87,16 +108,10 @@ public class BallRescue extends Objectif {
             Imgproc.circle(matSource, ball, 2, new Scalar(255, 255, 0, 255), 10);
             showFrame(matSource);
 
-            //rescue();
-            caller.showToast("Trouvé");
-            objectifStarted = false;
-            controller.land(() -> {
-                caller.showToast(rescueEnded);
-                cameraController.lookDown();
-                caller.setUIState(true);
-            });
+            cameraController.setZoom(CameraController.ZOOM_1X, djiError -> rescue());
         }
         else {
+            // Si le zoom est au minimum.
             if (zoom == 1) {
                 zoom = 6;
                 if (++failedAttempt > MAX_FAILED_ATTEMPT) {
@@ -131,10 +146,20 @@ public class BallRescue extends Objectif {
         }
     }
 
+    /**
+     * Fonction qui permet d'obtenir la coordonnée de la balle.
+     * @param points Point[], points du contour de la balle.
+     * @return Point, coordonnée du milieu de la balle.
+     */
     private Point getBall(Point[] points) {
         return points.length > BALL_DETECTION_THRESHOLD ? Detector.getAveragePoint(points) : null;
     }
 
+    /**
+     * Fonction qui permet de détecter le contour de la balle.
+     * @param source Mat, matrice à analyzer.
+     * @return Point[], points du contour de la balle.
+     */
     private Point[] detectBall(Mat source) {
         // Filter les couleurs de la balle.
         Mat yellow = visionHelper.filterColor(source, Color.YELLOW);
@@ -154,11 +179,14 @@ public class BallRescue extends Objectif {
         return detectedPoints;
     }
 
+    /**
+     * Méthode qui permet de déplacer le drone jusqu'à la balle.
+     */
     private void rescue() {
         Mat matSource = getFrame();
 
         Point ball = getBall(detectBall(matSource));
-        Point center = new Point(matSource.width() / 2, matSource.height() / 2);
+        Point center = Detector.getCenterPoint(matSource);
 
         // Si le drone voit la balle.
         if (ball != null) {

@@ -4,7 +4,6 @@ import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -16,13 +15,30 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Classe qui gère la détection d'élément.
+ */
 public class Detector {
+    /**
+     * Double, epsilon par défaut lors de la détection d'arrêtes d'une forme.
+     */
     private static final double DEFAULT_EPSILON = 0.04;
+    /**
+     * Double, valeur maximale autorisée lors de la comparaison de patrons.
+     */
     private static final double MATCH_TEMPLATE_THRESH = 6E9;
 
-    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, MainActivity caller) {
+    /**
+     * Fonction qui permet de détecter une forme à la caméra.
+     * @param source Mat, matrice à analyzer.
+     * @param visionHelper VisionHelper, service de traitement d'image.
+     * @param contour MatOfPoint, contour détecté.
+     * @return Shape, forme détectée.
+     */
+    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
         Shape detectedShape = Shape.UNKNOWN;
 
+        // Filter la matrice.
         Mat filteredSource = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
 
         // Détecter les côtés du contour.
@@ -62,6 +78,7 @@ public class Detector {
 
         double usimilarity = visionHelper.matchShape(source, R.mipmap.ic_u_foreground);
 
+        // Déterminer la forme selon les paramètres obtenus.
         if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
             detectedShape = Shape.ARROW;
         else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
@@ -74,6 +91,12 @@ public class Detector {
         return detectedShape;
     }
 
+    /**
+     * Fonction qui permet de détecter une flèche.
+     * @param source Mat, matrice à analyzer.
+     * @param corners Point[], coins de la flèche.
+     * @return Mat, matrice filtré.
+     */
     public static Mat detectArrow(Mat source, Point[] corners) {
         if (corners.length != 3) return null;
 
@@ -102,6 +125,11 @@ public class Detector {
         return binary;
     }
 
+    /**
+     * Fonction qui permet d'obtenir le centre de masse d'une matrice.
+     * @param source Mat, matrice à analyzer.
+     * @return Point, centre de masse.
+     */
     public static Point findCenterMass(Mat source) {
         Moments moments = Imgproc.moments(source);
         int cX = (int)(moments.get_m10() / moments.get_m00());
@@ -109,6 +137,12 @@ public class Detector {
         return new Point(cX, cY);
     }
 
+    /**
+     * Fonction qui permet d'obtenir la pointe d'une flèche.
+     * @param massCenter Point, centre de masse de la matrice.
+     * @param corners Point[], coins de la flèche.
+     * @return Point, point de la pointe de la flèche.
+     */
     public static Point findArrowHead(Point massCenter, Point[] corners) {
         // Calculer la distance entre chaque point et le centre de masse.
         double smallestDistance = Double.MAX_VALUE;
@@ -125,6 +159,12 @@ public class Detector {
         return corners.length > cornerID ? corners[cornerID] : null;
     }
 
+    /**
+     * Fonction qui permet de trouver l'angle entre deux points.
+     * @param base Point, premier point.
+     * @param head Point, deuxième point.
+     * @return Double, angle entre les deux points.
+     */
     public static double detectAngle(Point base, Point head) {
         double angle = 0;
 
@@ -177,29 +217,50 @@ public class Detector {
         return angle;
     }
 
+    /**
+     * Fonction qui trouve la distance entre deux points.
+     * @param p1 Point, premier point.
+     * @param p2 Point, deuxième point.
+     * @return Doubble, distance entre les deux points.
+     */
     public static double getLength(Point p1, Point p2) {
         if (p1 == null || p2 == null ) return 0;
 
+        // Calculer la distance.
         double r1 = Math.pow(p1.x - p2.x, 2);
         double r2 = Math.pow(p1.y - p2.y, 2);
         return Math.round(Math.sqrt(r1 + r2));
     }
 
+    /**
+     * Fonction qui trouve le point moyen d'une liste de points.
+     * @param points Point[], tableau de points.
+     * @return Point, point moyen de la liste.
+     */
     public static Point getAveragePoint(Point[] points) {
         if (points == null || points.length == 0)
             return null;
 
+        // Calculer la moyenne des x et y.
         int avgX = 0, avgY = 0;
         for (Point p : points) {
             avgX += p.x;
             avgY += p.y;
         }
+
+        // Diviser selon le nombre de points.
         avgX = avgX / points.length;
         avgY = avgY / points.length;
 
         return new Point(avgX, avgY);
     }
 
+    /**
+     * Fonction qui détermine si deux points sont alignés.
+     * @param base Point, premier point.
+     * @param head Point, deuxième point.
+     * @return
+     */
     public static Point[] detectPointAlignement(Point base, Point head) {
         int difference = (int)(base.x - head.x);
 
@@ -211,6 +272,11 @@ public class Detector {
         return new Point[] { base, head };
     }
 
+    /**
+     * Fonction qui permet d'obtenir le centre de la matrice.
+     * @param source Mat, matrice à analyzer.
+     * @return Point, centre de la matrice.
+     */
     public static Point getCenterPoint(Mat source) {
         return new Point((int)source.width() / 2, (int)source.height() / 2);
     }
