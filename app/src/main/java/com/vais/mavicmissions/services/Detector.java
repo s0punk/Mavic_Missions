@@ -26,10 +26,6 @@ public class Detector {
      * Double, epsilon par défaut lors de la détection d'arrêtes d'une forme.
      */
     private static final double DEFAULT_EPSILON = 0.04;
-    /**
-     * Double, valeur maximale autorisée lors de la comparaison de patrons.
-     */
-    private static final double MATCH_TEMPLATE_THRESH = 6E9;
 
     /**
      * Fonction qui permet de détecter une forme à la caméra.
@@ -53,7 +49,7 @@ public class Detector {
 
         // Déterminer les limites de la pancartes.
         Point[] contourPoints = c2f.toArray();
-        double xMin = source.width() + 1, xMax = -1, yMin = source.height() + 1, yMax = -1;
+        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
         for (Point p : contourPoints) {
             if (p.x < xMin)
                 xMin = p.x;
@@ -67,7 +63,7 @@ public class Detector {
         }
 
         // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.3f, 10);
+        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.4f, 10);
         cornerCount = corners.toArray().length;
         for (Point p : corners.toArray())
             if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin) {
@@ -78,14 +74,14 @@ public class Detector {
         m.showFrame(source);
 
         // Déterminer la forme selon les paramètres obtenus.
-        if (sidesCount == 3 || sidesCount == 4)
-            detectedShape = Shape.ARROW;
-        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
+        if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
         else if (sidesCount == 5 || sidesCount == 6 && area <= 5000)
             detectedShape = Shape.U;
-        else if (sidesCount == 3 || sidesCount == 4 || sidesCount == 9 && area > 5000)
+        else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000)
             detectedShape = Shape.D;
+        else if (sidesCount == 3 || sidesCount == 4)
+            detectedShape = Shape.ARROW;
 
         return detectedShape;
     }
