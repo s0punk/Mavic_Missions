@@ -96,11 +96,11 @@ public class DynamicParkour extends Objectif {
         // Effectuer une détection de contours et isoler le plus gros.
         Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(matSource, Color.BLACK));
         List<MatOfPoint> contours = visionHelper.contoursDetection(filteredMat);
-        MatOfPoint centeredContour = visionHelper.getCenteredContour(filteredMat, contours);
+        MatOfPoint centeredContour = visionHelper.getBiggerContour(contours);
 
         // Détecter l'instruction.
         if (centeredContour != null) {
-            detectedShape = Detector.detectShape(matSource, visionHelper, centeredContour);
+            detectedShape = Detector.detectShape(filteredMat, visionHelper, centeredContour, this);
 
             // Exécuter l'action selon l'instruction.
 
@@ -217,21 +217,17 @@ public class DynamicParkour extends Objectif {
             }
             // Monter l'altitude.
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
-                controller.stop(() -> {
-                    controller.goUp(1000, () -> {
-                        controller.goForward(2500, null);
-                        new Handler().postDelayed(this::seekInstructions, 2000);
-                    });
-                });
+                controller.stop(() -> controller.goUp(1000, () -> {
+                    controller.goForward(2500, null);
+                    new Handler().postDelayed(this::seekInstructions, 2000);
+                }));
             }
             // Descendre l'altitude.
             else if (instruction.getInstruction() == FlyInstruction.GO_DOWN) {
-                controller.stop(() -> {
-                    controller.goDown(1000, () -> {
-                        controller.goForward(2500, null);
-                        new Handler().postDelayed(this::seekInstructions, 2000);
-                    });
-                });
+                controller.stop(() -> controller.goDown(1000, () -> {
+                    controller.goForward(2500, null);
+                    new Handler().postDelayed(this::seekInstructions, 2000);
+                }));
             }
             // Attérir.
             else if (instruction.getInstruction() == FlyInstruction.TAKEOFF_LAND) {

@@ -5,8 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
@@ -80,12 +82,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * List<String>, liste des permissions manquantes.
      * Source: DJI Developper.
      */
-    private List<String> missingPermission = new ArrayList<>();
+    private final List<String> missingPermission = new ArrayList<>();
     /**
      * AtomicBoolean, indique si le processus d'authentification du SDK est en cours.
      * Source: DJI Developper.
      */
-    private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
+    private final AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     /**
      * Int, code de demande de permission.
      * Source: DJI Developper.
@@ -267,13 +269,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * Méthode appelée lors d'un clique sur l'activité.
      * @param view View, vue ayant été cliquée.
      */
+    @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
         // Selon la vue qui a été cliquée.
         switch (view.getId()) {
             case R.id.btnDynamicParcour:
                 // Démarrer le parcours dynamique.
-                if (!parkourManager.isObjectifStarted())
+                if (parkourManager.isObjectifOver())
                     parkourManager.startDynamicParkour();
                 else {
                     setUIState(false);
@@ -289,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btnFollowLine:
                 // Démarrer le suivi d'une ligne.
-                if (!lineFollower.isObjectifStarted())
+                if (lineFollower.isObjectifOver())
                     lineFollower.startFollowLine();
                 else {
                     setUIState(false);
@@ -305,7 +308,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.btnBallRescue:
                 // Démarrer le sauvetage d'une balle.
-                if (!ballRescuer.isObjectifStarted())
+                if (ballRescuer.isObjectifOver())
                     ballRescuer.startBallRescue();
                 else {
                     setUIState(false);
@@ -329,7 +332,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 PendingIntent mPendingIntent = PendingIntent.getActivity(this, mPendingIntentId,    mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
 
                 // Activer l'intent dans 100 millisecondes.
-                AlarmManager mgr = (AlarmManager)this.getSystemService(this.ALARM_SERVICE);
+                AlarmManager mgr = (AlarmManager)this.getSystemService(ALARM_SERVICE);
                 mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
                 System.exit(0);
                 break;
@@ -422,7 +425,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * Fonction qui met à jour l'intent de connection au produit.
      * Source: DJI Developper.
      */
-    private Runnable updateRunnable = () -> {
+    private final Runnable updateRunnable = () -> {
         Intent intent = new Intent(FLAG_CONNECTION_CHANGE);
         sendBroadcast(intent);
     };
@@ -480,9 +483,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (missingPermission.isEmpty())
             startSDKRegistration();
-        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        else {
             ActivityCompat.requestPermissions(this,
-                    missingPermission.toArray(new String[missingPermission.size()]),
+                    missingPermission.toArray(new String[0]),
                     REQUEST_PERMISSION_CODE);
         }
     }
@@ -582,31 +585,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         // Instancier le controlleur du drone.
-        controller = new AircraftController(aircraft, app, new AircraftController.ControllerListener() {
-            @Override
-            public void onControllerReady() {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    // Instancier le controlleur de caméra.
-                    cameraController = new CameraController(controller.getAircraft());
-                    if (textureAvailable)
-                        onSurfaceTextureAvailable(texture, textureWidth, textureHeight);
+        controller = new AircraftController(aircraft, app, () -> new Handler(Looper.getMainLooper()).post(() -> {
+            // Instancier le controlleur de caméra.
+            cameraController = new CameraController(controller.getAircraft());
+            if (textureAvailable)
+                onSurfaceTextureAvailable(texture, textureWidth, textureHeight);
 
-                    if (!cameraController.isLookingDown())
-                        cameraController.lookDown();
+            if (!cameraController.isLookingDown())
+                cameraController.lookDown();
 
-                    cameraController.setZoom(CameraController.ZOOM_1X, new CommonCallbacks.CompletionCallback() {
-                        @Override
-                        public void onResult(DJIError djiError) {
-                            setUIState(true);
-                        }
-                    });
+            cameraController.setZoom(CameraController.ZOOM_1X, djiError -> setUIState(true));
 
-                    // Instacier les gestionnaires des objectifs.
-                    parkourManager = new DynamicParkour(self, controller, cameraController, visionHelper);
-                    lineFollower = new FollowLine(self, controller, cameraController, visionHelper);
-                    ballRescuer = new BallRescue(self, controller, cameraController, visionHelper);
-                });
-            }
-        });
+            // Instacier les gestionnaires des objectifs.
+            parkourManager = new DynamicParkour(self, controller, cameraController, visionHelper);
+            lineFollower = new FollowLine(self, controller, cameraController, visionHelper);
+            ballRescuer = new BallRescue(self, controller, cameraController, visionHelper);
+        }));
     }
 }

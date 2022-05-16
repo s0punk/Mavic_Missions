@@ -9,7 +9,8 @@ import com.vais.mavicmissions.services.drone.AircraftController;
 import com.vais.mavicmissions.services.drone.CameraController;
 import com.vais.mavicmissions.services.VisionHelper;
 import org.opencv.core.Mat;
-import dji.common.util.CommonCallbacks;
+
+import dji.common.util.CommonCallbacks.CompletionCallback;
 
 /**
  * Classe qui gère un objectif.
@@ -18,7 +19,7 @@ public abstract class Objectif {
     /**
      * MainActivity, instance de l'activité de l'application.
      */
-    protected MainActivity caller;
+    public MainActivity caller;
     /**
      * AircraftController, controlleur du drone.
      */
@@ -68,14 +69,12 @@ public abstract class Objectif {
      * Méthode qui démarre l'objectif.
      * @param onReady CommonCallbacks.CompletionCallback, callback à appeler lorsque l'objectif est prêt.
      */
-    protected void startObjectif(CommonCallbacks.CompletionCallback onReady) {
+    protected void startObjectif(CompletionCallback onReady) {
         // Vérifier l'état du drone.
         controller.checkVirtualStick(() -> {
             cameraController.lookDown();
             // Décoller le drone.
-            //controller.takeOff(() -> {
-                cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null));
-            //});
+            controller.takeOff(() -> cameraController.setZoom(getRightZoom(), djiError -> onReady.onResult(null)));
         });
     }
 
@@ -83,7 +82,7 @@ public abstract class Objectif {
      * Fonction qui permet d'obtenir un frame du flux vidéo.
      * @return Mat, matrice du flux vidéo.
      */
-    protected Mat getFrame() {
+    public Mat getFrame() {
         return visionHelper.bitmapToMap(caller.cameraSurface.getBitmap());
     }
 
@@ -112,7 +111,7 @@ public abstract class Objectif {
      * Méthode qui affiche une matrice dans l'activité de l'application.
      * @param frame Mat, matrice à afficher.
      */
-    protected void showFrame(Mat frame) {
+    public void showFrame(Mat frame) {
         new Handler(Looper.getMainLooper()).post(() -> caller.ivResult.setImageBitmap(visionHelper.matToBitmap(frame)));
     }
 
@@ -120,8 +119,8 @@ public abstract class Objectif {
      * Fonction qui indique si l'objectif est démarré.
      * @return Boolea, vrai si l'objectif est démarré.
      */
-    public boolean isObjectifStarted() {
-        return objectifStarted;
+    public boolean isObjectifOver() {
+        return !objectifStarted;
     }
 
     /**

@@ -4,11 +4,14 @@ import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
 import com.vais.mavicmissions.R;
+import com.vais.mavicmissions.objectives.Objectif;
+
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.imgproc.Moments;
 import java.util.ArrayList;
@@ -35,24 +38,22 @@ public class Detector {
      * @param contour MatOfPoint, contour détecté.
      * @return Shape, forme détectée.
      */
-    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour) {
+    public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, Objectif m) {
         Shape detectedShape = Shape.UNKNOWN;
-
-        // Filter la matrice.
-        Mat filteredSource = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
 
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
+        double area = Imgproc.contourArea(contour);
         MatOfPoint2f approx = new MatOfPoint2f();
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
-        int cornerCount = 0;
+        int cornerCount;
         int sidesCount = approx.toArray().length;
 
         // Déterminer les limites de la pancartes.
         Point[] contourPoints = c2f.toArray();
-        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
+        double xMin = source.width() + 1, xMax = -1, yMin = source.height() + 1, yMax = -1;
         for (Point p : contourPoints) {
             if (p.x < xMin)
                 xMin = p.x;
@@ -66,26 +67,24 @@ public class Detector {
         }
 
         // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(filteredSource, 30, 0.4f, 10);
+        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.3f, 10);
+        cornerCount = corners.toArray().length;
         for (Point p : corners.toArray())
-            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin)
+            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin) {
                 cornerCount++;
+                Imgproc.circle(source, p, 2, new Scalar(255, 0, 0, 255), 10);
+            }
 
-        // Vérifier qu'il y ait une pancarte.
-        double instructionDetection = visionHelper.matchTemplate(source, R.mipmap.ic_d_foreground);
-        if (instructionDetection > MATCH_TEMPLATE_THRESH)
-            return detectedShape;
-
-        double usimilarity = visionHelper.matchShape(source, R.mipmap.ic_u_foreground);
+        m.showFrame(source);
 
         // Déterminer la forme selon les paramètres obtenus.
-        if ((sidesCount == 2 || sidesCount == 4) && cornerCount <= 3)
+        if (sidesCount == 3 || sidesCount == 4)
             detectedShape = Shape.ARROW;
         else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
-        else if (usimilarity <= 4)
+        else if (sidesCount == 5 || sidesCount == 6 && area <= 5000)
             detectedShape = Shape.U;
-        else if (usimilarity > 4)
+        else if (sidesCount == 3 || sidesCount == 4 || sidesCount == 9 && area > 5000)
             detectedShape = Shape.D;
 
         return detectedShape;
@@ -189,7 +188,7 @@ public class Detector {
             // Trouver l'hypoténuse avec le théorem de pythagore.
             double headA = Math.abs(head.x - base.x);
             double headB = Math.abs(head.y - base.y);
-            double c = Math.sqrt(Math.pow(headA, 2) + Math.pow(headB, 2));;
+            double c = Math.sqrt(Math.pow(headA, 2) + Math.pow(headB, 2));
 
             // Trouver l'angle à donner au drone.
             switch (quadrant) {
@@ -259,7 +258,7 @@ public class Detector {
      * Fonction qui détermine si deux points sont alignés.
      * @param base Point, premier point.
      * @param head Point, deuxième point.
-     * @return
+     * @return Point[], tableau contenant les nouveaux points alignés. (1, 2)
      */
     public static Point[] detectPointAlignement(Point base, Point head) {
         int difference = (int)(base.x - head.x);

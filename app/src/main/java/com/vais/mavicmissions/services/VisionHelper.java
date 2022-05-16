@@ -187,16 +187,7 @@ public class VisionHelper {
         // Préparer l'image.
         src = smooth(src, 15);
         src = dilate(src, 5);
-
-        Mat result = new Mat();
-        Mat resultNorm = new Mat();
-        Mat resultNormScaled = new Mat();
-        Imgproc.cornerHarris(src, result, 2, 3, 0.04);
-
-        Core.normalize(result, resultNorm, 0, 255, Core.NORM_MINMAX);
-        Core.convertScaleAbs(resultNorm, resultNormScaled);
-
-        return resultNormScaled;
+        return src;
     }
 
     /**
@@ -205,8 +196,7 @@ public class VisionHelper {
      * @return Mat, matrice résultante.
      */
     public Mat prepareCornerDetection(Mat src) {
-        Mat result = src;
-        result = toGrayscale(src);
+        Mat result = toGrayscale(src);
         result = smooth(result, 15);
 
         return result;
@@ -339,54 +329,13 @@ public class VisionHelper {
             lower = lowerBlack;
             upper = upperBlack;
         }
+        else {
+            lower = lowerBlack;
+            upper = upperBlack;
+        }
 
         Core.inRange(hsv, lower, upper, colorMask);
 
         return colorMask;
-    }
-
-    /**
-     * Fonction qui permet de comparer une matrice à un patron.
-     * Source: https://www.tabnine.com/code/java/methods/org.opencv.imgproc.Imgproc/matchTemplate
-     * @param src Mat, matrice à analyzer.
-     * @param templateRes Int, ID de la ressource du patron.
-     * @return Double, valeur de comparaison maximum détectée.
-     */
-    public double matchTemplate(Mat src, int templateRes) {
-        // Convertir la ressource en matrice.
-        Drawable tSource = ContextCompat.getDrawable(context, templateRes);
-        Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
-        template = toGrayscale(template);
-        src = toGrayscale(src);
-
-        Mat result = new Mat();
-        Imgproc.matchTemplate(src, template, result, Imgproc.TM_CCORR);
-        Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
-
-        return locResult.maxVal;
-    }
-
-    /**
-     * Fonction qui permet de comparer des contours.
-     * @param src Mat, matrice à analyzer.
-     * @param templateRes Int, ID de la ressource du patron.
-     * @return Double, valeur de comparaison des formes.
-     */
-    public double matchShape(Mat src, int templateRes) {
-        // Convertir la ressource en matrice.
-        Drawable tSource = ContextCompat.getDrawable(context, templateRes);
-        Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
-
-        // Prendre le contour du template.
-        Mat filteredTemplate = prepareContourDetection(toGrayscale(template));
-        List<MatOfPoint> templateContours = contoursDetection(filteredTemplate);
-        MatOfPoint templateContour = getBiggerContour(templateContours);
-
-        // Prendre le contour de la photo.
-        Mat filteredSource = prepareContourDetection(toGrayscale(src));
-        List<MatOfPoint> srcContours = contoursDetection(filteredSource);
-        MatOfPoint srcContour = getCenteredContour(filteredSource, srcContours);
-
-        return Imgproc.matchShapes(templateContour, srcContour, Imgproc.TM_CCORR, 0);
     }
 }
