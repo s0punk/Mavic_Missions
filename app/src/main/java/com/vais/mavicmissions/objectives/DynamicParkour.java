@@ -100,7 +100,7 @@ public class DynamicParkour extends Objectif {
 
         // Détecter l'instruction.
         if (centeredContour != null) {
-            detectedShape = Detector.detectShape(filteredMat, visionHelper, centeredContour, this);
+            detectedShape = Detector.detectShape(matSource, visionHelper, centeredContour, this);
 
             // Exécuter l'action selon l'instruction.
 

@@ -37,6 +37,8 @@ public class Detector {
     public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, Objectif m) {
         Shape detectedShape = Shape.UNKNOWN;
 
+        Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
+
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
@@ -63,7 +65,7 @@ public class Detector {
         }
 
         // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(source, 30, 0.4f, 10);
+        MatOfPoint corners = visionHelper.detectCorners(filteredMat, 30, 0.4f, 10);
         cornerCount = corners.toArray().length;
         for (Point p : corners.toArray())
             if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin) {
@@ -73,15 +75,20 @@ public class Detector {
 
         m.showFrame(source);
 
+        // Détecter une flèche.
+        Mat arr = visionHelper.prepareCornerDetection(source);
+        MatOfPoint arrCorners = visionHelper.detectCorners(arr, 3, 90);
+        Mat arrow = Detector.detectArrow(arr, arrCorners.toArray());
+
         // Déterminer la forme selon les paramètres obtenus.
-        if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
+        if ((sidesCount == 2 || sidesCount == 3 || sidesCount == 4) && arrow != null && arrCorners.toArray().length == 3)
+            detectedShape = Shape.ARROW;
+        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
             detectedShape = Shape.H;
         else if (sidesCount == 5 || sidesCount == 6 && area <= 5000)
             detectedShape = Shape.U;
         else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000)
             detectedShape = Shape.D;
-        else if (sidesCount == 3 || sidesCount == 4)
-            detectedShape = Shape.ARROW;
 
         return detectedShape;
     }
