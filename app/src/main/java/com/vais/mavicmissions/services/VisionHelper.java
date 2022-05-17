@@ -166,6 +166,19 @@ public class VisionHelper {
     }
 
     /**
+     * Fonction qui applique une érosion sur une matrice.
+     * @param src Mat, matrice à transformer.
+     * @param maskSize Int, dimension du masque à appliquer.
+     * @return Mat, matrice résultante.
+     */
+    public Mat erode(Mat src, int maskSize) {
+        Mat result = new Mat();
+        Imgproc.erode(src, result, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(maskSize, maskSize)));
+
+        return result;
+    }
+
+    /**
      * Fonction qui applique une dilattion sur une matrice.
      * @param src Mat, matrice à transformer.
      * @param maskSize Int, dimensions du masque à appliquer.

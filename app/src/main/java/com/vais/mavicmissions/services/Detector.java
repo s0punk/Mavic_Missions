@@ -73,7 +73,7 @@ public class Detector {
                 Imgproc.circle(source, p, 2, new Scalar(255, 0, 0, 255), 10);
             }
 
-        m.showFrame(source);
+        m.showFrame(filteredMat);
 
         // Détecter une flèche.
         Mat arr = visionHelper.prepareCornerDetection(source);
