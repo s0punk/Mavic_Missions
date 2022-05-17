@@ -2,10 +2,7 @@ package com.vais.mavicmissions.services;
 
 import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.Shape;
-import com.vais.mavicmissions.MainActivity;
-import com.vais.mavicmissions.R;
 import com.vais.mavicmissions.objectives.Objectif;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -281,6 +278,6 @@ public class Detector {
      * @return Point, centre de la matrice.
      */
     public static Point getCenterPoint(Mat source) {
-        return new Point((int)source.width() / 2, (int)source.height() / 2);
+        return new Point((int)(source.width() / 2), (int)(source.height() / 2));
     }
 }
