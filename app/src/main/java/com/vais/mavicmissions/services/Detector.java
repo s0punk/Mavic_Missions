@@ -84,7 +84,7 @@ public class Detector {
             detectedShape = Shape.H;
         else if (sidesCount == 5 || sidesCount == 6 && area <= 5000)
             detectedShape = Shape.U;
-        else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000 && area < 727000)
+        else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000)
             detectedShape = Shape.D;
 
         return detectedShape;

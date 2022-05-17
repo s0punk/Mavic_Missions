@@ -219,16 +219,20 @@ public class DynamicParkour extends Objectif {
             }
             // Monter l'altitude.
             else if (instruction.getInstruction() == FlyInstruction.GO_UP) {
-                controller.stop(() -> controller.goUp(1000, () -> {
-                    controller.goForward(2500, null);
-                    new Handler().postDelayed(this::seekInstructions, 2000);
+                controller.stop(() -> controller.goUp(2000, () -> {
+                    cameraController.setZoom(CameraController.ZOOM_3X, djiError -> {
+                        controller.goForward(2500, null);
+                        new Handler().postDelayed(this::seekInstructions, 2000);
+                    });
                 }));
             }
             // Descendre l'altitude.
             else if (instruction.getInstruction() == FlyInstruction.GO_DOWN) {
                 controller.stop(() -> controller.goDown(1000, () -> {
-                    controller.goForward(2500, null);
-                    new Handler().postDelayed(this::seekInstructions, 2000);
+                    cameraController.setZoom(CameraController.ZOOM_2_2X, djiError -> {
+                        controller.goForward(2500, null);
+                        new Handler().postDelayed(this::seekInstructions, 2000);
+                    });
                 }));
             }
             // Attérir.

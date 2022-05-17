@@ -97,14 +97,14 @@ public class VisionHelper {
 
         // Définir les limites du jaune.
         lowerYellow = new Scalar(22, 100, 100);
-        upperYellow = new Scalar(30, 255, 255);
+        upperYellow = new Scalar(28, 255, 255);
 
         // Définir les limites du vert de la balle.
         lowerBallGreen = new Scalar(32, 100, 100);
         upperBallGreen = new Scalar(82, 255, 255);
 
         lowerBlack = new Scalar(0, 0, 0);
-        upperBlack = new Scalar(145, 255, 30);
+        upperBlack = new Scalar(145, 255, 35);
     }
 
     /**

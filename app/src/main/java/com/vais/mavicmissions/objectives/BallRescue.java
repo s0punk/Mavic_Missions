@@ -31,7 +31,7 @@ public class BallRescue extends Objectif {
     /**
      * Int, threshold utilisée pour la détection de la balle.
      */
-    private final int BALL_DETECTION_THRESHOLD = 150;
+    private final int BALL_DETECTION_THRESHOLD = 55;
     /**
      * Int, rotation à effectuer lorsque le drone doit ballayer une nouvelle zone.
      */
@@ -110,13 +110,13 @@ public class BallRescue extends Objectif {
             // Afficher la position de la balle.
             Imgproc.circle(matSource, ball, 2, new Scalar(255, 255, 0, 255), 10);
             showFrame(matSource);
+            caller.showToast("Balle localisée");
 
-            cameraController.setZoom(CameraController.ZOOM_1X, djiError -> rescue());
+            rescue();
         }
         else {
             // Si le zoom est au minimum.
             if (zoom == 1) {
-
                 if (++failedAttempt > MAX_FAILED_ATTEMPT) {
                     failedAttempt = 0;
                     totalRotation += CHANGE_ZONE_ROTATION;
@@ -172,7 +172,6 @@ public class BallRescue extends Objectif {
                     search();
                 });
             }
-
         }
     }
 
