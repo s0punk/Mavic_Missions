@@ -119,7 +119,7 @@ public class DynamicParkour extends Objectif {
                     Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
 
                     if (head != null) {
-                        angle = Detector.detectAngle(new Point(arrow.width() / 2, arrow.height() / 2), head);
+                        angle = Detector.detectAngle(new Point((int)(arrow.width() / 2), (int)(arrow.height() / 2)), head);
                         Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 20);
                     }
 
@@ -130,7 +130,7 @@ public class DynamicParkour extends Objectif {
                         lastInstruction = new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle);
                     else if (new AircraftInstruction(FlyInstruction.GO_TOWARDS, angle).compare(lastInstruction)) {
                         seek = false;
-                        //executeInstruction(lastInstruction);
+                        executeInstruction(lastInstruction);
                         lastInstruction = null;
                     }
                     else {
@@ -186,7 +186,7 @@ public class DynamicParkour extends Objectif {
         }
 
         // Continuer la recherche si rien n'a été trouvé.
-        /*if (seek) {
+        if (seek) {
             if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
                 controller.land(() -> {
                     objectifStarted = false;
@@ -200,8 +200,7 @@ public class DynamicParkour extends Objectif {
             else
                 controller.goForward(2500, null);
             new Handler().postDelayed(this::seekInstructions, 250);
-        }*/
-        new Handler().postDelayed(this::seekInstructions, 250);
+        }
     }
 
     /**
