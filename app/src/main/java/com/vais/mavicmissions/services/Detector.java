@@ -78,7 +78,7 @@ public class Detector {
         // Détecter une flèche.
         Mat arr = visionHelper.prepareCornerDetection(source);
         MatOfPoint arrCorners = visionHelper.detectCorners(arr, 3, 90);
-        Mat arrow = Detector.detectArrow(arr, arrCorners.toArray());
+        Mat arrow = Detector.detectArrow(source, arrCorners.toArray(), visionHelper);
 
         // Déterminer la forme selon les paramètres obtenus.
         if ((sidesCount == 2 || sidesCount == 3 || sidesCount == 4) && arrow != null && arrCorners.toArray().length == 3)
@@ -87,7 +87,7 @@ public class Detector {
             detectedShape = Shape.H;
         else if (sidesCount == 5 || sidesCount == 6 && area <= 5000)
             detectedShape = Shape.U;
-        else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000)
+        else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000 && area < 727000)
             detectedShape = Shape.D;
 
         return detectedShape;
@@ -97,9 +97,10 @@ public class Detector {
      * Fonction qui permet de détecter une flèche.
      * @param source Mat, matrice à analyzer.
      * @param corners Point[], coins de la flèche.
+     * @param visionHelper VisionHelper, service de traitement d'image.
      * @return Mat, matrice filtré.
      */
-    public static Mat detectArrow(Mat source, Point[] corners) {
+    public static Mat detectArrow(Mat source, Point[] corners, VisionHelper visionHelper) {
         if (corners.length != 3) return null;
 
         // Redimensionner l'image pour y avoir la flèche seulement.
@@ -121,8 +122,8 @@ public class Detector {
         try { cropped = new Mat(source, crop); } catch (Exception e) { return null; }
 
         // Convertir l'image en image binaire.
-        Mat binary = new Mat();
-        Imgproc.threshold(cropped, binary, 100, 100, Imgproc.THRESH_BINARY_INV);
+        Mat binary = visionHelper.filterColor(cropped, Color.BLACK);
+        binary = visionHelper.dilate(binary, 5);
 
         return binary;
     }

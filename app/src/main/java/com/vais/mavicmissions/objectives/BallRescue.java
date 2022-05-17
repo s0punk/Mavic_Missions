@@ -37,6 +37,8 @@ public class BallRescue extends Objectif {
      */
     private final int CHANGE_ZONE_ROTATION = 25;
 
+    private int gimbalRotation;
+
     /**
      * String, message affiché lorsque le sauvetage est terminé.
      */
@@ -82,7 +84,8 @@ public class BallRescue extends Objectif {
             failedAttempt = 0;
             totalRotation = 0;
             zoom = 6;
-            cameraController.lookAtAngle(-55);
+            gimbalRotation = -55;
+            cameraController.lookAtAngle(gimbalRotation);
             cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * zoom, djiError1 -> {
                 controller.goUp(2000, this::search);
             });
@@ -113,14 +116,16 @@ public class BallRescue extends Objectif {
         else {
             // Si le zoom est au minimum.
             if (zoom == 1) {
-                zoom = 6;
+
                 if (++failedAttempt > MAX_FAILED_ATTEMPT) {
                     failedAttempt = 0;
                     totalRotation += CHANGE_ZONE_ROTATION;
 
-                    if (totalRotation < 360)
+                    if (totalRotation < 360) {
+                        zoom = 6;
                         // Rotationner le drone pour chercher une nouvelle zone.
                         controller.faceAngle(CHANGE_ZONE_ROTATION, this::search);
+                    }
                     else if (!cameraController.isLookingDown()) {
                         // Regarder directement en dessous du drone.
                         cameraController.lookDown();
@@ -139,10 +144,35 @@ public class BallRescue extends Objectif {
                 else
                     new Handler().postDelayed(this::search, 500);
             }
-            else
-                cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * --zoom, djiError -> {
+            else {
+                zoom--;
+                switch (zoom) {
+                    case 1:
+                        gimbalRotation = -55;
+                        break;
+                    case 2:
+                        gimbalRotation = -45;
+                        break;
+                    case 3:
+                        gimbalRotation = -35;
+                        break;
+                    case 4:
+                        gimbalRotation = -30;
+                        break;
+                    case 5:
+                        gimbalRotation = -25;
+                        break;
+                    case 6:
+                        gimbalRotation = -15;
+                        break;
+                }
+
+                cameraController.lookAtAngle(gimbalRotation);
+                cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * zoom, djiError -> {
                     search();
                 });
+            }
+
         }
     }
 
@@ -175,6 +205,8 @@ public class BallRescue extends Objectif {
 
         Point[] detectedPoints = biggerContour.toArray();
         detectedPoints = detectedPoints.length == 4 ? new Point[] {} : detectedPoints;
+
+        showFrame(combination);
 
         return detectedPoints;
     }

@@ -111,7 +111,7 @@ public class DynamicParkour extends Objectif {
                 Mat arr = visionHelper.prepareCornerDetection(matSource);
                 MatOfPoint corners = visionHelper.detectCorners(arr, 3, 90);
 
-                Mat arrow = Detector.detectArrow(arr, corners.toArray());
+                Mat arrow = Detector.detectArrow(matSource, corners.toArray(), visionHelper);
                 if (arrow != null) {
                     arrow = visionHelper.dilate(arrow, 5);
 
@@ -120,7 +120,7 @@ public class DynamicParkour extends Objectif {
 
                     if (head != null) {
                         angle = Detector.detectAngle(new Point(arrow.width() / 2, arrow.height() / 2), head);
-                        Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 10);
+                        Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 20);
                     }
 
                     // Afficher le résultat.
@@ -145,7 +145,7 @@ public class DynamicParkour extends Objectif {
                 else if (new AircraftInstruction(FlyInstruction.GO_UP).compare(lastInstruction)) {
                     seek = false;
                     caller.showToast("U");
-                    //executeInstruction(lastInstruction);
+                    executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
                 else {
@@ -160,7 +160,7 @@ public class DynamicParkour extends Objectif {
                 else if (new AircraftInstruction(FlyInstruction.GO_DOWN).compare(lastInstruction)) {
                     seek = false;
                     caller.showToast("D");
-                    //executeInstruction(lastInstruction);
+                    executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
                 else {
@@ -175,7 +175,7 @@ public class DynamicParkour extends Objectif {
                 else if (new AircraftInstruction(FlyInstruction.TAKEOFF_LAND).compare(lastInstruction)) {
                     seek = false;
                     caller.showToast("H");
-                    //executeInstruction(lastInstruction);
+                    executeInstruction(lastInstruction);
                     lastInstruction = null;
                 }
                 else {
@@ -189,8 +189,10 @@ public class DynamicParkour extends Objectif {
         /*if (seek) {
             if (++unknownDetectionCount > MAX_UNKNOWN_DETECTION)
                 controller.land(() -> {
-                    caller.showToast(parkourEnded);
+                    objectifStarted = false;
                     cameraController.lookDown();
+                    controller.loseControl();
+                    caller.showToast(parkourEnded);
                     caller.setUIState(true);
                 });
             else if (stop)
@@ -233,6 +235,7 @@ public class DynamicParkour extends Objectif {
             // Attérir.
             else if (instruction.getInstruction() == FlyInstruction.TAKEOFF_LAND) {
                 controller.land(() -> {
+                    controller.loseControl();
                     objectifStarted = false;
                     caller.showToast(parkourEnded);
                     cameraController.lookDown();
