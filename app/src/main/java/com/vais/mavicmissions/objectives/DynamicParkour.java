@@ -100,7 +100,7 @@ public class DynamicParkour extends Objectif {
 
         // Détecter l'instruction.
         if (biggerContour != null) {
-            detectedShape = Detector.detectShape(visionHelper.cropToContour(matSource, biggerContour), visionHelper, biggerContour, this);
+            detectedShape = Detector.detectShape(matSource, visionHelper, biggerContour, this);
 
             // Exécuter l'action selon l'instruction.
 

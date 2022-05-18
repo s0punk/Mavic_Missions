@@ -200,6 +200,7 @@ public class VisionHelper {
     public Mat prepareContourDetection(Mat src) {
         // Préparer l'image.
         src = smooth(src, 15);
+        src = dilate(src, 5);
         return src;
     }
 
@@ -326,49 +327,5 @@ public class VisionHelper {
         Core.inRange(hsv, lower, upper, colorMask);
 
         return colorMask;
-    }
-
-    /**
-     * Fonction qui rétressit une matrice par rapport à un ROI.
-     * @param source Mat, matrice à transformer.
-     * @param contour MatOfPoint, contour à délimiter.
-     * @return Mat, matrice résultante.
-     */
-    public Mat cropToContour(Mat source, MatOfPoint contour) {
-        Rect bounds = getRealBounds(source, contour);
-        Point tl = bounds.tl();
-        Point br = bounds.br();
-
-        // Agrandir le ROI.
-        tl = new Point(tl.x - 5, tl.y - 5);
-        br = new Point(br.x + 5, br.y + 5);
-        bounds = new Rect(tl, br);
-
-        return new Mat(source, bounds);
-    }
-
-    /**
-     * Fonction qui trouve le ROI d'un contour par rapport à une matrice.
-     * @param source Mat, matrice contenant le contour.
-     * @param contour MatOfPoint, contour à délimiter.
-     * @return Rect, ROI du contour.
-     */
-    public Rect getRealBounds(Mat source, MatOfPoint contour) {
-        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
-
-        // Délimiter les extrêmes du contour.
-        for (Point p : contour.toArray()) {
-            if (p.x < xMin)
-                xMin = p.x;
-            else if (p.x > xMax)
-                xMax = p.x;
-
-            if (p.y < yMin)
-                yMin = p.y;
-            else if (p.y > yMax)
-                yMax = p.y;
-        }
-
-        return new Rect(new Point(xMax, yMin), new Point(xMin, yMax));
     }
 }

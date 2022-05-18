@@ -35,7 +35,6 @@ public class Detector {
         Shape detectedShape = Shape.UNKNOWN;
 
         Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
-        filteredMat = visionHelper.dilate(filteredMat, 9);
 
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
@@ -48,13 +47,25 @@ public class Detector {
         int sidesCount = approx.toArray().length;
 
         // Déterminer les limites de la pancartes.
-        Rect bounds = visionHelper.getRealBounds(source, contour);
+        Point[] contourPoints = c2f.toArray();
+        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
+        for (Point p : contourPoints) {
+            if (p.x < xMin)
+                xMin = p.x;
+            else if (p.x > xMax)
+                xMax = p.x;
+
+            if (p.y < yMin)
+                yMin = p.y;
+            else if (p.y > yMax)
+                yMax = p.y;
+        }
 
         // Détecter les coins.
         MatOfPoint corners = visionHelper.detectCorners(filteredMat, 30, 0.4f, 10);
         cornerCount = corners.toArray().length;
         for (Point p : corners.toArray())
-            if (p.x <= (bounds.x + bounds.width) && p.x >= bounds.x && p.y <= (bounds.y + bounds.height) && p.y >= bounds.y) {
+            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin) {
                 cornerCount++;
                 Imgproc.circle(source, p, 2, new Scalar(255, 0, 0, 255), 10);
             }
