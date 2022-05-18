@@ -6,6 +6,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import androidx.core.content.ContextCompat;
 import com.vais.mavicmissions.Enum.Color;
+import com.vais.mavicmissions.R;
+
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -20,6 +22,7 @@ import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Classe qui permet d'effectuer des opérations de traitement d'image.
@@ -194,12 +197,16 @@ public class VisionHelper {
 
     /**
      * Fonction qui prépare une matrice pour effectuer une détection de contours.
+     * Source: https://www.tutorialspoint.com/opencv/opencv_canny_edge_detection.htm
      * @param src Mat, matrice à transformer.
      * @return Mat, matrice résultante.
      */
     public Mat prepareContourDetection(Mat src) {
         // Préparer l'image.
-        src = smooth(src, 15);
+        src = toGrayscale(src);
+        src = smooth(src, 25);
+
+        Imgproc.Canny(src, src, 60, 60 * 3);
         src = dilate(src, 5);
         return src;
     }
@@ -258,7 +265,7 @@ public class VisionHelper {
         Mat hierarchy = new Mat();
         Mat binary = new Mat();
         Imgproc.threshold(src, binary, CONTOURS_THRESHOLD, CONTOURS_THRESHOLD, Imgproc.THRESH_BINARY_INV);
-        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(binary, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 
         return contours;
     }
@@ -268,21 +275,47 @@ public class VisionHelper {
      * @param contours List<MatOfPoint>, liste de contours à analyzer.
      * @return MatOfPoint, contour le plus grand.
      */
-    public MatOfPoint getBiggerContour(List<MatOfPoint> contours) {
+    public MatOfPoint getBiggerContour(Mat source, List<MatOfPoint> contours) {
         MatOfPoint biggerContour = null;
         double biggestArea = 0;
         double area;
+        Rect bounds;
 
         // Parcourir les contours et noter le plus grand.
         for (MatOfPoint contour : contours) {
+            bounds = Imgproc.boundingRect(contour);
             area = Imgproc.contourArea(contour);
-            if (area > biggestArea) {
-                biggestArea = area;
+
+            if (area > biggestArea && (bounds.width < source.width() && bounds.height < source.height())) {
+                biggestArea  = area;
                 biggerContour = contour;
             }
         }
 
         return biggerContour;
+    }
+
+    /**
+     * Source: https://stackoverflow.com/questions/44501723/how-to-merge-contours-in-opencv
+     * @param source
+     * @param contours
+     * @return
+     */
+    public MatOfPoint combineContours(Mat source, List<MatOfPoint> contours) {
+        List<Point> finalPoints = new ArrayList<>();
+        MatOfPoint finalContour = new MatOfPoint();
+        Rect bounds;
+
+        for (MatOfPoint c : contours) {
+            bounds = Imgproc.boundingRect(c);
+
+            // Si le contour n'est pas le contour de la matrice au complet.
+            if (bounds.width < source.width() && bounds.height < source.height())
+                finalPoints.addAll(c.toList());
+        }
+
+        finalContour.fromList(finalPoints);
+        return finalContour;
     }
 
     /**
@@ -327,5 +360,119 @@ public class VisionHelper {
         Core.inRange(hsv, lower, upper, colorMask);
 
         return colorMask;
+    }
+
+    /**
+     * Fonction qui rétressit une matrice par rapport à un ROI.
+     * @param source Mat, matrice à transformer.
+     * @param contour MatOfPoint, contour à délimiter.
+     * @return Mat, matrice résultante.
+     */
+    public Mat cropToContour(Mat source, MatOfPoint contour) {
+        Rect bounds = Imgproc.boundingRect(contour);
+        return new Mat(source, bounds);
+    }
+
+    /**
+     * Fonction qui affiche des contours sur un fond noir.
+     * @param source Mat, matrice à transformer.
+     * @param contours List<MatOfPoint>, liste des contours à afficher.
+     * @return Mat, matrice résultante.
+     */
+    public Mat drawContour(Mat source, List<MatOfPoint> contours) {
+        // Remplir le fond de la matrice.
+        List<Point> points = new ArrayList<>();
+        points.add(new Point(0, 0));
+        points.add(new Point(source.width(), 0));
+        points.add(new Point(source.width(), source.height()));
+        points.add(new Point(0, source.height()));
+        MatOfPoint collection = new MatOfPoint();
+        collection.fromList(points);
+        List<MatOfPoint> pointMats = new ArrayList<>();
+        pointMats.add(collection);
+
+        Imgproc.fillPoly(source, pointMats, new Scalar(0, 0, 0, 255));
+        Random r = new Random();
+
+        for (int i = 0; i < contours.size(); i++)
+            Imgproc.drawContours(source, contours, i, new Scalar(r.nextInt(255), r.nextInt(255), r.nextInt(255), 255), 5);
+
+        return source;
+    }
+
+    /**
+     * Fonction qui affiche des contours sur un fond noir.
+     * @param source Mat, matrice à transformer.
+     * @param contour MatOfPoint, contour à afficher.
+     * @return Mat, matrice résultante.
+     */
+    public Mat drawContour(Mat source, MatOfPoint contour) {
+        // Remplir le fond de la matrice.
+        List<Point> points = new ArrayList<>();
+        points.add(new Point(0, 0));
+        points.add(new Point(source.width(), 0));
+        points.add(new Point(source.width(), source.height()));
+        points.add(new Point(0, source.height()));
+        MatOfPoint collection = new MatOfPoint();
+        collection.fromList(points);
+        List<MatOfPoint> pointMats = new ArrayList<>();
+        pointMats.add(collection);
+
+        Imgproc.fillPoly(source, pointMats, new Scalar(0, 0, 0, 255));
+        Random r = new Random();
+
+        List<MatOfPoint> contours = new ArrayList<>();
+        contours.add(contour);
+        for (int i = 0; i < contours.size(); i++)
+            Imgproc.drawContours(source, contours, i, new Scalar(r.nextInt(255), r.nextInt(255), r.nextInt(255), 255), 5);
+
+        return source;
+    }
+
+    /**
+     * Fonction qui permet de comparer une matrice à un patron.
+     * Source: https://www.tabnine.com/code/java/methods/org.opencv.imgproc.Imgproc/matchTemplate
+     * @param src Mat, matrice à analyzer.
+     * @param templateRes Int, ID de la ressource du patron.
+     * @return Double, valeur de comparaison maximum détectée.
+     */
+    public double matchTemplate(Mat src, int templateRes) {
+        // Convertir la ressource en matrice.
+        Drawable tSource = ContextCompat.getDrawable(context, templateRes);
+        Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
+        template = toGrayscale(template);
+        src = toGrayscale(src);
+
+        Mat result = new Mat();
+        Imgproc.matchTemplate(src, template, result, Imgproc.TM_CCORR);
+        Core.MinMaxLocResult locResult = Core.minMaxLoc(result);
+
+        return locResult.maxVal;
+    }
+
+    /**
+     * Fonction qui permet de comparer des contours.
+     * @param srcContour MatOfPoint, contour à analyzer.
+     * @param templateRes Int, ID de la ressource du patron.
+     * @return Double, valeur de comparaison des formes.
+     */
+    public double matchShape(MatOfPoint srcContour, int templateRes) {
+        // Convertir la ressource en matrice.
+        Drawable tSource = ContextCompat.getDrawable(context, templateRes);
+        Mat template = bitmapToMap(((BitmapDrawable)tSource).getBitmap());
+
+        // Prendre le contour du template.
+        Mat filteredTemplate = prepareContourDetection(template);
+        List<MatOfPoint> templateContours = contoursDetection(filteredTemplate);
+        MatOfPoint templateContour;
+
+        if (templateRes == R.mipmap.ic_d_foreground)
+            templateContour = templateContours.get(3);
+        else if (templateRes == R.mipmap.ic_u_foreground)
+            templateContour = templateContours.get(3);
+        else
+            templateContour = null;
+
+        return Imgproc.matchShapes(templateContour, srcContour, Imgproc.TM_CCORR, 0);
     }
 }

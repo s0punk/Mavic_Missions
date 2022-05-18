@@ -16,6 +16,8 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -94,9 +96,9 @@ public class DynamicParkour extends Objectif {
         Mat matSource = getFrame();
 
         // Effectuer une détection de contours et isoler le plus gros.
-        Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(matSource, Color.BLACK));
+        Mat filteredMat = visionHelper.prepareContourDetection(matSource);
         List<MatOfPoint> contours = visionHelper.contoursDetection(filteredMat);
-        MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+        MatOfPoint biggerContour = visionHelper.getBiggerContour(matSource, contours);
 
         // Détecter l'instruction.
         if (biggerContour != null) {

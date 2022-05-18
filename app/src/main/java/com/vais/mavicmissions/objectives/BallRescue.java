@@ -179,7 +179,7 @@ public class BallRescue extends Objectif {
 
         // Trouver le plus gros contour.
         List<MatOfPoint> contours = visionHelper.contoursDetection(combination);
-        MatOfPoint biggerContour = visionHelper.getBiggerContour(contours);
+        MatOfPoint biggerContour = visionHelper.getBiggerContour(combination, contours);
 
         Point[] detectedPoints = biggerContour.toArray();
         detectedPoints = detectedPoints.length == 4 ? new Point[] {} : detectedPoints;

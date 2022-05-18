@@ -2,6 +2,7 @@ package com.vais.mavicmissions.services;
 
 import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.Shape;
+import com.vais.mavicmissions.R;
 import com.vais.mavicmissions.objectives.Objectif;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -34,58 +35,36 @@ public class Detector {
     public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, Objectif m) {
         Shape detectedShape = Shape.UNKNOWN;
 
-        Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
-
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
         double perimeter = Imgproc.arcLength(c2f, true);
-        double area = Imgproc.contourArea(contour);
         MatOfPoint2f approx = new MatOfPoint2f();
         Imgproc.approxPolyDP(c2f, approx, DEFAULT_EPSILON * perimeter, true);
 
-        int cornerCount;
         int sidesCount = approx.toArray().length;
-
-        // Déterminer les limites de la pancartes.
-        Point[] contourPoints = c2f.toArray();
-        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
-        for (Point p : contourPoints) {
-            if (p.x < xMin)
-                xMin = p.x;
-            else if (p.x > xMax)
-                xMax = p.x;
-
-            if (p.y < yMin)
-                yMin = p.y;
-            else if (p.y > yMax)
-                yMax = p.y;
-        }
-
-        // Détecter les coins.
-        MatOfPoint corners = visionHelper.detectCorners(filteredMat, 30, 0.4f, 10);
-        cornerCount = corners.toArray().length;
-        for (Point p : corners.toArray())
-            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin) {
-                cornerCount++;
-                Imgproc.circle(source, p, 2, new Scalar(255, 0, 0, 255), 10);
-            }
-
-        m.showFrame(filteredMat);
 
         // Détecter une flèche.
         Mat arr = visionHelper.prepareCornerDetection(source);
         MatOfPoint arrCorners = visionHelper.detectCorners(arr, 3, 90);
         Mat arrow = Detector.detectArrow(source, arrCorners.toArray(), visionHelper);
 
+        m.showFrame(visionHelper.drawContour(source, contour));
+
+        double[] similarities = new double[2];
+        similarities[0] = visionHelper.matchShape(contour, R.mipmap.ic_d_foreground);
+        similarities[1] = visionHelper.matchShape(contour, R.mipmap.ic_u_foreground);
+
+        m.caller.showToast(sidesCount + "");
+
         // Déterminer la forme selon les paramètres obtenus.
-        if ((sidesCount == 2 || sidesCount == 3 || sidesCount == 4) && arrow != null && arrCorners.toArray().length == 3)
-            detectedShape = Shape.ARROW;
-        else if (cornerCount > 10 && (sidesCount == 7 || sidesCount == 8))
+        if (sidesCount == 7 || sidesCount == 8)
             detectedShape = Shape.H;
-        else if (sidesCount == 5 || sidesCount == 6 && area <= 5000)
+        else if (similarities[1] < 0)
             detectedShape = Shape.U;
-        else if ((sidesCount == 3 || sidesCount == 4 || sidesCount == 9) && area > 5000)
+        else if (similarities[0] < 0)
             detectedShape = Shape.D;
+        else if ((sidesCount == 2 || sidesCount == 3 || sidesCount == 4) && arrow != null && arrCorners.toArray().length == 3)
+            detectedShape = Shape.ARROW;
 
         return detectedShape;
     }
