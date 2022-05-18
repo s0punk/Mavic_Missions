@@ -20,6 +20,8 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.List;
 
+import dji.common.util.CommonCallbacks;
+
 /**
  * Classe qui gère l'accomplissement de l'objectif 3, le sauvetage d'une balle.
  */
@@ -37,6 +39,9 @@ public class BallRescue extends Objectif {
      */
     private final int CHANGE_ZONE_ROTATION = 25;
 
+    /**
+     * Int, rotation actuelle du gimbal en degrée.
+     */
     private int gimbalRotation;
 
     /**
@@ -144,34 +149,8 @@ public class BallRescue extends Objectif {
                 else
                     new Handler().postDelayed(this::search, 500);
             }
-            else {
-                zoom--;
-                switch (zoom) {
-                    case 1:
-                        gimbalRotation = -55;
-                        break;
-                    case 2:
-                        gimbalRotation = -45;
-                        break;
-                    case 3:
-                        gimbalRotation = -35;
-                        break;
-                    case 4:
-                        gimbalRotation = -30;
-                        break;
-                    case 5:
-                        gimbalRotation = -25;
-                        break;
-                    case 6:
-                        gimbalRotation = -15;
-                        break;
-                }
-
-                cameraController.lookAtAngle(gimbalRotation);
-                cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * zoom, djiError -> {
-                    search();
-                });
-            }
+            else
+                setView(djiError -> search());
         }
     }
 
@@ -234,12 +213,47 @@ public class BallRescue extends Objectif {
             });
         }
         // Si le drone ne voit plus la balle.
-        else
-            controller.land(() -> {
-                objectifStarted = false;
-                caller.showToast(rescueEnded);
-                cameraController.lookDown();
-                caller.setUIState(true);
-            });
+        else {
+            if (zoom != 1)
+                setView(djiError -> rescue());
+            else
+                controller.land(() -> {
+                    objectifStarted = false;
+                    caller.showToast(rescueEnded);
+                    cameraController.lookDown();
+                    caller.setUIState(true);
+                });
+        }
+    }
+
+    /**
+     * Méthode qui change l'angle de vue du drone.
+     * @param callback CompletionCallback, action à effectuer lors de la fin de l'opération.
+     */
+    private void setView(CommonCallbacks.CompletionCallback callback) {
+        zoom--;
+        switch (zoom) {
+            case 1:
+                gimbalRotation = -55;
+                break;
+            case 2:
+                gimbalRotation = -45;
+                break;
+            case 3:
+                gimbalRotation = -35;
+                break;
+            case 4:
+                gimbalRotation = -30;
+                break;
+            case 5:
+                gimbalRotation = -25;
+                break;
+            case 6:
+                gimbalRotation = -15;
+                break;
+        }
+
+        cameraController.lookAtAngle(gimbalRotation);
+        cameraController.setZoom(CameraController.MIN_OPTICAL_ZOOM * zoom, djiError -> callback.onResult(null));
     }
 }

@@ -14,6 +14,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.android.Utils;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -104,7 +105,7 @@ public class VisionHelper {
         upperBallGreen = new Scalar(82, 255, 255);
 
         lowerBlack = new Scalar(0, 0, 0);
-        upperBlack = new Scalar(145, 255, 35);
+        upperBlack = new Scalar(155, 255, 35);
     }
 
     /**
@@ -199,7 +200,6 @@ public class VisionHelper {
     public Mat prepareContourDetection(Mat src) {
         // Préparer l'image.
         src = smooth(src, 15);
-        src = dilate(src, 5);
         return src;
     }
 
@@ -269,43 +269,19 @@ public class VisionHelper {
      */
     public MatOfPoint getBiggerContour(List<MatOfPoint> contours) {
         MatOfPoint biggerContour = null;
-        int biggerRowCount = 0;
+        double biggestArea = 0;
+        double area;
 
         // Parcourir les contours et noter le plus grand.
         for (MatOfPoint contour : contours) {
-            if (contour.rows() > biggerRowCount) {
-                biggerRowCount = contour.rows();
+            area = Imgproc.contourArea(contour);
+            if (area > biggestArea) {
+                biggestArea = area;
                 biggerContour = contour;
             }
         }
 
         return biggerContour;
-    }
-
-    /**
-     * Fonction qui trouve le contours le plus au centre de sa matrice parmis une liste.
-     * @param source Mat, matrice à analyzer.
-     * @param contours List<MatOfPoint>, liste des contours à analyzer.
-     * @return MatOfPoint, contour le plus au centre de la matrice.
-     */
-    public MatOfPoint getCenteredContour(Mat source, List<MatOfPoint> contours) {
-        MatOfPoint centeredContour = null;
-
-        int targetPos = (int)(source.width() / 2);
-        double smallestDifference = source.width();
-        Point avg;
-
-        // Parcourir les contours et noter le plus au centre.
-        for (MatOfPoint contour : contours) {
-            avg = Detector.getAveragePoint(contour.toArray());
-            double difference = Math.abs(targetPos - avg.x);
-            if (difference < smallestDifference) {
-                centeredContour = contour;
-                smallestDifference = difference;
-            }
-        }
-
-        return centeredContour;
     }
 
     /**
@@ -350,5 +326,49 @@ public class VisionHelper {
         Core.inRange(hsv, lower, upper, colorMask);
 
         return colorMask;
+    }
+
+    /**
+     * Fonction qui rétressit une matrice par rapport à un ROI.
+     * @param source Mat, matrice à transformer.
+     * @param contour MatOfPoint, contour à délimiter.
+     * @return Mat, matrice résultante.
+     */
+    public Mat cropToContour(Mat source, MatOfPoint contour) {
+        Rect bounds = getRealBounds(source, contour);
+        Point tl = bounds.tl();
+        Point br = bounds.br();
+
+        // Agrandir le ROI.
+        tl = new Point(tl.x - 5, tl.y - 5);
+        br = new Point(br.x + 5, br.y + 5);
+        bounds = new Rect(tl, br);
+
+        return new Mat(source, bounds);
+    }
+
+    /**
+     * Fonction qui trouve le ROI d'un contour par rapport à une matrice.
+     * @param source Mat, matrice contenant le contour.
+     * @param contour MatOfPoint, contour à délimiter.
+     * @return Rect, ROI du contour.
+     */
+    public Rect getRealBounds(Mat source, MatOfPoint contour) {
+        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
+
+        // Délimiter les extrêmes du contour.
+        for (Point p : contour.toArray()) {
+            if (p.x < xMin)
+                xMin = p.x;
+            else if (p.x > xMax)
+                xMax = p.x;
+
+            if (p.y < yMin)
+                yMin = p.y;
+            else if (p.y > yMax)
+                yMax = p.y;
+        }
+
+        return new Rect(new Point(xMax, yMin), new Point(xMin, yMax));
     }
 }
