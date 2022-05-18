@@ -49,8 +49,6 @@ public class Detector {
 
         int sidesCount = approx.toArray().length;
 
-        m.showFrame(visionHelper.drawContour(source, contour));
-
         double[] similarities = new double[2];
         similarities[0] = visionHelper.matchShape(contour, R.mipmap.ic_d_foreground);
         similarities[1] = visionHelper.matchShape(contour, R.mipmap.ic_u_foreground);
@@ -62,8 +60,11 @@ public class Detector {
             detectedShape = Shape.D;
         else if (sidesCount == 7 || sidesCount == 8)
             detectedShape = Shape.H;
-        else if (sidesCount == 2 || sidesCount == 3 || sidesCount == 4)
+        else if (sidesCount == 2 || sidesCount == 4 || sidesCount == 6)
             detectedShape = Shape.ARROW;
+
+        if (detectedShape != Shape.ARROW)
+            m.showFrame(visionHelper.drawContour(source.clone(), contour));
 
         return detectedShape;
     }
@@ -99,11 +100,7 @@ public class Detector {
             cropped = new Mat(source, new Rect(x.get(0), y.get(0), (x.get(x.size() - 1) - x.get(0)), (y.get(y.size() - 1) - y.get(0))));
         }
 
-        // Convertir l'image en image binaire.
-        Mat binary = visionHelper.filterColor(cropped, Color.BLACK);
-        binary = visionHelper.dilate(binary, 5);
-
-        return binary;
+        return visionHelper.toGrayscale(cropped);
     }
 
     /**

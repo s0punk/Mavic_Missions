@@ -115,14 +115,12 @@ public class DynamicParkour extends Objectif {
 
                 Mat arrow = Detector.detectArrow(matSource, corners.toArray(), visionHelper);
                 if (arrow != null) {
-                    arrow = visionHelper.dilate(arrow, 5);
-
                     Point[] croppedCorners = visionHelper.detectCorners(arrow, 3, 0.6f, 150).toArray();
                     Point head = Detector.findArrowHead(Detector.findCenterMass(arrow), croppedCorners);
 
                     if (head != null) {
                         angle = Detector.detectAngle(new Point((int)(arrow.width() / 2), (int)(arrow.height() / 2)), head);
-                        Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 20);
+                        Imgproc.circle(arrow, head, 2, new Scalar(255, 0, 0, 255), 10);
                     }
 
                     // Afficher le résultat.
