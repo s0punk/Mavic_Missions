@@ -35,6 +35,7 @@ public class Detector {
         Shape detectedShape = Shape.UNKNOWN;
 
         Mat filteredMat = visionHelper.prepareContourDetection(visionHelper.filterColor(source, Color.BLACK));
+        filteredMat = visionHelper.dilate(filteredMat, 9);
 
         // Détecter les côtés du contour.
         MatOfPoint2f c2f = new MatOfPoint2f(contour.toArray());
@@ -47,25 +48,13 @@ public class Detector {
         int sidesCount = approx.toArray().length;
 
         // Déterminer les limites de la pancartes.
-        Point[] contourPoints = c2f.toArray();
-        double xMin = source.width() + 1, xMax = -1, yMin = -1, yMax = source.height() + 1;
-        for (Point p : contourPoints) {
-            if (p.x < xMin)
-                xMin = p.x;
-            else if (p.x > xMax)
-                xMax = p.x;
-
-            if (p.y < yMin)
-                yMin = p.y;
-            else if (p.y > yMax)
-                yMax = p.y;
-        }
+        Rect bounds = visionHelper.getRealBounds(source, contour);
 
         // Détecter les coins.
         MatOfPoint corners = visionHelper.detectCorners(filteredMat, 30, 0.4f, 10);
         cornerCount = corners.toArray().length;
         for (Point p : corners.toArray())
-            if (p.x <= xMax && p.x >= xMin && p.y <= yMax && p.y >= yMin) {
+            if (p.x <= (bounds.x + bounds.width) && p.x >= bounds.x && p.y <= (bounds.y + bounds.height) && p.y >= bounds.y) {
                 cornerCount++;
                 Imgproc.circle(source, p, 2, new Scalar(255, 0, 0, 255), 10);
             }
@@ -116,7 +105,10 @@ public class Detector {
 
         Rect crop = new Rect(x.get(0) - 25, y.get(0) - 25, newWidth, newHeight);
         Mat cropped;
-        try { cropped = new Mat(source, crop); } catch (Exception e) { return null; }
+        try { cropped = new Mat(source, crop); }
+        catch (Exception e) {
+            cropped = new Mat(source, new Rect(x.get(0), y.get(0), (x.get(x.size() - 1) - x.get(0)), (y.get(y.size() - 1) - y.get(0))));
+        }
 
         // Convertir l'image en image binaire.
         Mat binary = visionHelper.filterColor(cropped, Color.BLACK);
