@@ -26,10 +26,16 @@ public class Detector {
     private static final double DEFAULT_EPSILON = 0.04;
 
     /**
+     * Int, limite maximum pour la comparaison de contours.
+     */
+    private static final int MATCH_SHAPE_TRESH = 1;
+
+    /**
      * Fonction qui permet de détecter une forme à la caméra.
      * @param source Mat, matrice à analyzer.
      * @param visionHelper VisionHelper, service de traitement d'image.
      * @param contour MatOfPoint, contour détecté.
+     * @param m Objectif, gestionnaire de l'objectif.
      * @return Shape, forme détectée.
      */
     public static Shape detectShape(Mat source, VisionHelper visionHelper, MatOfPoint contour, Objectif m) {
@@ -43,27 +49,20 @@ public class Detector {
 
         int sidesCount = approx.toArray().length;
 
-        // Détecter une flèche.
-        Mat arr = visionHelper.prepareCornerDetection(source);
-        MatOfPoint arrCorners = visionHelper.detectCorners(arr, 3, 90);
-        Mat arrow = Detector.detectArrow(source, arrCorners.toArray(), visionHelper);
-
         m.showFrame(visionHelper.drawContour(source, contour));
 
         double[] similarities = new double[2];
         similarities[0] = visionHelper.matchShape(contour, R.mipmap.ic_d_foreground);
         similarities[1] = visionHelper.matchShape(contour, R.mipmap.ic_u_foreground);
 
-        m.caller.showToast(sidesCount + "");
-
         // Déterminer la forme selon les paramètres obtenus.
-        if (sidesCount == 7 || sidesCount == 8)
-            detectedShape = Shape.H;
-        else if (similarities[1] < 0)
+        if (similarities[1] < MATCH_SHAPE_TRESH)
             detectedShape = Shape.U;
-        else if (similarities[0] < 0)
+        else if (similarities[0] < MATCH_SHAPE_TRESH)
             detectedShape = Shape.D;
-        else if ((sidesCount == 2 || sidesCount == 3 || sidesCount == 4) && arrow != null && arrCorners.toArray().length == 3)
+        else if (sidesCount == 7 || sidesCount == 8)
+            detectedShape = Shape.H;
+        else if (sidesCount == 2 || sidesCount == 3 || sidesCount == 4)
             detectedShape = Shape.ARROW;
 
         return detectedShape;
