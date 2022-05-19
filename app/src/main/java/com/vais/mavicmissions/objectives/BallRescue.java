@@ -79,6 +79,26 @@ public class BallRescue extends Objectif {
      * Méthode qui commence le processus de sauvetage de la balle.
      */
     public void startBallRescue() {
+        /**
+         * Sauvetage d'une balle
+         *
+         * Informations de vol:
+         * - Vitesse de déplacement: 1 m/s (vitesse maximum permise)
+         * - Hauteur de décollage: 3.2 mètres
+         *
+         * Déroulement de l'objectif:
+         * 1. Le drone décolle et monte de 2 mètres.
+         * 2. Le drone commence à chercher la balle.
+         * 2.1 Le drone zoom sa caméra au maximum et cherche la balle.
+         * 2.2 Si le drone ne voit pas la balle, il dé-zoom sa caméra, repositionne son gimbale et cherche la balle.
+         * 2.3 Lorsque le drone arrive au zoom minimum, il rotationne positivement de 25 degrées et retourne à l'étape 2.
+         * 3. Lorsque le drone voit la balle, il calcule l'angle nécessaire pour s'aligner avec celle-ci.
+         * 4. Le drone avance jusqu'à ce qu'il ne voit plus la balle.
+         * 5. Lorsque le drone ne voit plus la balle, il dé-zoom sa caméra, réajuste son gimbale et retourne à l'étape 4.
+         * 6. Lorsque le drone arrive au zoom 2, il attérie et le sauvetage est terminé.
+         * 7. Si le drone a rotationné sur 360 degrées sans jamais voir la balle, il attérie et termine la recherche.
+         */
+
         // Désactiver les boutons, excepté le bouton d'arrêt.
         setStopButton(caller.btnBallRescue);
         caller.showToast(caller.getResources().getString(R.string.ballRescueStart));

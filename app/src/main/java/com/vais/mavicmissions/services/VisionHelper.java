@@ -100,6 +100,7 @@ public class VisionHelper {
         upperGreen = new Scalar(82, 240, 240);
 
         // Définir les limites du jaune.
+        // Source: https://stackoverflow.com/questions/9179189/detect-yellow-color-in-opencv
         lowerYellow = new Scalar(22, 100, 100);
         upperYellow = new Scalar(28, 255, 255);
 
