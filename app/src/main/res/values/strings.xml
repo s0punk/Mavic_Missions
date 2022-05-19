@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">Mavic Missions</string>
+
+    <!-- Main Activity -->
+    <string name="chooseMission">Choisissez une mission</string>
+    <string name="dynamicParcour">Parcour dynamique</string>
+    <string name="followLine">Suivi d\'une ligne</string>
+    <string name="ballRescue">Sauvetage d\'une balle</string>
+    <string name="permissionNeeded">Les permissions sont requise pour le fonctionnement de l\'application</string>
+    <string name="missingPermissions">Permissions manquantes</string>
+    <string name="registering">Authentification en cours…</string>
+    <string name="registerComplete">Authentification terminée avec succès</string>
+    <string name="registerError">Erreur survenue lors du processus d\'authentification</string>
+    <string name="dynamicParcourStart">Début du parcour dynamique…</string>
+    <string name="dynamicParourEnded">Parcour dynamique terminé</string>
+    <string name="followLineStart">Début du suivi d\'une ligne verte…</string>
+    <string name="followLineEnded">Suivi d\'une ligne verte arrêté</string>
+    <string name="ballRescueStart">Début du sauvetage de la balle…</string>
+    <string name="ballRescueEnded">Sauvetage de la balle arrêté</string>
+    <string name="stop">Arrêter</string>
+    <string name="retry">Réessayer</string>
+    <string name="connectionError">La connexion au drone à échoué. Assurez-vous que le drone soit allumé et réessayez.</string>
 </resources>
