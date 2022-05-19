@@ -1,7 +1,9 @@
-# Mavic_Missions
+# Mavic Missions
 Projet de programmation de drone (DJI Mavic 2 Entreprise)
 - Client: Martin Client
 - Chef de projet: Simon-Olivier Vaillancourt
+
+
 
 # Objectifs du projet
 
