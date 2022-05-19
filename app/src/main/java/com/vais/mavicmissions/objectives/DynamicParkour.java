@@ -67,7 +67,7 @@ public class DynamicParkour extends Objectif {
      * Méthode qui commence le suivi du parcours.
      */
     public void startDynamicParkour() {
-        /**
+        /*
          * Suivi d'un parcours dynamique
          *
          * Informations de vol:

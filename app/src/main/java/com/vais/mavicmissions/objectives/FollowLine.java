@@ -55,7 +55,7 @@ public class FollowLine extends Objectif {
      * Méthode qui commence le processus de suivi d'une ligne verte.
      */
     public void startFollowLine() {
-        /**
+        /*
          * Suivi d'une ligne verte
          *
          * Informations de vol:
