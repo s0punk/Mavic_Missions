@@ -128,15 +128,11 @@ public class BallRescue extends Objectif {
         // Capturer le flux vidéo.
         Mat matSource = getFrame();
 
-        Point[] points = detectBall(matSource);
+        Point[] points = detectBall(matSource, true);
         Point ball = getBall(points);
 
         if (ball != null) {
-            // Afficher la position de la balle.
-            Imgproc.circle(matSource, ball, 2, new Scalar(255, 255, 0, 255), 10);
-            showFrame(matSource);
             caller.showToast("Balle localisée");
-
             rescue();
         }
         else {
@@ -186,9 +182,10 @@ public class BallRescue extends Objectif {
     /**
      * Fonction qui permet de détecter le contour de la balle.
      * @param source Mat, matrice à analyzer.
+     * @param showVision Boolean, indique s'il faut afficher la vision du drone.
      * @return Point[], points du contour de la balle.
      */
-    private Point[] detectBall(Mat source) {
+    private Point[] detectBall(Mat source, boolean showVision) {
         // Filter les couleurs de la balle.
         Mat yellow = visionHelper.filterColor(source, Color.YELLOW);
         Mat green = visionHelper.filterColor(source, Color.BALL_GREEN);
@@ -201,10 +198,11 @@ public class BallRescue extends Objectif {
         List<MatOfPoint> contours = visionHelper.contoursDetection(combination);
         MatOfPoint biggerContour = visionHelper.getBiggerContour(combination, contours);
 
-        Point[] detectedPoints = biggerContour.toArray();
+        Point[] detectedPoints = biggerContour == null ? new Point[] {} : biggerContour.toArray();
         detectedPoints = detectedPoints.length == 4 ? new Point[] {} : detectedPoints;
 
-        showFrame(combination);
+        if (showVision)
+            showFrame(combination);
 
         return detectedPoints;
     }
@@ -215,11 +213,15 @@ public class BallRescue extends Objectif {
     private void rescue() {
         Mat matSource = getFrame();
 
-        Point ball = getBall(detectBall(matSource));
+        Point ball = getBall(detectBall(matSource, false));
         Point center = Detector.getCenterPoint(matSource);
 
         // Si le drone voit la balle.
         if (ball != null) {
+            // Afficher la balle.
+            Imgproc.circle(matSource, ball, 2, new Scalar(0, 255, 0, 255), 15);
+            showFrame(matSource);
+
             double angle = Detector.detectAngle(center, ball);
             if (angle > 90)
                 angle = angle - 180;
@@ -234,7 +236,7 @@ public class BallRescue extends Objectif {
         }
         // Si le drone ne voit plus la balle.
         else {
-            if (zoom != 1)
+            if (zoom > 2)
                 setView(djiError -> rescue());
             else
                 controller.land(() -> {

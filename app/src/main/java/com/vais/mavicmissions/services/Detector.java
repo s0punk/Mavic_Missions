@@ -1,6 +1,5 @@
 package com.vais.mavicmissions.services;
 
-import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.R;
 import com.vais.mavicmissions.objectives.Objectif;
@@ -28,7 +27,7 @@ public class Detector {
     /**
      * Int, limite maximum pour la comparaison de contours.
      */
-    private static final int MATCH_SHAPE_TRESH = 1;
+    private static final float MATCH_SHAPE_TRESH = 1.3f;
 
     /**
      * Fonction qui permet de détecter une forme à la caméra.
@@ -49,18 +48,21 @@ public class Detector {
 
         int sidesCount = approx.toArray().length;
 
-        double[] similarities = new double[2];
+        double[] similarities = new double[3];
         similarities[0] = visionHelper.matchShape(contour, R.mipmap.ic_d_foreground);
         similarities[1] = visionHelper.matchShape(contour, R.mipmap.ic_u_foreground);
+        similarities[2] = visionHelper.matchShape(contour, R.mipmap.ic_h_foreground);
+
+        boolean isCircle = detectCircle(contour);
 
         // Déterminer la forme selon les paramètres obtenus.
         if (similarities[1] < MATCH_SHAPE_TRESH)
             detectedShape = Shape.U;
         else if (similarities[0] < MATCH_SHAPE_TRESH)
             detectedShape = Shape.D;
-        else if (sidesCount == 7 || sidesCount == 8)
+        else if (similarities[2] < MATCH_SHAPE_TRESH && isCircle)
             detectedShape = Shape.H;
-        else if (sidesCount == 2 || sidesCount == 4 || sidesCount == 6)
+        else if (sidesCount <= 8 && sidesCount >= 2)
             detectedShape = Shape.ARROW;
 
         if (detectedShape != Shape.ARROW)
@@ -257,5 +259,22 @@ public class Detector {
      */
     public static Point getCenterPoint(Mat source) {
         return new Point((int)(source.width() / 2), (int)(source.height() / 2));
+    }
+
+    public static boolean detectCircle(MatOfPoint contour) {
+        double radius = -1;
+        double actualRadius;
+        Point center = getAveragePoint(contour.toArray());
+
+        for (Point p : contour.toArray()) {
+            actualRadius = getLength(center, p);
+
+            if (radius == -1)
+                radius = actualRadius;
+            else if (actualRadius < radius - 10 || actualRadius > radius + 10)
+                return false;
+        }
+
+        return true;
     }
 }

@@ -1,6 +1,11 @@
 package com.vais.mavicmissions.objectives;
 
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
+
+import androidx.core.content.ContextCompat;
+
 import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.FlyInstruction;
 import com.vais.mavicmissions.Enum.Shape;

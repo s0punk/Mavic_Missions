@@ -467,9 +467,7 @@ public class VisionHelper {
         List<MatOfPoint> templateContours = contoursDetection(filteredTemplate);
         MatOfPoint templateContour;
 
-        if (templateRes == R.mipmap.ic_d_foreground)
-            templateContour = templateContours.get(3);
-        else if (templateRes == R.mipmap.ic_u_foreground)
+        if (templateRes == R.mipmap.ic_d_foreground || templateRes == R.mipmap.ic_u_foreground || templateRes == R.mipmap.ic_h_foreground)
             templateContour = templateContours.get(3);
         else
             templateContour = null;
