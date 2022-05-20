@@ -9,6 +9,9 @@ import dji.sdk.products.HandHeld;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui gère l'application.
  */
 public class MavicMissionApp extends Application {

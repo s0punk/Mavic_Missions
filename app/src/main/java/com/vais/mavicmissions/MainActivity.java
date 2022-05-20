@@ -8,11 +8,9 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,7 +34,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.codec.DJICodecManager;
@@ -46,7 +43,10 @@ import dji.sdk.sdkmanager.DJISDKManager;
 import dji.thirdparty.afinal.core.AsyncTask;
 
 /**
- * Classe qui représente l'activité principale de l'application.
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
+ * Classe qui représente l'activité principale de l'application. Elle permet de démarrer les objectifs, d'observer leurs résultats et de visionner le flux vidéo du drone.
  */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextureView.SurfaceTextureListener {
     /**

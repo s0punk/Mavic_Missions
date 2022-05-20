@@ -15,6 +15,9 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui gère l'accomplissement de l'objectif 2, le suivi d'une ligne verte.
  */
 public class FollowLine extends Objectif {
