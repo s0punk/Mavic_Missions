@@ -3,6 +3,9 @@ package com.vais.mavicmissions.services.drone;
 import com.vais.mavicmissions.Enum.FlyInstruction;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui représente une instruction à envpyer au drone.
  */
 public class AircraftInstruction {

@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.Random;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui permet d'effectuer des opérations de traitement d'image.
  */
 public class VisionHelper {

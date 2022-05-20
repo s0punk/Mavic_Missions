@@ -16,6 +16,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui gère la détection d'élément.
  */
 public class Detector {
