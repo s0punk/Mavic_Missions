@@ -18,6 +18,9 @@ import java.util.List;
 import dji.common.util.CommonCallbacks;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui gère l'accomplissement de l'objectif 3, le sauvetage d'une balle.
  */
 public class BallRescue extends Objectif {

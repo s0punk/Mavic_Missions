@@ -1,17 +1,12 @@
 package com.vais.mavicmissions.services;
 
-import androidx.annotation.Nullable;
 import com.vais.mavicmissions.application.MavicMissionApp;
-import dji.sdk.accessory.AccessoryAggregation;
-import dji.sdk.accessory.beacon.Beacon;
-import dji.sdk.accessory.speaker.Speaker;
-import dji.sdk.accessory.spotlight.Spotlight;
-import dji.sdk.flightcontroller.FlightController;
-import dji.sdk.flightcontroller.Simulator;
 import dji.sdk.products.Aircraft;
-import dji.sdk.products.HandHeld;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui permet de faire des vérifications auprès du drone et du SDK.
  * Source (Fichier au complet): DJI Developper.
  *

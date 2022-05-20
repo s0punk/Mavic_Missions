@@ -14,6 +14,9 @@ import dji.sdk.gimbal.Gimbal;
 import dji.sdk.products.Aircraft;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui gère la caméra du drone.
  */
 public class CameraController {

@@ -1,12 +1,6 @@
 package com.vais.mavicmissions.objectives;
 
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
-
-import androidx.core.content.ContextCompat;
-
-import com.vais.mavicmissions.Enum.Color;
 import com.vais.mavicmissions.Enum.FlyInstruction;
 import com.vais.mavicmissions.Enum.Shape;
 import com.vais.mavicmissions.MainActivity;
@@ -21,11 +15,12 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-
-import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Simon-Olivier Vaillancourt
+ * 2022-05-20
+ * DJI Mavic 2 Entreprise
  * Classe qui gère le suivi d'un parcours dynamique.
  */
 public class DynamicParkour extends Objectif {
